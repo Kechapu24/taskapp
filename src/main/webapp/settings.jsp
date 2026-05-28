@@ -21,7 +21,7 @@
 				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
 				<li class="menu-item"><a href="settings.jsp">設定</a></li>
 				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
-				<li class="menu-item"><a href="notification.jsp">通知センター</a></li>
+				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
 				<li class="menu-item"><a href="logs.jsp">ログ</a></li>
 			</ul>
 		</aside>
