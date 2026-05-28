@@ -1,5 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,7 +11,7 @@
     body {
         font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
         color: #333333;
-        background-color: #f8f9fa; /* 明るいグレーの背景 */
+        background-color: #f8f9fa;
         padding: 30px;
         margin: 0;
     }
@@ -34,37 +34,35 @@
         margin: 0;
     }
 
-    /* 区切り線を薄くオシャレにする */
+    /* 区切り線 */
     hr {
         border: 0;
         border-top: 1px solid #e0e0e0;
         margin: 25px 0;
     }
 
-    /* 🧱 4つの箱を2×2で綺麗に並べる魔法のCSS（Gridレイアウト） */
+    /* 4つの箱を2×2で綺麗に並べる設定 */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* 左右に2等分 */
-        gap: 20px; /* 箱と箱のあいだのすき間（縦横共通） */
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
     }
 
-    /* 4つの箱（カード）の共通デザイン */
+    /* 4つの箱の共通デザイン */
     .card {
-        background: #ffffff; /* 箱の中身は白 */
-        border-radius: 8px; /* 角を丸くする */
+        background: #ffffff;
+        border-radius: 8px;
         padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* ほんのり上品な影 */
-        border-top: 5px solid #007bff; /* 上側にアクセントとして青い線を引く */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border-top: 5px solid #007bff;
     }
 
-    /* 各箱のタイトル（H3）の色 */
     .card h3 {
         color: #007bff;
         margin-top: 0;
         margin-bottom: 15px;
     }
 
-    /* リスト（ul）の間隔を広げて見やすくする */
     ul {
         padding-left: 20px;
         line-height: 1.8;
@@ -111,7 +109,8 @@
 
         <div class="card">
             <h3>📝 予定地（メモ用）</h3>
-            <p>ここは空きスペースです！</p>
+            <p>ここは後から何かを書き足すための空きスペースです！</p>
+            <p>今後のアイデアやメモ、メモ帳での検証用に使ってください。</p>
         </div>
 
     </div>
