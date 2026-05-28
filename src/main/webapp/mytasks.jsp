@@ -28,7 +28,7 @@
 
 		<main class="main-content">
 			<header class="content-header">
-				<h1 class="page-title">ダッシュボード</h1>
+				<h1 class="page-title">マイタスク</h1>
 				<div class="main-search-box">
 					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
