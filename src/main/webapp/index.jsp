@@ -35,36 +35,36 @@
 			</header>
 
 			<div class="content-body"></div>
+			<footer class="footer">
+
+				<div class="footer-member">
+					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
+
+					<ul class="member-submenu" id="memberSubmenu">
+						<li><a href="member/tatsu.jsp">坂田</a></li>
+						<li><a href="member/yamada.jsp">清水</a></li>
+						<li><a href="member/sato.jsp">東</a></li>
+						<li><a href="member/sato.jsp">宮崎</a></li>
+					</ul>
+				</div>
+
+				<script>
+					function toggleMemberMenu() {
+						const menu = document.getElementById("memberSubmenu");
+
+						if (menu.style.display === "block") {
+							menu.style.display = "none";
+						} else {
+							menu.style.display = "block";
+						}
+					}
+				</script>
+
+			</footer>
 		</main>
 
 	</div>
 
-	<footer class="footer">
-
-		<div class="footer-member">
-			<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
-
-			<ul class="member-submenu" id="memberSubmenu">
-				<li><a href="member/tatsu.jsp">坂田</a></li>
-				<li><a href="member/yamada.jsp">清水</a></li>
-				<li><a href="member/sato.jsp">東</a></li>
-				<li><a href="member/sato.jsp">宮崎</a></li>
-			</ul>
-		</div>
-
-		<script>
-			function toggleMemberMenu() {
-				const menu = document.getElementById("memberSubmenu");
-
-				if (menu.style.display === "block") {
-					menu.style.display = "none";
-				} else {
-					menu.style.display = "block";
-				}
-			}
-		</script>
-
-	</footer>
 
 </body>
 </html>
