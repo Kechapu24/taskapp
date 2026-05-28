@@ -28,19 +28,28 @@
     justify-content: space-between;
 }
 
+.page-title {
+    margin-right: auto;
+}
+
 .header-right {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.login-btn {
+/* アカウントボタン */
+.account-button {
     background: #3498db;
     color: white;
-    border: none;
+    text-decoration: none;
     padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.account-button:hover {
+    background: #2980b9;
 }
 
 /* レイアウト全体（サイドバー＋メイン） */
