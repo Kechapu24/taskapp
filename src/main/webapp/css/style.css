@@ -6,14 +6,17 @@
 }
 
 /* ヘッダー */
-.main-header {
-    height: 60px;
-    background: #f5f5f5;
+.content-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
+    padding: 20px 30px;
+    margin-bottom: 20px;
     border-bottom: 1px solid #ddd;
+}
+
+.page-title {
+    margin-right: auto;
+    font-size: 28px;
 }
 
 .header-right {
@@ -22,23 +25,14 @@
     gap: 15px;
 }
 
-.content-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.search-input {
+    padding: 8px 12px;
+    width: 220px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
 }
 
-.page-title {
-    margin-right: auto;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-/* アカウントボタン */
 .account-button {
     background: #3498db;
     color: white;
