@@ -1,43 +1,70 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>タスク管理アプリ</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タスク管理アプリ</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <div class="app-container">
+	<div class="app-container">
 
-        <aside class="sidebar">
-            <div class="sidebar-brand">タスク管理</div>
+		<aside class="sidebar">
+			<div class="sidebar-brand">タスク管理</div>
 
-            <ul class="sidebar-menu">
-                <li class="menu-item active"><a href="#">ダッシュボード</a></li>
-                <li class="menu-item"><a href="#">プロジェクト一覧</a></li>
-                <li class="menu-item"><a href="#">タスクボード</a></li>
-                <li class="menu-item"><a href="#">設定</a></li>
-                <li class="menu-item"><a href="#">マイタスク</a></li>
-                <li class="menu-item"><a href="#">通知センター</a></li>
-                <li class="menu-item"><a href="#">ログ</a></li>
-            </ul>
-        </aside>
+			<ul class="sidebar-menu">
+				<li class="menu-item active"><a href="#">ダッシュボード</a></li>
+				<li class="menu-item"><a href="#">プロジェクト一覧</a></li>
+				<li class="menu-item"><a href="#">タスクボード</a></li>
+				<li class="menu-item"><a href="#">設定</a></li>
+				<li class="menu-item"><a href="#">マイタスク</a></li>
+				<li class="menu-item"><a href="#">通知センター</a></li>
+				<li class="menu-item"><a href="#">ログ</a></li>
+			</ul>
+		</aside>
 
-        <main class="main-content">
-            <header class="content-header">
-                <h1 class="page-title">ダッシュボード</h1>
-                <div class="main-search-box">
-                    <input type="text" class="search-input" placeholder="タスクを検索...">
-                </div>
-            </header>
-            
-            <div class="content-body">
-                </div>
-        </main>
+		<main class="main-content">
+			<header class="content-header">
+				<h1 class="page-title">ダッシュボード</h1>
+				<div class="main-search-box">
+					<input type="text" class="search-input" placeholder="タスクを検索...">
+				</div>
+			</header>
 
-    </div>
+			<div class="content-body"></div>
+		</main>
+
+	</div>
+
+	<footer class="footer">
+
+		<div class="footer-member">
+			<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
+
+			<ul class="member-submenu" id="memberSubmenu">
+				<li><a href="member/tatsu.jsp">坂田</a></li>
+				<li><a href="member/yamada.jsp">清水</a></li>
+				<li><a href="member/sato.jsp">東</a></li>
+				<li><a href="member/sato.jsp">宮崎</a></li>
+			</ul>
+		</div>
+
+		<script>
+			function toggleMemberMenu() {
+				const menu = document.getElementById("memberSubmenu");
+
+				if (menu.style.display === "block") {
+					menu.style.display = "none";
+				} else {
+					menu.style.display = "block";
+				}
+			}
+		</script>
+
+	</footer>
 
 </body>
 </html>
