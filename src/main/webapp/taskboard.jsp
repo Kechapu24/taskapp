@@ -16,9 +16,9 @@
 			<div class="sidebar-brand">タスク管理</div>
 
 			<ul class="sidebar-menu">
-				<li class="menu-item active"><a href="index.jsp">ダッシュボード</a></li>
+				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
 				<li class="menu-item"><a href="projects.jsp">プロジェクト一覧</a></li>
-				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
+				<li class="menu-item active"><a href="taskboard.jsp">タスクボード</a></li>
 				<li class="menu-item"><a href="settings.jsp">設定</a></li>
 				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
 				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
