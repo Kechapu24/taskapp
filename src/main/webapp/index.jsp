@@ -49,7 +49,7 @@
 					<ul class="member-submenu" id="memberSubmenu">
 						<li><a href="member/Sakata.jsp">坂田</a></li>
 						<li><a href="member/Shimizu.jsp">清水</a></li>
-						<li><a href="member/Higashi.jsp">東</a></li>
+						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
 						<li><a href="member/Miyazaki.jsp">宮崎</a></li>
 					</ul>
 				</div>
