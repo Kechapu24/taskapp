@@ -186,3 +186,312 @@
 .priority.high {
     background: #e74c3c;
 }
+/* ==========================================
+   Shimizu担当：プロジェクト一覧
+   ========================================== */
+
+.title-with-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* プロジェクト追加用のトップボタン */
+.add-project-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.add-project-btn:hover {
+    background-color: #0056b3;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* 横長のプロジェクトカード */
+.project-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-left: 5px solid #007bff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.project-title {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+}
+
+/* プロジェクト名と進捗バーのまとまり */
+.project-info-block {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex: 1; /* 横幅いっぱいに広げる */
+}
+
+/* 💡 新しくプロジェクト名の右横に置くパーセンテージ用バッジ */
+.project-percent-badge {
+    background-color: #f1f3f5;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-left: 10px;
+    border: 1px solid #dee2e6;
+}
+
+/* プロジェクトの横にある「＋」ボタン */
+.open-box-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.open-box-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* 📊 進捗バーの外枠（グレーの背景） */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 400px; /* バーが長くなりすぎないようにストッパー */
+}
+
+.progress-bar-bg {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    width: 100%;
+    height: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* 🟩 進捗バーの中身（左から右にたまる緑のバー） */
+.progress-bar-fill {
+    background-color: #28a745; /* 安心感のある緑色 */
+    height: 100%;
+    width: 0%; /* 最初は0%（JSで動かします） */
+    transition: width 0.4s ease; /* 伸びるときにアニメーションさせる */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* バーの中の「〇〇%」という文字 */
+.progress-text-inside {
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    left: 0;
+    line-height: 16px;
+    pointer-events: none; /* 文字が邪魔しないように */
+}
+
+/* 下から半らせり上がるタスク表示画面（オーバーレイ） */
+.task-panel-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    align-items: flex-end;
+    z-index: 1000;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: none; /* 上の空スペースをクリック可能にする */
+}
+
+.task-panel {
+    background: #ffffff;
+    width: 100%;
+    height: 50vh; /* 下半分を美しく覆うサイズ */
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: auto !important; /* パネル内はクリック可能に */
+}
+
+.task-panel-overlay.show {
+    visibility: visible;
+}
+.task-panel-overlay.show .task-panel {
+    transform: translateY(0);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.close-arrow-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.close-arrow-btn:hover { color: #ff3b30; }
+
+.add-task-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    font-size: 20px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.add-task-btn:hover { background: #218838; }
+
+.panel-title {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.task-ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 📌 タスク内のレイアウト調整 */
+.task-li {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    position: relative;
+}
+
+.task-check {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.task-content-text {
+    margin-left: 12px;
+}
+
+/* 📅 追加した日付のデザイン */
+.task-date {
+    display: block;
+    font-size: 11px;
+    color: #888888;
+    margin-top: 3px;
+}
+
+/* 🛑 三点リーダーボタン（⋮）の設定 */
+.task-menu-trigger {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-left: auto; /* 一番右端に寄せる */
+    border-radius: 4px;
+}
+.task-menu-trigger:hover {
+    background-color: #e9ecef;
+}
+
+/* 浮き出るドロップダウンメニュー */
+.task-dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 15px;
+    top: 45px;
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    z-index: 1100;
+    overflow: hidden;
+}
+
+.task-dropdown-menu.open {
+    display: block;
+}
+
+.dropdown-delete-item {
+    background: none;
+    border: none;
+    width: 100%;
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 14px;
+    color: #dc3545; /* 削除は赤色 */
+    cursor: pointer;
+    white-space: nowrap;
+}
+.dropdown-delete-item:hover {
+    background-color: #fff5f5;
+}
