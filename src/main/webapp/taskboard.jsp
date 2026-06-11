@@ -44,7 +44,7 @@
 						<div class="task-card">
 							<h3>DB設計</h3>
 							<p>テーブル設計を完成させる</p>
-							<span class="priority middle">中</span>
+							<span class="priority low">低</span>
 							<p>期限：2026/06/30</p>
 						</div>
 					</div>
@@ -54,7 +54,7 @@
 						<div class="task-card">
 							<h3>Webサイト作成</h3>
 							<p>jspで画面を作る</p>
-							<span class="priority middle">高</span>
+							<span class="priority middle">中</span>
 							<p>期限：2026/06/20</p>
 						</div>
 					</div>
@@ -64,7 +64,7 @@
 						<div class="task-card">
 							<h3>環境構築</h3>
 							<p>Hyper-v上でalumalinux環境構築</p>
-							<span class="priority middle">高</span>
+							<span class="priority high">高</span>
 							<p>期限：2026/06/10</p>
 						</div>
 					</div>
