@@ -113,3 +113,12 @@ CREATE TABLE notification (
     FOREIGN KEY (project_id) REFERENCES project(project_id) ON DELETE SET NULL,
     FOREIGN KEY (task_id) REFERENCES task(task_id) ON DELETE SET NULL
 );
+
+CREATE TABLE personal_task (
+    personal_task_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    task_name VARCHAR(100) NOT NULL,
+    status VARCHAR(30) DEFAULT '進行中',
+    due_date DATE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
