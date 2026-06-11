@@ -32,15 +32,48 @@
 				<div class="main-search-box">
 					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
-				 <a href="account.jsp" class="account-button">アカウント情報</a>
+				<a href="account.jsp" class="account-button">アカウント情報</a>
 			</header>
 
 			<div class="content-body">
-			
-			
-			
+
+				<div class="task-board">
+
+					<div class="task-column">
+						<h2>未着手</h2>
+						<div class="task-card">
+							<h3>DB設計</h3>
+							<p>テーブル設計を完成させる</p>
+							<span class="priority middle">中</span>
+							<p>期限：2026/06/30</p>
+						</div>
+					</div>
+
+					<div class="task-column">
+						<h2>進行中</h2>
+						<div class="task-card">
+							<h3>Webサイト作成</h3>
+							<p>jspで画面を作る</p>
+							<span class="priority middle">高</span>
+							<p>期限：2026/06/20</p>
+						</div>
+					</div>
+
+					<div class="task-column">
+						<h2>完了</h2>
+						<div class="task-card">
+							<h3>環境構築</h3>
+							<p>Hyper-v上でalumalinux環境構築</p>
+							<span class="priority middle">高</span>
+							<p>期限：2026/06/10</p>
+						</div>
+					</div>
+
+
+				</div>
+
 			</div>
-			
+
 			<footer class="footer">
 
 				<div class="footer-member">
