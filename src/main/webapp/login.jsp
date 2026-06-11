@@ -4,9 +4,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>ログイン</title>
 </head>
 <body>
+	ログイン情報<br/>
+	<br/>
+	
 
 </body>
 </html>

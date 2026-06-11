@@ -7,6 +7,11 @@
 <title>Insert title here</title>
 </head>
 <body>
+<<<<<<< HEAD
 まるまるまる
+
+=======
+あいうえおあいうえお
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 </body>
 </html>
