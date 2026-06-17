@@ -226,5 +226,27 @@
 			</footer>
 		</main>
 	</div>
+	<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedTheme = localStorage.getItem('app-theme');
+        const savedBgColor = localStorage.getItem('custom-bg-color');
+        const savedTextColor = localStorage.getItem('custom-text-color');
+        const savedFontSize = localStorage.getItem('app-fontSize');
+
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        } else if (savedTheme === 'custom') {
+            document.body.classList.add('custom-theme');
+            if (savedBgColor) document.documentElement.style.setProperty('--custom-bg-color', savedBgColor);
+            if (savedTextColor) document.documentElement.style.setProperty('--custom-text-color', savedTextColor);
+        }
+
+        if (savedFontSize === 'small') {
+            document.body.classList.add('font-small');
+        } else if (savedFontSize === 'large') {
+            document.body.classList.add('font-large');
+        }
+    });
+</script>
 </body>
 </html>
