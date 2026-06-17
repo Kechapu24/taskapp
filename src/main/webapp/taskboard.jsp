@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*"%>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -41,32 +42,150 @@
 
 					<div class="task-column">
 						<h2>未着手</h2>
+
+						<%
+			String url = "jdbc:postgresql://localhost:5432/taskapp";
+			String user = "taskuser";
+			String password = "taskpass";
+
+			try {
+				Class.forName("org.postgresql.Driver");
+				Connection conn = DriverManager.getConnection(url, user, password);
+
+				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
+				           + "FROM task "
+				           + "WHERE status = '未着手' "
+				           + "ORDER BY due_date";
+
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql);
+
+				while (rs.next()) {
+			%>
+
 						<div class="task-card">
-							<h3>DB設計</h3>
-							<p>テーブル設計を完成させる</p>
-							<span class="priority low">低</span>
-							<p>期限：2026/06/30</p>
+							<h3><%= rs.getString("task_name") %></h3>
+							<p><%= rs.getString("description") %></p>
+							<p>
+								優先度：<%= rs.getString("priority") %></p>
+							<p>
+								開始日：<%= rs.getDate("start_date") %></p>
+							<p>
+								期限：<%= rs.getDate("due_date") %></p>
 						</div>
+
+						<%
+				}
+
+				rs.close();
+				stmt.close();
+				conn.close();
+
+			} catch (Exception e) {
+			%>
+						<p style="color: red;">
+							エラー:
+							<%= e.getMessage() %></p>
+						<%
+			}
+			%>
+
 					</div>
 
 					<div class="task-column">
 						<h2>進行中</h2>
+
+						<%
+			try {
+				Class.forName("org.postgresql.Driver");
+				Connection conn = DriverManager.getConnection(url, user, password);
+
+				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
+				           + "FROM task "
+				           + "WHERE status = '進行中' "
+				           + "ORDER BY due_date";
+
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql);
+
+				while (rs.next()) {
+			%>
+
 						<div class="task-card">
-							<h3>Webサイト作成</h3>
-							<p>jspで画面を作る</p>
-							<span class="priority middle">中</span>
-							<p>期限：2026/06/20</p>
+							<h3><%= rs.getString("task_name") %></h3>
+							<p><%= rs.getString("description") %></p>
+							<p>
+								優先度：<%= rs.getString("priority") %></p>
+							<p>
+								開始日：<%= rs.getDate("start_date") %></p>
+							<p>
+								期限：<%= rs.getDate("due_date") %></p>
 						</div>
+
+						<%
+				}
+
+				rs.close();
+				stmt.close();
+				conn.close();
+
+			} catch (Exception e) {
+			%>
+						<p style="color: red;">
+							エラー:
+							<%= e.getMessage() %></p>
+						<%
+			}
+			%>
+
 					</div>
 
 					<div class="task-column">
 						<h2>完了</h2>
+
+						<%
+			try {
+				Class.forName("org.postgresql.Driver");
+				Connection conn = DriverManager.getConnection(url, user, password);
+
+				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
+				           + "FROM task "
+				           + "WHERE status = '完了' "
+				           + "ORDER BY due_date";
+
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql);
+
+				while (rs.next()) {
+			%>
+
 						<div class="task-card">
-							<h3>環境構築</h3>
-							<p>Hyper-v上でalumalinux環境構築</p>
-							<span class="priority high">高</span>
-							<p>期限：2026/06/10</p>
+							<h3><%= rs.getString("task_name") %></h3>
+							<p><%= rs.getString("description") %></p>
+							<p>
+								優先度：<%= rs.getString("priority") %></p>
+							<p>
+								開始日：<%= rs.getDate("start_date") %></p>
+							<p>
+								期限：<%= rs.getDate("due_date") %></p>
 						</div>
+
+						<%
+				}
+
+				rs.close();
+				stmt.close();
+				conn.close();
+
+			} catch (Exception e) {
+			%>
+						<p style="color: red;">
+							エラー:
+							<%= e.getMessage() %></p>
+						<%
+			}
+			%>
+
 					</div>
 
 				</div>
