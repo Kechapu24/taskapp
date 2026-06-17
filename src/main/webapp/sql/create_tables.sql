@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS task;
 DROP TABLE IF EXISTS project_member;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS project;
+DROP TABLE IF EXISTS personal_task;
 
 CREATE TABLE project (
     project_id SERIAL PRIMARY KEY,
