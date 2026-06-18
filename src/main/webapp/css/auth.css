@@ -1,0 +1,115 @@
+/* 全体リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 画面全体 */
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* カード */
+.login-card {
+    background: white;
+    padding: 30px;
+    width: 360px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* タイトル */
+.login-card h2 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* 説明文 */
+.login-card p {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* ラベル */
+label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 入力欄 */
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+
+    background-color: #f9fbff; /* 淡い青で視認性UP */
+    transition: 0.2s;
+}
+
+/* 入力欄フォーカス時 */
+input:focus {
+    border-color: #007bff;
+    background-color: #eef5ff;
+    outline: none;
+}
+
+/* ボタンエリア（ログイン画面は横並び） */
+.button-area {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* ログインボタン */
+.login-btn {
+    width: 48%;
+    padding: 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.login-btn:hover {
+    background: #1e7e34;
+}
+
+/* 新規登録ボタン（ログイン画面用） */
+.register-btn {
+    width: 48%;
+    padding: 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.register-btn:hover {
+    background: #005fcc;
+}
+
+/* 新規登録画面の登録ボタンだけ中央寄せ */
+#registerForm .button-area {
+    justify-content: center;
+}
+
+#registerForm .register-btn {
+    width: 70%;
+}

@@ -32,15 +32,29 @@
 				<div class="main-search-box">
 					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
-				 <a href="account.jsp" class="account-button">アカウント情報</a>
+				<a href="account.jsp" class="account-button">アカウント情報</a>
 			</header>
 
 			<div class="content-body">
-			
-			
-			
+
+				<div class="notification-item unread">
+					<span class="notification-dot"></span>
+
+					<div class="notification-content">
+						<div class="notification-title">メンションされました</div>
+
+						<div class="notification-task">タスク：ログイン機能実装</div>
+
+						<div class="notification-project">プロジェクト：タスク管理アプリ</div>
+
+						<div class="notification-detail">坂田さんがあなたをメンションしました</div>
+
+						<div class="notification-date">2026/06/17 10:30</div>
+					</div>
+				</div>
+
 			</div>
-			
+
 			<footer class="footer">
 
 				<div class="footer-member">
