@@ -38,10 +38,56 @@
 
 			<div class="content-body">
 
+				<%
+int todoCount = 0;
+int doingCount = 0;
+int doneCount = 0;
+
+String countUrl = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+String countUser = "taskuser";
+String countPassword = "taskpass";
+
+try {
+    Class.forName("org.postgresql.Driver");
+    Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
+
+    String countSql = "SELECT status, COUNT(*) AS task_count "
+                    + "FROM task "
+                    + "GROUP BY status";
+
+    Statement countStmt = countConn.createStatement();
+    ResultSet countRs = countStmt.executeQuery(countSql);
+
+    while (countRs.next()) {
+        String status = countRs.getString("status");
+        int count = countRs.getInt("task_count");
+
+        if ("未着手".equals(status)) {
+            todoCount = count;
+        } else if ("進行中".equals(status)) {
+            doingCount = count;
+        } else if ("完了".equals(status)) {
+            doneCount = count;
+        }
+    }
+
+    countRs.close();
+    countStmt.close();
+    countConn.close();
+
+} catch (Exception e) {
+%>
+				<p style="color: red;">
+					件数取得エラー:
+					<%= e.getMessage() %></p>
+				<%
+}
+%>
+
 				<div class="task-board">
 
-					<div class="task-column">
-						<h2>未着手</h2>
+					<div class="task-column status-todo">
+						<h2>未着手（<%= todoCount %>）</h2>
 
 						<%
 			String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
@@ -100,11 +146,11 @@
 							</div>
 
 							<p>
-								プロジェクト：<%= rs.getString("project_name") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								担当：<%= rs.getString("assignees") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
 
 							<div class="task-card-actions">
 								<button class="icon-button"
@@ -186,8 +232,8 @@
 
 					</div>
 
-					<div class="task-column">
-						<h2>進行中</h2>
+					<div class="task-column status-doing">
+						<h2>進行中（<%= doingCount %>）</h2>
 
 						<%
 			try {
@@ -242,11 +288,11 @@
 							</div>
 
 							<p>
-								プロジェクト：<%= rs.getString("project_name") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								担当：<%= rs.getString("assignees") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
 
 							<div class="task-card-actions">
 								<button class="icon-button"
@@ -328,8 +374,8 @@
 
 					</div>
 
-					<div class="task-column">
-						<h2>完了</h2>
+					<div class="task-column status-done">
+						<h2>完了（<%= doneCount %>）</h2>
 
 						<%
 			try {
@@ -384,11 +430,11 @@
 							</div>
 
 							<p>
-								プロジェクト：<%= rs.getString("project_name") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								担当：<%= rs.getString("assignees") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
 
 							<div class="task-card-actions">
 								<button class="icon-button"
@@ -553,7 +599,7 @@
 		</main>
 
 	</div>
-	
+
 	<div class="modal-overlay" id="modalOverlay">
 		<div class="modal-content">
 			<div class="modal-header">

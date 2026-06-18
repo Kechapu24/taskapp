@@ -148,6 +148,37 @@
     padding: 15px;
 }
 
+/* コラム上部の細い色バー */
+.task-column {
+    position: relative;
+    overflow: hidden;
+}
+
+.task-column::before {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* 未着手：青 */
+.status-todo::before {
+    background-color: #3498db;
+}
+
+/* 進行中：黄色 */
+.status-doing::before {
+    background-color: #f1c40f;
+}
+
+/* 完了：緑色 */
+.status-done::before {
+    background-color: #2ecc71;
+}
+
 /* タスクカード */
 .task-column h2 {
     margin-bottom: 15px;
