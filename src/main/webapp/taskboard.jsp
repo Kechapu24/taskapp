@@ -38,10 +38,56 @@
 
 			<div class="content-body">
 
+				<%
+int todoCount = 0;
+int doingCount = 0;
+int doneCount = 0;
+
+String countUrl = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+String countUser = "taskuser";
+String countPassword = "taskpass";
+
+try {
+    Class.forName("org.postgresql.Driver");
+    Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
+
+    String countSql = "SELECT status, COUNT(*) AS task_count "
+                    + "FROM task "
+                    + "GROUP BY status";
+
+    Statement countStmt = countConn.createStatement();
+    ResultSet countRs = countStmt.executeQuery(countSql);
+
+    while (countRs.next()) {
+        String status = countRs.getString("status");
+        int count = countRs.getInt("task_count");
+
+        if ("未着手".equals(status)) {
+            todoCount = count;
+        } else if ("進行中".equals(status)) {
+            doingCount = count;
+        } else if ("完了".equals(status)) {
+            doneCount = count;
+        }
+    }
+
+    countRs.close();
+    countStmt.close();
+    countConn.close();
+
+} catch (Exception e) {
+%>
+				<p style="color: red;">
+					件数取得エラー:
+					<%= e.getMessage() %></p>
+				<%
+}
+%>
+
 				<div class="task-board">
 
-					<div class="task-column">
-						<h2>未着手</h2>
+					<div class="task-column status-todo">
+						<h2>未着手（<%= todoCount %>）</h2>
 
 						<%
 			String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
@@ -52,10 +98,27 @@
 				Class.forName("org.postgresql.Driver");
 				Connection conn = DriverManager.getConnection(url, user, password);
 
-				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
-				           + "FROM task "
-				           + "WHERE status = '未着手' "
-				           + "ORDER BY due_date";
+				String sql = "SELECT "
+				           + "t.task_id, "
+				           + "t.task_name, "
+				           + "t.description, "
+				           + "t.status, "
+				           + "t.priority, "
+				           + "t.start_date, "
+				           + "t.due_date, "
+				           + "p.project_name, "
+				           + "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
+				           + "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
+				           + "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files "
+				           + "FROM task t "
+				           + "JOIN project p ON t.project_id = p.project_id "
+				           + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
+				           + "LEFT JOIN users u ON ta.user_id = u.user_id "
+				           + "LEFT JOIN comment c ON t.task_id = c.task_id "
+				           + "LEFT JOIN attachment a ON t.task_id = a.task_id "
+				           + "WHERE t.status = '未着手' "
+				           + "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
+				           + "ORDER BY t.due_date";
 
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(sql);
@@ -64,14 +127,91 @@
 			%>
 
 						<div class="task-card">
-							<h3><%= rs.getString("task_name") %></h3>
-							<p><%= rs.getString("description") %></p>
+
+							<div class="task-card-header">
+								<h3><%= rs.getString("task_name") %></h3>
+
+								<div class="task-menu">
+									<button class="menu-button"
+										onclick="toggleTaskMenu(event, 'menu-<%= rs.getInt("task_id") %>')">⋯</button>
+
+									<div class="menu-dropdown"
+										id="menu-<%= rs.getInt("task_id") %>">
+										<button
+											onclick="openModalFromElement('詳細', 'detail-<%= rs.getInt("task_id") %>')">詳細</button>
+										<button
+											onclick="openModalFromElement('編集', 'edit-<%= rs.getInt("task_id") %>')">編集</button>
+									</div>
+								</div>
+							</div>
+
 							<p>
-								優先度：<%= rs.getString("priority") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								開始日：<%= rs.getDate("start_date") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
+
+							<div class="task-card-actions">
+								<button class="icon-button"
+									onclick="openModalFromElement('コメント', 'comment-<%= rs.getInt("task_id") %>')">
+									💬 コメント</button>
+
+								<button class="icon-button"
+									onclick="openModalFromElement('添付ファイル', 'file-<%= rs.getInt("task_id") %>')">
+									📎 添付</button>
+							</div>
+
+							<!-- 詳細ポップアップ用の中身 -->
+							<div id="detail-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p>
+									<strong>タスク名：</strong><%= rs.getString("task_name") %></p>
+								<p>
+									<strong>プロジェクト：</strong><%= rs.getString("project_name") %></p>
+								<p>
+									<strong>担当者：</strong><%= rs.getString("assignees") %></p>
+								<p>
+									<strong>状態：</strong><%= rs.getString("status") %></p>
+								<p>
+									<strong>優先度：</strong><%= rs.getString("priority") %></p>
+								<p>
+									<strong>期限：</strong><%= rs.getDate("due_date") %></p>
+							</div>
+
+							<!-- 編集ポップアップ用の中身 -->
+							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
+								<form class="edit-form">
+									<label>タスク名</label> <input type="text"
+										value="<%= rs.getString("task_name") %>"> <label>状態</label>
+									<select>
+										<option>未着手</option>
+										<option>進行中</option>
+										<option>完了</option>
+									</select> <label>優先度</label> <select>
+										<option>低</option>
+										<option>中</option>
+										<option>高</option>
+									</select> <label>期限</label> <input type="date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea><%= rs.getString("description") %></textarea>
+
+									<p style="margin-top: 15px; color: #777;">
+										※今は表示のみ。更新処理は後で追加します。</p>
+								</form>
+							</div>
+
+							<!-- コメントポップアップ用の中身 -->
+							<div id="comment-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p><%= rs.getString("comments") %></p>
+							</div>
+
+							<!-- 添付ファイルポップアップ用の中身 -->
+							<div id="file-<%= rs.getInt("task_id") %>" style="display: none;">
+								<p><%= rs.getString("files") %></p>
+							</div>
+
 						</div>
 
 						<%
@@ -92,18 +232,35 @@
 
 					</div>
 
-					<div class="task-column">
-						<h2>進行中</h2>
+					<div class="task-column status-doing">
+						<h2>進行中（<%= doingCount %>）</h2>
 
 						<%
 			try {
 				Class.forName("org.postgresql.Driver");
 				Connection conn = DriverManager.getConnection(url, user, password);
 
-				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
-				           + "FROM task "
-				           + "WHERE status = '進行中' "
-				           + "ORDER BY due_date";
+				String sql = "SELECT "
+				           + "t.task_id, "
+				           + "t.task_name, "
+				           + "t.description, "
+				           + "t.status, "
+				           + "t.priority, "
+				           + "t.start_date, "
+				           + "t.due_date, "
+				           + "p.project_name, "
+				           + "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
+				           + "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
+				           + "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files "
+				           + "FROM task t "
+				           + "JOIN project p ON t.project_id = p.project_id "
+				           + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
+				           + "LEFT JOIN users u ON ta.user_id = u.user_id "
+				           + "LEFT JOIN comment c ON t.task_id = c.task_id "
+				           + "LEFT JOIN attachment a ON t.task_id = a.task_id "
+				           + "WHERE t.status = '進行中' "
+				           + "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
+				           + "ORDER BY t.due_date";
 
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(sql);
@@ -112,14 +269,91 @@
 			%>
 
 						<div class="task-card">
-							<h3><%= rs.getString("task_name") %></h3>
-							<p><%= rs.getString("description") %></p>
+
+							<div class="task-card-header">
+								<h3><%= rs.getString("task_name") %></h3>
+
+								<div class="task-menu">
+									<button class="menu-button"
+										onclick="toggleTaskMenu(event, 'menu-<%= rs.getInt("task_id") %>')">⋯</button>
+
+									<div class="menu-dropdown"
+										id="menu-<%= rs.getInt("task_id") %>">
+										<button
+											onclick="openModalFromElement('詳細', 'detail-<%= rs.getInt("task_id") %>')">詳細</button>
+										<button
+											onclick="openModalFromElement('編集', 'edit-<%= rs.getInt("task_id") %>')">編集</button>
+									</div>
+								</div>
+							</div>
+
 							<p>
-								優先度：<%= rs.getString("priority") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								開始日：<%= rs.getDate("start_date") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
+
+							<div class="task-card-actions">
+								<button class="icon-button"
+									onclick="openModalFromElement('コメント', 'comment-<%= rs.getInt("task_id") %>')">
+									💬 コメント</button>
+
+								<button class="icon-button"
+									onclick="openModalFromElement('添付ファイル', 'file-<%= rs.getInt("task_id") %>')">
+									📎 添付</button>
+							</div>
+
+							<!-- 詳細ポップアップ用の中身 -->
+							<div id="detail-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p>
+									<strong>タスク名：</strong><%= rs.getString("task_name") %></p>
+								<p>
+									<strong>プロジェクト：</strong><%= rs.getString("project_name") %></p>
+								<p>
+									<strong>担当者：</strong><%= rs.getString("assignees") %></p>
+								<p>
+									<strong>状態：</strong><%= rs.getString("status") %></p>
+								<p>
+									<strong>優先度：</strong><%= rs.getString("priority") %></p>
+								<p>
+									<strong>期限：</strong><%= rs.getDate("due_date") %></p>
+							</div>
+
+							<!-- 編集ポップアップ用の中身 -->
+							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
+								<form class="edit-form">
+									<label>タスク名</label> <input type="text"
+										value="<%= rs.getString("task_name") %>"> <label>状態</label>
+									<select>
+										<option>未着手</option>
+										<option>進行中</option>
+										<option>完了</option>
+									</select> <label>優先度</label> <select>
+										<option>低</option>
+										<option>中</option>
+										<option>高</option>
+									</select> <label>期限</label> <input type="date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea><%= rs.getString("description") %></textarea>
+
+									<p style="margin-top: 15px; color: #777;">
+										※今は表示のみ。更新処理は後で追加します。</p>
+								</form>
+							</div>
+
+							<!-- コメントポップアップ用の中身 -->
+							<div id="comment-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p><%= rs.getString("comments") %></p>
+							</div>
+
+							<!-- 添付ファイルポップアップ用の中身 -->
+							<div id="file-<%= rs.getInt("task_id") %>" style="display: none;">
+								<p><%= rs.getString("files") %></p>
+							</div>
+
 						</div>
 
 						<%
@@ -140,18 +374,35 @@
 
 					</div>
 
-					<div class="task-column">
-						<h2>完了</h2>
+					<div class="task-column status-done">
+						<h2>完了（<%= doneCount %>）</h2>
 
 						<%
 			try {
 				Class.forName("org.postgresql.Driver");
 				Connection conn = DriverManager.getConnection(url, user, password);
 
-				String sql = "SELECT task_id, task_name, description, status, priority, start_date, due_date "
-				           + "FROM task "
-				           + "WHERE status = '完了' "
-				           + "ORDER BY due_date";
+				String sql = "SELECT "
+				           + "t.task_id, "
+				           + "t.task_name, "
+				           + "t.description, "
+				           + "t.status, "
+				           + "t.priority, "
+				           + "t.start_date, "
+				           + "t.due_date, "
+				           + "p.project_name, "
+				           + "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
+				           + "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
+				           + "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files "
+				           + "FROM task t "
+				           + "JOIN project p ON t.project_id = p.project_id "
+				           + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
+				           + "LEFT JOIN users u ON ta.user_id = u.user_id "
+				           + "LEFT JOIN comment c ON t.task_id = c.task_id "
+				           + "LEFT JOIN attachment a ON t.task_id = a.task_id "
+				           + "WHERE t.status = '完了' "
+				           + "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
+				           + "ORDER BY t.due_date";
 
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(sql);
@@ -160,14 +411,91 @@
 			%>
 
 						<div class="task-card">
-							<h3><%= rs.getString("task_name") %></h3>
-							<p><%= rs.getString("description") %></p>
+
+							<div class="task-card-header">
+								<h3><%= rs.getString("task_name") %></h3>
+
+								<div class="task-menu">
+									<button class="menu-button"
+										onclick="toggleTaskMenu(event, 'menu-<%= rs.getInt("task_id") %>')">⋯</button>
+
+									<div class="menu-dropdown"
+										id="menu-<%= rs.getInt("task_id") %>">
+										<button
+											onclick="openModalFromElement('詳細', 'detail-<%= rs.getInt("task_id") %>')">詳細</button>
+										<button
+											onclick="openModalFromElement('編集', 'edit-<%= rs.getInt("task_id") %>')">編集</button>
+									</div>
+								</div>
+							</div>
+
 							<p>
-								優先度：<%= rs.getString("priority") %></p>
+								<%= rs.getString("project_name") %></p>
 							<p>
-								開始日：<%= rs.getDate("start_date") %></p>
+								<%= rs.getString("assignees") %></p>
 							<p>
-								期限：<%= rs.getDate("due_date") %></p>
+								<%= rs.getDate("due_date") %></p>
+
+							<div class="task-card-actions">
+								<button class="icon-button"
+									onclick="openModalFromElement('コメント', 'comment-<%= rs.getInt("task_id") %>')">
+									💬 コメント</button>
+
+								<button class="icon-button"
+									onclick="openModalFromElement('添付ファイル', 'file-<%= rs.getInt("task_id") %>')">
+									📎 添付</button>
+							</div>
+
+							<!-- 詳細ポップアップ用の中身 -->
+							<div id="detail-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p>
+									<strong>タスク名：</strong><%= rs.getString("task_name") %></p>
+								<p>
+									<strong>プロジェクト：</strong><%= rs.getString("project_name") %></p>
+								<p>
+									<strong>担当者：</strong><%= rs.getString("assignees") %></p>
+								<p>
+									<strong>状態：</strong><%= rs.getString("status") %></p>
+								<p>
+									<strong>優先度：</strong><%= rs.getString("priority") %></p>
+								<p>
+									<strong>期限：</strong><%= rs.getDate("due_date") %></p>
+							</div>
+
+							<!-- 編集ポップアップ用の中身 -->
+							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
+								<form class="edit-form">
+									<label>タスク名</label> <input type="text"
+										value="<%= rs.getString("task_name") %>"> <label>状態</label>
+									<select>
+										<option>未着手</option>
+										<option>進行中</option>
+										<option>完了</option>
+									</select> <label>優先度</label> <select>
+										<option>低</option>
+										<option>中</option>
+										<option>高</option>
+									</select> <label>期限</label> <input type="date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea><%= rs.getString("description") %></textarea>
+
+									<p style="margin-top: 15px; color: #777;">
+										※今は表示のみ。更新処理は後で追加します。</p>
+								</form>
+							</div>
+
+							<!-- コメントポップアップ用の中身 -->
+							<div id="comment-<%= rs.getInt("task_id") %>"
+								style="display: none;">
+								<p><%= rs.getString("comments") %></p>
+							</div>
+
+							<!-- 添付ファイルポップアップ用の中身 -->
+							<div id="file-<%= rs.getInt("task_id") %>" style="display: none;">
+								<p><%= rs.getString("files") %></p>
+							</div>
+
 						</div>
 
 						<%
@@ -217,9 +545,70 @@
 					}
 				</script>
 
+				<script>
+					function openModalFromElement(title, elementId) {
+						const source = document.getElementById(elementId);
+						const modalOverlay = document
+								.getElementById("modalOverlay");
+						const modalTitle = document
+								.getElementById("modalTitle");
+						const modalBody = document.getElementById("modalBody");
+
+						modalTitle.textContent = title;
+						modalBody.innerHTML = source.innerHTML;
+						modalOverlay.style.display = "flex";
+
+						closeAllTaskMenus();
+					}
+
+					function closeModal() {
+						document.getElementById("modalOverlay").style.display = "none";
+					}
+
+					function toggleTaskMenu(event, menuId) {
+						event.stopPropagation();
+
+						closeAllTaskMenus();
+
+						const menu = document.getElementById(menuId);
+						menu.style.display = "block";
+					}
+
+					function closeAllTaskMenus() {
+						const menus = document
+								.querySelectorAll(".menu-dropdown");
+
+						menus.forEach(function(menu) {
+							menu.style.display = "none";
+						});
+					}
+
+					window.addEventListener("click", function(event) {
+						closeAllTaskMenus();
+
+						const modalOverlay = document
+								.getElementById("modalOverlay");
+
+						if (event.target === modalOverlay) {
+							closeModal();
+						}
+					});
+				</script>
+
 			</footer>
 		</main>
 
+	</div>
+
+	<div class="modal-overlay" id="modalOverlay">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="modalTitle">タイトル</h2>
+				<button class="modal-close" onclick="closeModal()">×</button>
+			</div>
+
+			<div class="modal-body" id="modalBody"></div>
+		</div>
 	</div>
 
 
