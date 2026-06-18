@@ -95,6 +95,8 @@ function showNotification(message){
     }, 3000);
 }
 
+
+
 // テスト用
 showNotification("メンションされました");
 
