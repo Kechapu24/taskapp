@@ -79,12 +79,30 @@
 						}
 					}
 				</script>
+				<script>
 
+function showNotification(message){
+
+    const toast =
+        document.getElementById("toastNotification");
+
+    toast.innerText = message;
+
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000);
+}
+
+// テスト用
+showNotification("メンションされました");
+
+</script>
 			</footer>
 		</main>
 
 	</div>
-
-
+	<div id="toastNotification" class="toast">メンションされました</div>
 </body>
 </html>

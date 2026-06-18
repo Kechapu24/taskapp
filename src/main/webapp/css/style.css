@@ -931,5 +931,20 @@ body.font-large { font-size: 18px; }
     color: #777;
     font-size: 12px;
 }
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+
+    background-color: #3498db;
+    color: white;
+
+    padding: 15px;
+    border-radius: 8px;
+
+    display: none;
+
+    z-index: 9999;
+}
 
 >>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
