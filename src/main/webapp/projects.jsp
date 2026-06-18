@@ -10,16 +10,14 @@
 </head>
 <body>
 
-<<<<<<< HEAD
-=======
 	<div class="app-container">
 
 		<aside class="sidebar">
 			<div class="sidebar-brand">タスク管理</div>
 
 			<ul class="sidebar-menu">
-				<li class="menu-item active"><a href="index.jsp">ダッシュボード</a></li>
-				<li class="menu-item"><a href="projects.jsp">プロジェクト一覧</a></li>
+				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
+				<li class="menu-item active"><a href="projects.jsp">プロジェクト一覧</a></li>
 				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
 				<li class="menu-item"><a href="settings.jsp">設定</a></li>
 				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
@@ -30,7 +28,7 @@
 
 		<main class="main-content">
 			<header class="content-header">
-				<h1 class="page-title">ダッシュボード</h1>
+				<h1 class="page-title">プロジェクト一覧</h1>
 				<div class="main-search-box">
 					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
@@ -76,4 +74,3 @@
 
 </body>
 </html>
->>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git

@@ -10,19 +10,17 @@
 </head>
 <body>
 
-<<<<<<< HEAD
-=======
 	<div class="app-container">
 
 		<aside class="sidebar">
 			<div class="sidebar-brand">タスク管理</div>
 
 			<ul class="sidebar-menu">
-				<li class="menu-item active"><a href="index.jsp">ダッシュボード</a></li>
+				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
 				<li class="menu-item"><a href="projects.jsp">プロジェクト一覧</a></li>
 				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
 				<li class="menu-item"><a href="settings.jsp">設定</a></li>
-				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
+				<li class="menu-item active"><a href="mytasks.jsp">マイタスク</a></li>
 				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
 				<li class="menu-item"><a href="logs.jsp">ログ</a></li>
 			</ul>
@@ -30,7 +28,7 @@
 
 		<main class="main-content">
 			<header class="content-header">
-				<h1 class="page-title">ダッシュボード</h1>
+				<h1 class="page-title">マイタスク</h1>
 				<div class="main-search-box">
 					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
@@ -39,6 +37,30 @@
 
 			<div class="content-body">
 			
+			<div class="content-body">
+
+    <div class="task-card">
+        <h3>システム設計書作成</h3>
+        <p>期限：2026/06/20</p>
+        <p>優先度：高</p>
+        <p>状態：進行中</p>
+    </div>
+
+    <div class="task-card">
+        <h3>データベース設計</h3>
+        <p>期限：2026/06/25</p>
+        <p>優先度：中</p>
+        <p>状態：未着手</p>
+    </div>
+
+    <div class="task-card">
+        <h3>テスト仕様書作成</h3>
+        <p>期限：2026/06/30</p>
+        <p>優先度：低</p>
+        <p>状態：完了</p>
+    </div>
+
+</div>
 			
 			
 			</div>
@@ -76,4 +98,3 @@
 
 </body>
 </html>
->>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
