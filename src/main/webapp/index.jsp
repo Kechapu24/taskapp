@@ -10,8 +10,7 @@
 </head>
 <body>
 
-<<<<<<< HEAD
-=======
+
 	<div class="app-container">
 
 		<aside class="sidebar">
@@ -76,4 +75,3 @@
 
 </body>
 </html>
->>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
