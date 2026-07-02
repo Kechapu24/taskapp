@@ -147,16 +147,16 @@ try {
 				        long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
 
 				        if (daysLeft < 0) {
-				            deadlineClass = " overdue";
+				            deadlineClass = "overdue";
 				        } else if (daysLeft <= 1) {
-				            deadlineClass = " deadline-red";
+				            deadlineClass = "deadline-red";
 				        } else if (daysLeft <= 3) {
-				            deadlineClass = " deadline-yellow";
+				            deadlineClass = "deadline-yellow";
 				        }
 				    }
 				%>
 
-						<div class="task-card<%= deadlineClass %>">
+						<div class="task-card <%= deadlineClass %>">
 
 							<div class="task-card-header">
 								<h3><%= rs.getString("task_name") %></h3>
@@ -327,16 +327,16 @@ try {
 				        long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
 
 				        if (daysLeft < 0) {
-				            deadlineClass = " overdue";
+				            deadlineClass = "overdue";
 				        } else if (daysLeft <= 1) {
-				            deadlineClass = " deadline-red";
+				            deadlineClass = "deadline-red";
 				        } else if (daysLeft <= 3) {
-				            deadlineClass = " deadline-yellow";
+				            deadlineClass = "deadline-yellow";
 				        }
 				    }
 				%>
 
-						<div class="task-card<%= deadlineClass %>">
+						<div class="task-card <%= deadlineClass %>">
 
 							<div class="task-card-header">
 								<h3><%= rs.getString("task_name") %></h3>
@@ -510,16 +510,16 @@ try {
 				        long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
 
 				        if (daysLeft < 0) {
-				            deadlineClass = " overdue";
+				            deadlineClass = "overdue";
 				        } else if (daysLeft <= 1) {
-				            deadlineClass = " deadline-red";
+				            deadlineClass = "deadline-red";
 				        } else if (daysLeft <= 3) {
-				            deadlineClass = " deadline-yellow";
+				            deadlineClass = "deadline-yellow";
 				        }
 				    }
 				%>
 
-						<div class="task-card<%= deadlineClass %>">
+						<div class="task-card <%= deadlineClass %>">
 
 							<div class="task-card-header">
 								<h3><%= rs.getString("task_name") %></h3>
