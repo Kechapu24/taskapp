@@ -117,13 +117,16 @@ try {
 				           + "p.project_name, "
 				           + "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
 				           + "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
-				           + "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files "
+				           + "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
+				           + "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags "
 				           + "FROM task t "
 				           + "JOIN project p ON t.project_id = p.project_id "
 				           + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 				           + "LEFT JOIN users u ON ta.user_id = u.user_id "
 				           + "LEFT JOIN comment c ON t.task_id = c.task_id "
 				           + "LEFT JOIN attachment a ON t.task_id = a.task_id "
+				           + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
+				           + "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id "
 				           + "WHERE t.status = '未着手' "
 				           + "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
 				           + "ORDER BY t.due_date";
@@ -192,39 +195,52 @@ try {
 							<!-- 詳細ポップアップ用の中身 -->
 							<div id="detail-<%= rs.getInt("task_id") %>"
 								style="display: none;">
-								<p>
-									<strong>タスク名：</strong><%= rs.getString("task_name") %></p>
-								<p>
-									<strong>プロジェクト：</strong><%= rs.getString("project_name") %></p>
-								<p>
-									<strong>担当者：</strong><%= rs.getString("assignees") %></p>
-								<p>
-									<strong>状態：</strong><%= rs.getString("status") %></p>
-								<p>
-									<strong>優先度：</strong><%= rs.getString("priority") %></p>
-								<p>
-									<strong>期限：</strong><%= rs.getDate("due_date") %></p>
+								<p><strong>タスク名：</strong><%= rs.getString("task_name") %></p>
+								<p><strong>プロジェクト：</strong><%= rs.getString("project_name") %></p>
+								<p><strong>説明：</strong><%= rs.getString("description") %></p>
+								<p><strong>担当者：</strong><%= rs.getString("assignees") %></p>
+								<p><strong>タグ：</strong><%= rs.getString("tags") %></p>
+								<p><strong>状態：</strong><%= rs.getString("status") %></p>
+								<p><strong>優先度：</strong><%= rs.getString("priority") %></p>
+								<p><strong>開始日：</strong><%= rs.getDate("start_date") %></p>
+								<p><strong>期限：</strong><%= rs.getDate("due_date") %></p>
 							</div>
 
 							<!-- 編集ポップアップ用の中身 -->
 							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
-								<form class="edit-form">
-									<label>タスク名</label> <input type="text"
-										value="<%= rs.getString("task_name") %>"> <label>状態</label>
-									<select>
-										<option>未着手</option>
-										<option>進行中</option>
-										<option>完了</option>
-									</select> <label>優先度</label> <select>
-										<option>低</option>
-										<option>中</option>
-										<option>高</option>
-									</select> <label>期限</label> <input type="date"
-										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
-									<textarea><%= rs.getString("description") %></textarea>
+								<form class="edit-form" action="taskUpdate.jsp" method="post">
 
-									<p style="margin-top: 15px; color: #777;">
-										※今は表示のみ。更新処理は後で追加します。</p>
+									<input type="hidden" name="task_id"
+										value="<%= rs.getInt("task_id") %>"> <label>タスク名</label>
+									<input type="text" name="task_name"
+										value="<%= rs.getString("task_name") %>" required> <label>状態</label>
+									<select name="status">
+										<option value="未着手"
+											<%= "未着手".equals(rs.getString("status")) ? "selected" : "" %>>未着手</option>
+										<option value="進行中"
+											<%= "進行中".equals(rs.getString("status")) ? "selected" : "" %>>進行中</option>
+										<option value="完了"
+											<%= "完了".equals(rs.getString("status")) ? "selected" : "" %>>完了</option>
+									</select> <label>優先度</label> <select name="priority">
+										<option value="低"
+											<%= "低".equals(rs.getString("priority")) ? "selected" : "" %>>低</option>
+										<option value="中"
+											<%= "中".equals(rs.getString("priority")) ? "selected" : "" %>>中</option>
+										<option value="高"
+											<%= "高".equals(rs.getString("priority")) ? "selected" : "" %>>高</option>
+									</select> <label>期限</label> <input type="date" name="due_date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea name="description"><%= rs.getString("description") == null ? "" : rs.getString("description") %></textarea>
+
+									<label>担当者</label> <select name="user_id">
+										<option value="1">伊藤</option>
+										<option value="2">高橋</option>
+										<option value="3">中村</option>
+										<option value="4">小林</option>
+										<option value="5">加藤</option>
+									</select>
+
+									<button type="submit" class="modal-submit-btn">保存</button>
 								</form>
 							</div>
 
@@ -375,23 +391,39 @@ try {
 
 							<!-- 編集ポップアップ用の中身 -->
 							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
-								<form class="edit-form">
-									<label>タスク名</label> <input type="text"
-										value="<%= rs.getString("task_name") %>"> <label>状態</label>
-									<select>
-										<option>未着手</option>
-										<option>進行中</option>
-										<option>完了</option>
-									</select> <label>優先度</label> <select>
-										<option>低</option>
-										<option>中</option>
-										<option>高</option>
-									</select> <label>期限</label> <input type="date"
-										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
-									<textarea><%= rs.getString("description") %></textarea>
+								<form class="edit-form" action="taskUpdate.jsp" method="post">
 
-									<p style="margin-top: 15px; color: #777;">
-										※今は表示のみ。更新処理は後で追加します。</p>
+									<input type="hidden" name="task_id"
+										value="<%= rs.getInt("task_id") %>"> <label>タスク名</label>
+									<input type="text" name="task_name"
+										value="<%= rs.getString("task_name") %>" required> <label>状態</label>
+									<select name="status">
+										<option value="未着手"
+											<%= "未着手".equals(rs.getString("status")) ? "selected" : "" %>>未着手</option>
+										<option value="進行中"
+											<%= "進行中".equals(rs.getString("status")) ? "selected" : "" %>>進行中</option>
+										<option value="完了"
+											<%= "完了".equals(rs.getString("status")) ? "selected" : "" %>>完了</option>
+									</select> <label>優先度</label> <select name="priority">
+										<option value="低"
+											<%= "低".equals(rs.getString("priority")) ? "selected" : "" %>>低</option>
+										<option value="中"
+											<%= "中".equals(rs.getString("priority")) ? "selected" : "" %>>中</option>
+										<option value="高"
+											<%= "高".equals(rs.getString("priority")) ? "selected" : "" %>>高</option>
+									</select> <label>期限</label> <input type="date" name="due_date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea name="description"><%= rs.getString("description") == null ? "" : rs.getString("description") %></textarea>
+
+									<label>担当者</label> <select name="user_id">
+										<option value="1">伊藤</option>
+										<option value="2">高橋</option>
+										<option value="3">中村</option>
+										<option value="4">小林</option>
+										<option value="5">加藤</option>
+									</select>
+
+									<button type="submit" class="modal-submit-btn">保存</button>
 								</form>
 							</div>
 
@@ -542,23 +574,39 @@ try {
 
 							<!-- 編集ポップアップ用の中身 -->
 							<div id="edit-<%= rs.getInt("task_id") %>" style="display: none;">
-								<form class="edit-form">
-									<label>タスク名</label> <input type="text"
-										value="<%= rs.getString("task_name") %>"> <label>状態</label>
-									<select>
-										<option>未着手</option>
-										<option>進行中</option>
-										<option>完了</option>
-									</select> <label>優先度</label> <select>
-										<option>低</option>
-										<option>中</option>
-										<option>高</option>
-									</select> <label>期限</label> <input type="date"
-										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
-									<textarea><%= rs.getString("description") %></textarea>
+								<form class="edit-form" action="taskUpdate.jsp" method="post">
 
-									<p style="margin-top: 15px; color: #777;">
-										※今は表示のみ。更新処理は後で追加します。</p>
+									<input type="hidden" name="task_id"
+										value="<%= rs.getInt("task_id") %>"> <label>タスク名</label>
+									<input type="text" name="task_name"
+										value="<%= rs.getString("task_name") %>" required> <label>状態</label>
+									<select name="status">
+										<option value="未着手"
+											<%= "未着手".equals(rs.getString("status")) ? "selected" : "" %>>未着手</option>
+										<option value="進行中"
+											<%= "進行中".equals(rs.getString("status")) ? "selected" : "" %>>進行中</option>
+										<option value="完了"
+											<%= "完了".equals(rs.getString("status")) ? "selected" : "" %>>完了</option>
+									</select> <label>優先度</label> <select name="priority">
+										<option value="低"
+											<%= "低".equals(rs.getString("priority")) ? "selected" : "" %>>低</option>
+										<option value="中"
+											<%= "中".equals(rs.getString("priority")) ? "selected" : "" %>>中</option>
+										<option value="高"
+											<%= "高".equals(rs.getString("priority")) ? "selected" : "" %>>高</option>
+									</select> <label>期限</label> <input type="date" name="due_date"
+										value="<%= rs.getDate("due_date") %>"> <label>説明</label>
+									<textarea name="description"><%= rs.getString("description") == null ? "" : rs.getString("description") %></textarea>
+
+									<label>担当者</label> <select name="user_id">
+										<option value="1">伊藤</option>
+										<option value="2">高橋</option>
+										<option value="3">中村</option>
+										<option value="4">小林</option>
+										<option value="5">加藤</option>
+									</select>
+
+									<button type="submit" class="modal-submit-btn">保存</button>
 								</form>
 							</div>
 
