@@ -118,7 +118,11 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			pstmt.setString(2, "");
 			pstmt.executeUpdate();
 			pstmt.close(); conn.close();
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) { 
+		    out.println("<div style='color:red; border:1px solid red; padding:10px;'>");
+		    out.println("【DBエラー発生】: " + e.getMessage());
+		    out.println("</div>");
+		}
 		
 		response.sendRedirect("projects.jsp");
 		return;
