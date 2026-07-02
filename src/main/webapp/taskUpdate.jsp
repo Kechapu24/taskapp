@@ -10,6 +10,7 @@ String taskName = request.getParameter("task_name");
 String description = request.getParameter("description");
 String status = request.getParameter("status");
 String priority = request.getParameter("priority");
+String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
 String userIdStr = request.getParameter("user_id");
 
@@ -33,6 +34,7 @@ try {
                    + "description = ?, "
                    + "status = ?, "
                    + "priority = ?, "
+                   + "start_date = ?, "
                    + "due_date = ? "
                    + "WHERE task_id = ?";
 
@@ -42,14 +44,20 @@ try {
     taskStmt.setString(2, description);
     taskStmt.setString(3, status);
     taskStmt.setString(4, priority);
-
-    if (dueDate == null || dueDate.isEmpty()) {
+    
+    if (startDate == null || startDate.isEmpty()) {
         taskStmt.setNull(5, java.sql.Types.DATE);
     } else {
-        taskStmt.setDate(5, java.sql.Date.valueOf(dueDate));
+        taskStmt.setDate(5, java.sql.Date.valueOf(startDate));
     }
 
-    taskStmt.setInt(6, Integer.parseInt(taskIdStr));
+    if (dueDate == null || dueDate.isEmpty()) {
+        taskStmt.setNull(6, java.sql.Types.DATE);
+    } else {
+        taskStmt.setDate(6, java.sql.Date.valueOf(dueDate));
+    }
+
+    taskStmt.setInt(7, Integer.parseInt(taskIdStr));
 
     taskStmt.executeUpdate();
 
