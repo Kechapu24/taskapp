@@ -27,15 +27,6 @@ if (action != null) {
 			pstmt.setInt(1, Integer.parseInt(pId));
 			ResultSet rs = pstmt.executeQuery();
 			
-			// --- デバッグ用コード（タグを削除し、変数名を conn に修正） ---
-			Statement stmtTest = conn.createStatement(); // connSelect → conn に修正
-			ResultSet rsTest = stmtTest.executeQuery("SELECT count(*) FROM project");
-			if(rsTest.next()) {
-			    out.println("<p style='background: yellow;'>DB内のプロジェクト総数: " + rsTest.getInt(1) + "</p>");
-			}
-			stmtTest.close();
-			// ----------------------------------------------------
-			
 			// 取得したタスクをHTML（<li>タグ）にして画面に返す
 			while (rs.next()) {
 				int taskId = rs.getInt("task_id");
@@ -127,11 +118,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			pstmt.setString(2, "");
 			pstmt.executeUpdate();
 			pstmt.close(); conn.close();
-		} catch (Exception e) { 
-		    out.println("<div style='color:red; border:1px solid red; padding:10px;'>");
-		    out.println("【DBエラー発生】: " + e.getMessage());
-		    out.println("</div>");
-		}
+		} catch (Exception e) { e.printStackTrace(); }
 		
 		response.sendRedirect("projects.jsp");
 		return;
