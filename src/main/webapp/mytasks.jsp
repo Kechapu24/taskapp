@@ -37,6 +37,30 @@
 
 			<div class="content-body">
 			
+			<div class="content-body">
+
+    <div class="task-card">
+        <h3>システム設計書作成</h3>
+        <p>期限：2026/06/20</p>
+        <p>優先度：高</p>
+        <p>状態：進行中</p>
+    </div>
+
+    <div class="task-card">
+        <h3>データベース設計</h3>
+        <p>期限：2026/06/25</p>
+        <p>優先度：中</p>
+        <p>状態：未着手</p>
+    </div>
+
+    <div class="task-card">
+        <h3>テスト仕様書作成</h3>
+        <p>期限：2026/06/30</p>
+        <p>優先度：低</p>
+        <p>状態：完了</p>
+    </div>
+
+</div>
 			
 			
 			</div>

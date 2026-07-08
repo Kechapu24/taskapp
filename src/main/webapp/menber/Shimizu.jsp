@@ -55,6 +55,8 @@
         padding: 20px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         border-top: 5px solid #007bff;
+        display: flex;
+        flex-direction: column; /* メモ欄のボタン配置用 */
     }
 
     .card h3 {
@@ -71,6 +73,59 @@
     li {
         margin-bottom: 8px;
     }
+
+    /* 進捗バーの背景（薄いグレー部分 ＋ 濃い枠線を追加） */
+    .progress-container {
+        width: 100%;
+        background-color: #e9ecef;
+        border: 1px solid #888888; /* ここで枠線を濃くしました */
+        border-radius: 10px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+
+    /* 進捗バーの青い部分（現在30%） */
+    .progress-bar {
+        width: 30%;
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 4px 0;
+    }
+
+    /* 新しく追加したメモ用テキストエリア */
+    .memo-textarea {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        resize: none; /* サイズを固定 */
+        font-family: inherit;
+        box-sizing: border-box; /* はみ出し防止 */
+        margin-bottom: 15px; /* ボタンとの間に余白 */
+    }
+
+    /* 戻るボタンのデザイン */
+    .back-btn {
+        margin-top: auto;
+        align-self: flex-start;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .back-btn:hover {
+        background-color: #5a6268;
+    }
+
 </style>
 
 </head>
@@ -88,29 +143,33 @@
         <div class="card">
             <h3>📈 現在の進捗</h3>
             <ul>
-                <li><strong>外枠（HTML/CSS）：</strong> 他のメンバーが制作中！</li>
-                <li><strong>中身：</strong> すかすか</li>
+                <li><strong>外枠：</strong> B班全員で作成中！</li>
+                <li><strong>現在の全体進捗：</strong>
+                    <div class="progress-container">
+                        <div class="progress-bar">30%</div>
+                    </div>
+                </li>
             </ul>
         </div>
 
         <div class="card">
             <h3>🛠️ 今していること</h3>
-            <p>待ち！</p>
-            <p>暇つぶしを兼ねて実験中！</p>
+            <p>ページのレイアウト作成</p>
         </div>
 
         <div class="card">
             <h3>🎯 今週の目標</h3>
             <ul>
-                <li><input type="checkbox" checked disabled> 自分のプロフィールの文字を書き換える</li>
-                <li><input type="checkbox"> メンバーのHTMLとCSSが完成</li>
+                <li><input type="checkbox"> 自分で選んだタスクを終わらせる</li>
+                <li><input type="checkbox"> ページ作りをしながら理解を深める</li>
             </ul>
         </div>
 
         <div class="card">
-            <h3>📝 予定地（メモ用）</h3>
-            <p>ここは後から何かを書き足すための空きスペースです！</p>
-            <p>今後のアイデアやメモ、メモ帳での検証用に使ってください。</p>
+            <h3>📝 メモ</h3>
+            <textarea class="memo-textarea" placeholder="ここにアイデアや気付きをメモできます..."></textarea>
+            
+            <button class="back-btn" onclick="history.back()">◀ 前のページに戻る</button>
         </div>
 
     </div>

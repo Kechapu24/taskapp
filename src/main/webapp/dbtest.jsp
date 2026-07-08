@@ -21,8 +21,9 @@
         <th>期限</th>
     </tr>
 
+
 <%
-String url = "jdbc:postgresql://localhost:5432/taskapp";
+String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
 String user = "taskuser";
 String password = "taskpass";
 

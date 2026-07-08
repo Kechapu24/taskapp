@@ -133,6 +133,7 @@
     padding: 5px 10px;
 }
 
+
 /* タスクボード */
 .task-board {
     display: flex;
@@ -148,6 +149,66 @@
     padding: 15px;
 }
 
+/* タスクコラムヘッダー */
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.column-header h2 {
+    margin-bottom: 0;
+}
+
+.add-task-btn-small {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 28px;
+}
+
+.add-task-btn-small:hover {
+    background-color: #2980b9;
+}
+
+/* コラム上部の細い色バー */
+.task-column {
+    position: relative;
+    overflow: hidden;
+}
+
+.task-column::before {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* 未着手：青 */
+.status-todo::before {
+    background-color: #3498db;
+}
+
+/* 進行中：黄色 */
+.status-doing::before {
+    background-color: #f1c40f;
+}
+
+/* 完了：緑色 */
+.status-done::before {
+    background-color: #2ecc71;
+}
+
 /* タスクカード */
 .task-column h2 {
     margin-bottom: 15px;
@@ -160,6 +221,7 @@
     padding: 15px;
     margin-bottom: 15px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    border: 3px solid transparent;
 }
 
 .task-card h3 {
@@ -186,6 +248,160 @@
 .priority.high {
     background: #e74c3c;
 }
+
+/* タスクカードの枠線 */
+.task-card.deadline-yellow {
+    border: 3px solid #f1c40f;
+}
+
+.task-card.deadline-red {
+    border: 3px solid #e74c3c;
+}
+
+.task-card.overdue {
+    border: 3px solid #111;
+}
+
+/* タスクカード上部 */
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.icon-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #34495e;
+}
+
+.icon-button:hover {
+    color: #1abc9c;
+}
+
+/* 三点リーダーメニュー */
+.task-menu {
+    position: relative;
+}
+
+.menu-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 22px;
+    padding: 4px 8px;
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 28px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    min-width: 90px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 20;
+}
+
+.menu-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menu-dropdown button:hover {
+    background: #f0f0f0;
+}
+
+/* 画面全体を暗くする背景 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ポップアップ本体 画面の60% */
+.modal-content {
+    width: 60%;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.modal-close {
+    border: none;
+    background: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-body p {
+    margin-bottom: 10px;
+}
+
+.edit-form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+.edit-form input,
+.edit-form textarea,
+.edit-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.edit-form textarea {
+    height: 100px;
+}
+
+/* タスク追加のボタン */
+.modal-submit-btn {
+    margin-top: 18px;
+    padding: 10px 16px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal-submit-btn:hover {
+    background: #2980b9;
+}
+
 /* ==========================================
    Shimizu担当：プロジェクト一覧
    ========================================== */
@@ -435,7 +651,381 @@
     height: 18px;
     cursor: pointer;
 }
+/* :ここからsettingjspのcssです */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+/* ヘッダー */
+.content-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.page-title {
+    margin-right: auto;
+    font-size: 28px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-input {
+    padding: 8px 12px;
+    width: 220px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.account-button {
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.account-button:hover {
+    background: #2980b9;
+}
+
+/* レイアウト全体（サイドバー＋メイン） */
+.app-container {
+    display: flex;
+    height: calc(100vh); /* main-header の高さ */
+}
+
+/* サイドバー */
+.sidebar {
+    width: 220px;
+    background-color: #34495e;
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-menu .menu-item a {
+    display: block;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+}
+
+.sidebar-menu .menu-item.active a,
+.sidebar-menu .menu-item a:hover {
+    background-color: #2c3e50;
+}
+
+/* メインコンテンツ */
+.main-content {
+    flex: 1;
+    background-color: #ecf0f1;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* フッター */
+.footer {
+    height: 40px;
+    background: #34495e;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    position: relative;
+}
+
+.footer-member a {
+    color: #1abc9c;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.member-submenu {
+    display: none;
+    position: absolute;
+    bottom: 40px;
+    left: 20px;
+    background: #34495e;
+    padding: 10px;
+    list-style: none;
+    border-radius: 5px;
+}
+
+.member-submenu li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 5px 10px;
+}
+/* =========================================
+   設定画面 (settings.jsp) 専用のスタイル
+   ========================================= */
+
+/* デフォルトのテーマカラー変数 */
+:root {
+    --theme-color: #007bff;
+}
+
+.settings-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    height: 100%;
+    align-items: flex-start;
+}
+
+/* 左側：設定メニュー */
+.settings-sidebar {
+    width: 200px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+}
+.settings-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.settings-item {
+    margin-bottom: 5px;
+}
+.settings-item a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+.settings-item a:hover {
+    background: #e9ecef;
+}
+/* アクティブなタブの色は変数で管理 */
+.settings-item.active a {
+    background: var(--theme-color);
+    color: white;
+}
+
+/* 右側：設定パネル */
+.settings-panel {
+    flex: 1;
+    background: white;
+    padding: 30px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.setting-section {
+    display: none;
+}
+.setting-section.active {
+    display: block;
+}
+
+.setting-group {
+    margin-bottom: 30px;
+}
+.setting-group h3 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* 横並びのオプション（外観用） */
+.setting-options {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* 縦並びのオプション（フォントサイズ用） */
+.setting-options-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ラジオボタンのデザイン */
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 1em;
+}
+.radio-label input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--theme-color);
+}
+
+/* フォーム関連のスタイル追加 */
+.setting-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+.setting-input[readonly] {
+    background: #f1f1f1;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.setting-btn {
+    padding: 8px 16px;
+    background: var(--theme-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: 0.2s;
+}
+.setting-btn:hover {
+    opacity: 0.8;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #e3f2fd;
+    color: #0d47a1;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+/* チェックボックスのリスト */
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-left: 10px;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 1em;
+}
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--theme-color);
+}
+.main-checkbox {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* =========================================
+   ダークモード用のスタイル
+   ========================================= */
+body.dark-theme .main-content,
+body.dark-theme .settings-panel {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+body.dark-theme .settings-sidebar {
+    background: #222;
+    border-color: #444;
+}
+body.dark-theme .settings-item a {
+    color: #ddd;
+}
+body.dark-theme .setting-group h3 {
+    border-color: #555;
+}
+body.dark-theme .setting-input {
+    background: #444;
+    color: #fff;
+    border-color: #666;
+}
+body.dark-theme .setting-input[readonly] {
+    background: #2a2a2a;
+}
+body.dark-theme .role-badge {
+    background: #0d47a1;
+    color: #e3f2fd;
+}
+
+/* =========================================
+   カスタムテーマ用のスタイル
+   ========================================= */
+body.custom-theme .main-content,
+body.custom-theme .settings-panel {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+
+body.custom-theme .content-header {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+body.custom-theme .settings-sidebar {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+    border-color: rgba(128, 128, 128, 0.3);
+}
+
+body.custom-theme .settings-item a {
+    color: var(--custom-text-color);
+}
+
+body.custom-theme .setting-input {
+    background-color: transparent;
+    color: var(--custom-text-color);
+    border: 1px solid rgba(128, 128, 128, 0.5);
+}
+
+body.custom-theme .setting-group h3 {
+    border-color: rgba(128, 128, 128, 0.2);
+}
+
+/* =========================================
+   フォントサイズ変更用のスタイル
+   ========================================= */
+body.font-small { font-size: 14px; }
+body.font-large { font-size: 18px; }
 .task-content-text {
     margin-left: 12px;
 }
@@ -495,4 +1085,58 @@
 .dropdown-delete-item:hover {
     background-color: #fff5f5;
 }
+/* 通知 */
+
+.notification-item {
+    display: flex;
+    background: white;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.notification-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 15px;
+    margin-top: 5px;
+}
+
+.unread .notification-dot {
+    background-color: red;
+}
+
+.read .notification-dot {
+    background-color: gray;
+}
+
+.notification-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.notification-date {
+    margin-top: 10px;
+    color: #777;
+    font-size: 12px;
+}
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+
+    background-color: #3498db;
+    color: white;
+
+    padding: 15px;
+    border-radius: 8px;
+
+    display: none;
+
+    z-index: 9999;
+}
+
 

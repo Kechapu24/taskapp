@@ -129,7 +129,7 @@
                         
                         <div class="setting-group">
                             <label class="checkbox-label main-checkbox">
-                                <input type="checkbox" id="allowAllNotifications" checked> 通知許可 (すべての大元)
+                                <input type="checkbox" id="allowAllNotifications" checked> 通知許可
                             </label>
                             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
                             

@@ -1,5 +1,131 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+
+<%
+// 文字化け防止
+request.setCharacterEncoding("UTF-8");
+
+// ==========================================
+// 【新機能】タスクの裏側処理 (JavaScriptから非同期で呼ばれるAPI)
+// ==========================================
+String action = request.getParameter("action");
+if (action != null) {
+	String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+	String user = "bhan";
+	String password = "2025";
+	
+	try {
+		Class.forName("org.postgresql.Driver");
+		Connection conn = DriverManager.getConnection(url, user, password);
+		
+		// ① タスク一覧の取得
+		if ("getTasks".equals(action)) {
+			String pId = request.getParameter("projectId");
+			// status と due_date を取得するように変更
+			String sql = "SELECT task_id, task_name, status, TO_CHAR(due_date, 'MM/DD') as fmt_date FROM task WHERE project_id = ? ORDER BY task_id ASC";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, Integer.parseInt(pId));
+			ResultSet rs = pstmt.executeQuery();
+			
+			// 取得したタスクをHTML（<li>タグ）にして画面に返す
+			while (rs.next()) {
+				int taskId = rs.getInt("task_id");
+				String taskName = rs.getString("task_name");
+				String status = rs.getString("status");
+				String dateStr = rs.getString("fmt_date");
+				
+				// 期限が未設定(NULL)の場合の対応
+				if (dateStr == null) {
+					dateStr = "未設定";
+				}
+				
+				// DBのstatusが「完了」だったらチェック状態にする
+				boolean isChecked = "完了".equals(status);
+				
+				out.print("<li class='task-li'>");
+				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + "> ");
+				out.print("<div class='task-content-text'>");
+				out.print("<span>" + taskName + "</span>");
+				out.print("<span class='task-date'>期限: " + dateStr + "</span>");
+				out.print("</div>");
+				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
+				out.print("<div class='task-dropdown-menu'>");
+				out.print("<button class='dropdown-delete-item' onclick='deleteTask(" + taskId + ", \"" + pId + "\")'>削除</button>");
+				out.print("</div>");
+				out.print("</li>");
+			}
+			rs.close(); pstmt.close();
+		} 
+		// ② タスクの追加
+		else if ("addTask".equals(action)) {
+			String pId = request.getParameter("projectId");
+			String tName = request.getParameter("taskName");
+			// 新規追加時は '未着手' として登録
+			String sql = "INSERT INTO task (project_id, task_name, status) VALUES (?, ?, '未着手')";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, Integer.parseInt(pId));
+			pstmt.setString(2, tName);
+			pstmt.executeUpdate();
+			pstmt.close();
+		} 
+		// ③ タスクのチェック状態更新（statusの変更）
+		else if ("toggleTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			boolean isChecked = Boolean.parseBoolean(request.getParameter("isChecked"));
+			// チェックされたら「完了」、外されたら「未着手」にする
+			String newStatus = isChecked ? "完了" : "未着手";
+			
+			String sql = "UPDATE task SET status = ? WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newStatus);
+			pstmt.setInt(2, Integer.parseInt(tId));
+			pstmt.executeUpdate();
+			pstmt.close();
+		} 
+		// ④ タスクの削除
+		else if ("deleteTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			String sql = "DELETE FROM task WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, Integer.parseInt(tId));
+			pstmt.executeUpdate();
+			pstmt.close();
+		}
+		conn.close();
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	// タスクAPI処理が終わったら、ページ全体のHTMLを出力せずにここで終了する
+	return; 
+}
+
+// ==========================================
+// プロジェクトの追加（DBへのINSERT）処理
+// ==========================================
+if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newProjectName") != null) {
+	String newProjectName = request.getParameter("newProjectName");
+	if (!newProjectName.trim().isEmpty()) {
+		String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+		String user = "bhan";
+		String password = "2025";
+		
+		try {
+			Class.forName("org.postgresql.Driver");
+			Connection conn = DriverManager.getConnection(url, user, password);
+			String sql = "INSERT INTO project (project_name, description) VALUES (?, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newProjectName);
+			pstmt.setString(2, "");
+			pstmt.executeUpdate();
+			pstmt.close(); conn.close();
+		} catch (Exception e) { e.printStackTrace(); }
+		
+		response.sendRedirect("projects.jsp");
+		return;
+	}
+}
+%>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -8,16 +134,12 @@
 <title>タスク管理アプリ - プロジェクト一覧</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
-	/* エクリプス上の絶対配置の基準点にするため、ここだけ残します */
-	.main-content {
-		position: relative;
-	}
+	.main-content { position: relative; }
 </style>
 </head>
 <body>
 
 	<div class="app-container">
-
 		<aside class="sidebar">
 			<div class="sidebar-brand">タスク管理</div>
 			<ul class="sidebar-menu">
@@ -32,13 +154,11 @@
 		</aside>
 
 		<main class="main-content">
-			
 			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
 				<div class="title-with-btn">
 					<h1 class="page-title" style="margin: 0;">プロジェクト一覧</h1>
 					<button class="add-project-btn" onclick="addProject()" title="プロジェクトを追加">＋</button>
 				</div>
-				
 				<div style="display: flex; align-items: center; gap: 15px;">
 					<div class="main-search-box" style="margin: 0;">
 						<input type="text" class="search-input" placeholder="タスクを検索...">
@@ -48,7 +168,65 @@
 			</header>
 
 			<div class="content-body">
-				<div class="project-list" id="projectList"></div>
+				<div class="project-list" id="projectList">
+					<%
+					// ==========================================
+					// DBからプロジェクト一覧 ＋ 各プロジェクトのタスク進捗を取得
+					// ==========================================
+					String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+					String dbUser = "bhan";
+					String dbPassword = "2025";
+					
+					try {
+						Class.forName("org.postgresql.Driver");
+						Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
+						
+						// 【修正】is_checkedではなく、status = '完了' の数をカウントする
+						String sqlSelect = 
+							"SELECT p.project_id, p.project_name, " +
+							"COUNT(t.task_id) AS total_tasks, " +
+							"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
+							"FROM project p " +
+							"LEFT JOIN task t ON p.project_id = t.project_id " +
+							"GROUP BY p.project_id, p.project_name " +
+							"ORDER BY p.project_id DESC";
+							
+						Statement stmtSelect = connSelect.createStatement();
+						ResultSet rs = stmtSelect.executeQuery(sqlSelect);
+
+						while(rs.next()) {
+							int dbProjectId = rs.getInt("project_id");
+							String projectName = rs.getString("project_name");
+							int totalTasks = rs.getInt("total_tasks");
+							int checkedTasks = rs.getInt("checked_tasks");
+							
+							// 進捗（パーセンテージ）を計算
+							int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
+							String domId = "db_proj_" + dbProjectId;
+					%>
+							<div class="project-card" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>">
+								<div class="project-info-block">
+									<div>
+										<span class="project-title"><%= projectName %></span>
+										<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
+									</div>
+									<div class="progress-container">
+										<div class="progress-bar-bg">
+											<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
+											<div class="progress-text-inside" id="text_<%= domId %>"><%= percent %>%</div>
+										</div>
+									</div>
+								</div>
+								<button class="open-box-btn" onclick="showPanel('<%= projectName %>', '<%= domId %>', '<%= dbProjectId %>')">＋</button>
+							</div>
+					<%
+						}
+						rs.close(); stmtSelect.close(); connSelect.close();
+					} catch (Exception e) {
+						out.println("<p style='color:red; font-weight:bold;'>DBエラー：" + e.getMessage() + "</p>");
+					}
+					%>
+				</div>
 			</div>
 			
 			<div class="task-panel-overlay" id="taskOverlay">
@@ -66,96 +244,100 @@
 			
 			<script>
 				let currentProjectCard = null;
+				let currentRawProjectId = null;
 
-				// プロジェクトを追加する
 				function addProject() {
 					const projectName = prompt("新しいプロジェクト名を入力してください：");
 					if (projectName && projectName.trim() !== "") {
-						const projectList = document.getElementById("projectList");
-						const newCard = document.createElement("div");
-						newCard.className = "project-card";
-						
-						const projectId = "proj_" + Date.now();
-						newCard.setAttribute("data-id", projectId);
-						
-						newCard.innerHTML = 
-							'<div class="project-info-block">' +
-								'<div>' +
-									'<span class="project-title">' + projectName + '</span>' +
-									'<span class="project-percent-badge" id="badge_' + projectId + '">0%</span>' +
-								'</div>' +
-								'<div class="progress-container">' +
-									'<div class="progress-bar-bg">' +
-										'<div class="progress-bar-fill" id="fill_' + projectId + '"></div>' +
-										'<div class="progress-text-inside" id="text_' + projectId + '">0%</div>' +
-									'</div>' +
-								'</div>' +
-							'</div>' +
-							'<button class="open-box-btn" onclick="showPanel(\'' + projectName + '\', \'' + projectId + '\')">＋</button>';
-						
-						projectList.appendChild(newCard);
+						const form = document.createElement("form");
+						form.method = "POST";
+						form.action = "projects.jsp";
+						const input = document.createElement("input");
+						input.type = "hidden";
+						input.name = "newProjectName";
+						input.value = projectName;
+						form.appendChild(input);
+						document.body.appendChild(form);
+						form.submit();
 					}
 				}
 
-				// 下からタスクパネルを出す
-				function showPanel(projectName, projectId) {
-					currentProjectCard = document.querySelector('[data-id="' + projectId + '"]');
+				function showPanel(projectName, domId, rawProjectId) {
+					currentProjectCard = document.querySelector('[data-id="' + domId + '"]');
+					currentRawProjectId = rawProjectId;
+					
 					document.getElementById("panelProjectTitle").innerText = projectName;
-					
-					const taskUl = document.getElementById("taskUl");
-					taskUl.innerHTML = '';
-					
+					document.getElementById("taskUl").innerHTML = '<li>読み込み中...</li>';
 					document.getElementById("taskOverlay").classList.add("show");
-					calculateProgress(projectId); 
+					
+					loadTasksFromDB();
 				}
 
-				// パネルを引っ込める
+				function loadTasksFromDB() {
+					fetch('projects.jsp?action=getTasks&projectId=' + currentRawProjectId)
+						.then(response => response.text())
+						.then(html => {
+							document.getElementById("taskUl").innerHTML = html;
+							calculateProgressLocal();
+						});
+				}
+
 				function hidePanel() {
 					document.getElementById("taskOverlay").classList.remove("show");
 				}
 
-				// タスクを追加する
 				function addNewTask() {
 					const taskText = prompt("新しいタスク内容を入力してください：");
 					if (taskText && taskText.trim() !== "") {
-						const projectId = currentProjectCard.getAttribute("data-id");
-						const taskUl = document.getElementById("taskUl");
-						const newLi = document.createElement("li");
-						newLi.className = "task-li";
+						const params = new URLSearchParams();
+						params.append('action', 'addTask');
+						params.append('projectId', currentRawProjectId);
+						params.append('taskName', taskText);
 						
-						const now = new Date();
-						const month = String(now.getMonth() + 1).padStart(2, '0');
-						const date = String(now.getDate()).padStart(2, '0');
-						const hours = String(now.getHours()).padStart(2, '0');
-						const minutes = String(now.getMinutes()).padStart(2, '0');
-						const formattedDate = month + '/' + date + ' ' + hours + ':' + minutes;
-						
-						newLi.innerHTML = 
-							'<input type="checkbox" class="task-check" onchange="calculateProgress(\'' + projectId + '\')"> ' +
-							'<div class="task-content-text">' +
-								'<span>' + taskText + '</span>' +
-								'<span class="task-date">追加日: ' + formattedDate + '</span>' +
-							'</div>' +
-							'<button class="task-menu-trigger" onclick="toggleTaskMenu(this)">⋮</button>' +
-							'<div class="task-dropdown-menu">' +
-								'<button class="dropdown-delete-item" onclick="deleteTask(this, \'' + projectId + '\')">削除</button>' +
-							'</div>';
-						
-						taskUl.appendChild(newLi);
-						calculateProgress(projectId); 
+						fetch('projects.jsp', {
+							method: 'POST',
+							body: params
+						}).then(() => {
+							loadTasksFromDB();
+						});
 					}
 				}
+				
+				function toggleTask(taskId, isChecked, projectId) {
+					const params = new URLSearchParams();
+					params.append('action', 'toggleTask');
+					params.append('taskId', taskId);
+					params.append('isChecked', isChecked);
+					
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						calculateProgressLocal();
+					});
+				}
 
-				// 三点リーダーメニューの表示/非表示
+				function deleteTask(taskId, projectId) {
+					if(!confirm("本当に削除しますか？")) return;
+					
+					const params = new URLSearchParams();
+					params.append('action', 'deleteTask');
+					params.append('taskId', taskId);
+					
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						loadTasksFromDB();
+					});
+				}
+
 				function toggleTaskMenu(buttonElement) {
 					const menu = buttonElement.nextElementSibling;
-					
 					document.querySelectorAll('.task-dropdown-menu').forEach(m => {
 						if (m !== menu) m.classList.remove('open');
 					});
-					
 					menu.classList.toggle('open');
-					
 					setTimeout(() => {
 						window.addEventListener('click', function closeMenu(e) {
 							if (!menu.contains(e.target) && e.target !== buttonElement) {
@@ -166,36 +348,27 @@
 					}, 0);
 				}
 
-				// タスクを削除する関数
-				function deleteTask(buttonElement, projectId) {
-					const liElement = buttonElement.parentElement.parentElement;
-					liElement.remove();
-					calculateProgress(projectId);
-				}
-
-				// 進捗度を計算する関数
-				function calculateProgress(projectId) {
+				function calculateProgressLocal() {
+					if(!currentProjectCard) return;
+					
+					const projectId = currentProjectCard.getAttribute("data-id");
 					const taskUl = document.getElementById("taskUl");
 					const checkboxes = taskUl.querySelectorAll(".task-check");
 					const totalTasks = checkboxes.length;
 					
 					let checkedTasks = 0;
 					checkboxes.forEach(box => {
-						if (box.checked) {
-							checkedTasks++;
-						}
+						if (box.checked) checkedTasks++;
 					});
-
+					
 					const percent = totalTasks > 0 ? Math.round((checkedTasks / totalTasks) * 100) : 0;
-
 					const barFill = document.getElementById('fill_' + projectId);
 					const barText = document.getElementById('text_' + projectId);
 					const badgeText = document.getElementById('badge_' + projectId);
 					
 					if (barFill && barText) {
 						barFill.style.width = percent + '%'; 
-						barText.innerText = percent + '%';   
-						
+						barText.innerText = percent + '%';    
 						if (badgeText) {
 							badgeText.innerText = percent + '%';
 						}
@@ -216,37 +389,11 @@
 				<script>
 					function toggleMemberMenu() {
 						const menu = document.getElementById("memberSubmenu");
-						if (menu.style.display === "block") {
-							menu.style.display = "none";
-						} else {
-							menu.style.display = "block";
-						}
+						menu.style.display = (menu.style.display === "block") ? "none" : "block";
 					}
 				</script>
 			</footer>
 		</main>
 	</div>
-	<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const savedTheme = localStorage.getItem('app-theme');
-        const savedBgColor = localStorage.getItem('custom-bg-color');
-        const savedTextColor = localStorage.getItem('custom-text-color');
-        const savedFontSize = localStorage.getItem('app-fontSize');
-
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        } else if (savedTheme === 'custom') {
-            document.body.classList.add('custom-theme');
-            if (savedBgColor) document.documentElement.style.setProperty('--custom-bg-color', savedBgColor);
-            if (savedTextColor) document.documentElement.style.setProperty('--custom-text-color', savedTextColor);
-        }
-
-        if (savedFontSize === 'small') {
-            document.body.classList.add('font-small');
-        } else if (savedFontSize === 'large') {
-            document.body.classList.add('font-large');
-        }
-    });
-</script>
 </body>
 </html>
