@@ -4,9 +4,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
 <link rel="stylesheet" href="../../css/Higashi.css">
-
+<title>作業報告 開発演習 個人ページ</title>
 </head>
 <body>
 	<div class="page-layout">
@@ -15,8 +14,8 @@
 			<p>個人ページ</p>
 
 			<nav>
-				<a href="Higashi.jsp">トップページ</a> <a href="report.jsp">作業報告</a> <a
-					href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
+				<a href="Higashi.jsp">トップページ</a> <a href="report.jsp" class="active">作業報告</a>
+				<a href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
 			</nav>
 		</aside>
 
@@ -25,6 +24,7 @@
 			<header>
 				<h1>作業報告</h1>
 			</header>
+			<p>システム開発演習での作業内容を日付ごとにまとめています</p>
 
 			<section>
 				<table>

@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="stylesheet" href="../../css/Higashi.css">
-<title>開発演習 個人ページ</title>
+<title>成果物・資料 開発演習 個人ページ</title>
 </head>
 <body>
 	<div class="page-layout">
@@ -15,17 +15,17 @@
 
 			<nav>
 				<a href="Higashi.jsp">トップページ</a> <a href="report.jsp">作業報告</a> <a
-					href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
+					href="manual.jsp">マニュアル</a> <a href="works.jsp" class="active">制作物・資料</a>
 			</nav>
 		</aside>
 
 		<main class="main-content">
-		
-		<header>
-			<h1>システム開発演習 個人ページ</h1>
-			<p>これまでの作業内容と学習成果をまとめています。</p>
-		</header>
-		
+
+			<header>
+				<h1>成果物・資料</h1>
+			</header>
+			<p>システム開発演習で制作した要件定義資料などをまとめています</p>
+
 		</main>
 
 	</div>

@@ -9,6 +9,8 @@ body {
   min-height: 100vh;
 }
 
+/*サイドメニュー*/
+
 .side-menu {
   width: 150px;
   background-color: #0f2942;
@@ -37,6 +39,7 @@ body {
   margin: 0 -24px;
 }
 
+.side-menu a.active,
 .side-menu a:hover {
   background-color: #1d4f7a;
 }
@@ -46,6 +49,19 @@ body {
   padding: 32px;
   background-color: #f7f9fc;
 }
+
+/*ヘッダー*/
+
+.main-content header {
+  padding-bottom: 16px;
+  border-bottom: 3px solid #1d4f7a;
+}
+
+.main-content header h1 {
+	margin: 0%;
+}
+
+/*作業報告*/
 
 table {
   width: 100%;

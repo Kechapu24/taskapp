@@ -14,7 +14,7 @@
 			<p>個人ページ</p>
 
 			<nav>
-				<a href="Higashi.jsp">トップページ</a> <a href="report.jsp">作業報告</a> <a
+				<a href="Higashi.jsp" class="active">トップページ</a> <a href="report.jsp">作業報告</a> <a
 					href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
 			</nav>
 		</aside>
@@ -23,8 +23,8 @@
 		
 		<header>
 			<h1>システム開発演習 個人ページ</h1>
-			<p>これまでの作業内容と学習成果をまとめています。</p>
 		</header>
+		<p>これまでの作業内容と成果物をまとめています</p>
 		
 		</main>
 
