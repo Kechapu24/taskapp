@@ -106,8 +106,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	String newProjectName = request.getParameter("newProjectName");
 	if (!newProjectName.trim().isEmpty()) {
 		String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
-		String user = "bhan";
-		String password = "2025";
+		String user = "taskuser";
+		String password = "taskpass";
 		
 		try {
 			Class.forName("org.postgresql.Driver");
@@ -174,8 +174,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					// DBからプロジェクト一覧 ＋ 各プロジェクトのタスク進捗を取得
 					// ==========================================
 					String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
-					String dbUser = "bhan";
-					String dbPassword = "2025";
+					String dbUser = "taskuser";
+					String dbPassword = "taskpass";
 					
 					try {
 						Class.forName("org.postgresql.Driver");
