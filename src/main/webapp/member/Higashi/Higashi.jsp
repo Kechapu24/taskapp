@@ -4,30 +4,42 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="../../css/Higashi.css">
 <title>開発演習 個人ページ</title>
 </head>
 <body>
-	<header>
-		<h1>システム開発演習 個人ページ</h1>
-		<p>これまでの作業内容と学習成果をまとめています。</p>
-	</header>
+	<div class="page-layout">
+		<aside class="side-menu">
+			<h1>Higashi</h1>
+			<p>個人ページ</p>
 
-	<section>
-		<h2>現在進行中システム開発概要</h2>
-		<a>タスク管理アプリ開発</a>
-	</section>
+			<nav>
+				<a href="Higashi.jsp" class="active">トップページ</a> <a href="report.jsp">作業報告</a>
+				<a href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
+			</nav>
 
-	<section>
-		<h2>取り組み</h2>
-		<a href="kankyou.jsp">環境構築マニュアル作り</a><br> <a href="github.jsp">github導入</a>
-	</section>
+			<section>
+				<p class="title">プロフィール</p>
+				<p>東 辰賢</p>
+				<p>専門学校湖東カレッジ</p>
+				<p>IT経済学科</p>
+				<p class="space">SEコース</p>
+				<p>Java / JSP / HTML / CSS / JavaScript / PostgreSQL / Tomcat /
+					Apache / Github / Git / Alumalinux / Hyper-V</p>
+			</section>
 
-	<section>
-		<h2>作業報告</h2>
-		<a>6/3 学校サーバーの環境設定<br> 個人ページ更新
-		</a>
-	</section>
+			<a href="../../index.jsp" class="task_app">タスク管理アプリ</a>
+		</aside>
 
+		<main class="main-content">
 
+			<header>
+				<h1>システム開発演習 個人ページ</h1>
+			</header>
+			<p>これまでの作業内容と成果物をまとめています</p>
+
+		</main>
+
+	</div>
 </body>
 </html>
