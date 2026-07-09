@@ -13,11 +13,22 @@ body {
 
 .side-menu {
 	width: 150px;
+	height: calc(100vh - 44px);
 	background-color: #0f2942;
 	color: white;
 	padding: 20px 24px 24px;
 	display: flex;
 	flex-direction: column;
+	position: fixed;
+	top: 0;
+	left: 0;
+	overflow-y: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.side-menu::-webkit-scrollbar {
+	display: none;
 }
 
 .side-menu h1 {
@@ -85,10 +96,13 @@ body {
 	background-color: #1d4f7a;
 }
 
+/*メインコンテンツ*/
+
 .main-content {
 	flex: 1;
 	padding: 32px;
 	background-color: #f7f9fc;
+	margin-left: 198px;
 }
 
 /*ヘッダー*/
