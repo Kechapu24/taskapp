@@ -11,8 +11,8 @@ request.setCharacterEncoding("UTF-8");
 String action = request.getParameter("action");
 if (action != null) {
 	String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
-	String user = "bhan";
-	String password = "2025";
+	String user = "taskuser";
+	String password = "taskpass";
 	
 	try {
 		Class.forName("org.postgresql.Driver");
@@ -383,7 +383,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						<li><a href="member/Sakata.jsp">坂田</a></li>
 						<li><a href="member/Shimizu.jsp">清水</a></li>
 						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
-						<li><a href="member/Miyazaki/Miyazaki.jsp">宮崎</a></li>
+						<li><a href="member/Miyazaki.jsp">宮崎</a></li>
 					</ul>
 				</div>
 				<script>
