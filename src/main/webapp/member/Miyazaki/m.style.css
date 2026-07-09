@@ -1,4 +1,4 @@
-@charset "UTF-8";@charset "UTF-8";
+@charset "UTF-8";
 
 *{
     margin:0;
@@ -6,9 +6,13 @@
     box-sizing:border-box;
 }
 
+html{
+    scroll-behavior:smooth;
+}
+
 body{
     font-family:"Yu Gothic", sans-serif;
-    background:#f4f6f9;
+    background:#f5f7fb;
     color:#333;
     line-height:1.8;
 }
@@ -21,62 +25,172 @@ header{
 }
 
 header h1{
-    font-size:40px;
+    font-size:42px;
     margin-bottom:10px;
 }
 
+header p{
+    font-size:16px;
+    opacity:0.9;
+}
+
+/* ナビゲーション */
 nav{
-    background:#ffffff;
-    padding:15px;
-    text-align:center;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    background:white;
+    padding:12px 15px;
     position:sticky;
     top:0;
+    z-index:100;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:5px;
 }
 
 nav a{
-    margin:0 15px;
+    padding:8px 14px;
+    border-radius:6px;
     text-decoration:none;
     color:#2f6fe4;
     font-weight:bold;
+    font-size:14px;
+    white-space:nowrap;
+    transition:background 0.2s ease, color 0.2s ease;
+}
+
+nav a:hover,
+nav a:focus-visible{
+    background:#2f6fe4;
+    color:white;
+    outline:none;
 }
 
 .container{
-    width:80%;
+    width:88%;
+    max-width:1100px;
     margin:30px auto;
 }
 
 section{
     background:white;
-    margin-bottom:25px;
     padding:25px;
+    margin-bottom:25px;
     border-radius:12px;
     box-shadow:0 3px 8px rgba(0,0,0,0.08);
+    scroll-margin-top:80px; /* stickyナビの高さ分ずらしてジャンプ */
 }
 
 section h2{
     color:#2f6fe4;
-    margin-bottom:15px;
     border-left:6px solid #2f6fe4;
     padding-left:10px;
+    margin-bottom:15px;
+    font-size:22px;
+}
+
+section h3{
+    margin-top:15px;
+    margin-bottom:10px;
+}
+
+section p{
+    margin-bottom:10px;
+}
+
+section p:last-child{
+    margin-bottom:0;
 }
 
 ul{
     padding-left:25px;
 }
 
+/* 学んだことカード */
+.card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:15px;
+}
+
 .card{
-    background:#f8f9fb;
+    background:#f8f9fc;
     border-left:5px solid #2f6fe4;
     padding:15px;
-    margin-top:10px;
-    margin-bottom:10px;
+    border-radius:6px;
+}
+
+.card h3{
+    margin-top:0;
+}
+
+.card p{
+    margin-bottom:0;
+}
+
+/* 制作物ギャラリー */
+.gallery{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    justify-content:center;
+    margin:15px 0 20px;
+}
+
+.gallery figure{
+    margin:0;
+    width:260px;
+    text-align:center;
+}
+
+.screenshot{
+    width:260px;
+    height:190px;
+    object-fit:contain;
+    background:#fff;
+    border:1px solid #e2e6ef;
+    border-radius:8px;
+    padding:10px;
+    box-sizing:border-box;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+figcaption{
+    margin-top:8px;
+    font-size:14px;
+    color:#555;
 }
 
 footer{
-    text-align:center;
     background:#2f6fe4;
     color:white;
+    text-align:center;
     padding:20px;
-    margin-top:40px;
+    margin-top:30px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width:600px){
+    header h1{
+        font-size:30px;
+    }
+
+    nav a{
+        font-size:13px;
+        padding:6px 10px;
+    }
+
+    .container{
+        width:92%;
+    }
+
+    section{
+        padding:18px;
+    }
+
+    .gallery figure,
+    .screenshot{
+        width:100%;
+        max-width:320px;
+    }
 }
