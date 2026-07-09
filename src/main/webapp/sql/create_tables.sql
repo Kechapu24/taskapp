@@ -123,3 +123,29 @@ CREATE TABLE personal_task (
     due_date DATE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+is_read = false
+);
+UPDATE notifications
+SET is_read = true
+WHERE user_id = ?
+);
+CREATE TABLE notifications(
+    notification_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    type VARCHAR(30),
+    task_id INT,
+    project_id INT,
+    detail TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at DATETIME
+);
+CREATE TABLE notification (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    task_name VARCHAR(100),
+    project_name VARCHAR(100),
+    type VARCHAR(30),
+    detail TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
