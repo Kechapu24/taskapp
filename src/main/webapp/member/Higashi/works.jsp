@@ -17,6 +17,18 @@
 				<a href="Higashi.jsp">トップページ</a> <a href="report.jsp">作業報告</a> <a
 					href="manual.jsp">マニュアル</a> <a href="works.jsp" class="active">制作物・資料</a>
 			</nav>
+
+			<section>
+				<p class="title">プロフィール</p>
+				<p>東 辰賢</p>
+				<p>専門学校湖東カレッジ</p>
+				<p>IT経済学科</p>
+				<p class="space">SEコース</p>
+				<p>Java / JSP / HTML / CSS / JavaScript / PostgreSQL / Tomcat /
+					Apache / Github / Git / Alumalinux / Hyper-V</p>
+			</section>
+
+			<a href="../../index.jsp" class="task_app">タスク管理アプリ</a>
 		</aside>
 
 		<main class="main-content">
