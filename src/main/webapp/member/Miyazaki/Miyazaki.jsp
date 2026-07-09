@@ -1,144 +1,181 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8"%>
 
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>宮﨑 実可</title>
-<link rels
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宮﨑 実可 | 個人ページ</title>
+
+<link rel="stylesheet" href="m.style.css">
 </head>
+
 <body>
+	<header>
+		<p>専門学校湖東カレッジ　IT経済学科</p>
+		<h1>宮﨑 実可</h1>
+		<p>システム開発演習 個人ページ</p>
+	</header>
 
-<header>
-    <h1>宮﨑 実可</h1>
-    <p>システム開発演習 個人ページ</p>
-</header>
+	<nav>
+		<a href="#profile">自己紹介</a>
+		<a href="#team">私たちのチーム</a>
+		<a href="#role">担当内容</a>
+		<a href="#contribution">チームへの貢献</a>
+		<a href="#struggle">苦労したこと</a>
+		<a href="#learning">学んだこと</a>
+		<a href="#works">制作物</a>
+		<a href="#goal">今後の目標</a>
+	</nav>
 
-<nav>
-    #teamチーム紹介</a>
-    #role
-    tribution">チームへの貢献</a>
-    study">学習記録</a>
-    ">制作物</a>
-</nav>
+	<div class="container">
 
-<div class="container">
+		<section id="profile">
+			<h2>自己紹介</h2>
 
-    <section>
-        <h2>自己紹介</h2>
-        <p>
-            Java・Linux・Git・Tomcat・PostgreSQLを学習しています。
-            システム開発演習ではタスク管理アプリの開発に取り組んでいます。
-        </p>
-    </section>
+			<p>Java・JSP・Linux・Git・Tomcat・PostgreSQLを学習しています。
+				システム開発演習では、チームでタスク管理アプリケーションの開発に取り組んでいます。</p>
 
-    <section id="team">
-        <h2>私たちのチーム</h2>
+			<p>これまでは個人でコードを書く機会が中心でしたが、この演習を通じて
+				チームでひとつのアプリケーションを作り上げる経験を積んでいます。
+				特にGitでのバージョン管理やサーバーへのデプロイ作業など、
+				実務に近い開発の流れを体験できている点が大きな学びになっています。</p>
+		</section>
 
-        <p>
-            私たちのチームは、最初に細かい仕様をすべて決めるのではなく、
-            「まず作ってみる」という考え方で開発を進めています。
-        </p>
+		<section id="team">
+			<h2>私たちのチーム</h2>
 
-        <p>
-            実際に画面や機能を作成しながら改良を重ねる、
-            アジャイル開発に近い形でタスク管理アプリを制作しています。
-        </p>
-    </section>
+			<p>私たちのチームは、細かな設計を最初に全て決めるのではなく、
+				まず動くものを作りながら改善していくアジャイル型の開発を意識して進めています。</p>
 
-    <section id="role">
-        <h2>担当内容</h2>
+			<p>メンバー同士で相談しながら機能追加や修正を行い、
+				実際に動作確認を繰り返しながら開発しています。</p>
+		</section>
 
-        <ul>
-            <li>Eclipseプロジェクトの作成</li>
-            <li>開発環境の準備</li>
-            <li>ログイン画面の作成</li>
-            <li>ID入力欄の実装</li>
-            <li>パスワード入力欄の実装</li>
-            <li>名前入力欄の実装</li>
-            <li>新規登録ポップアップ画面の作成</li>
-        </ul>
-    </section>
+		<section id="role">
+			<h2>担当内容</h2>
 
-    <section id="contribution">
-        <h2>チームへの貢献</h2>
+			<ul>
+				<li>Eclipseプロジェクト作成</li>
+				<li>ログイン画面の作成</li>
+				<li>ID入力欄の実装</li>
+				<li>パスワード入力欄の実装</li>
+				<li>名前入力欄の実装</li>
+				<li>新規登録ポップアップ画面の作成</li>
+				<li>画面レイアウト調整</li>
+			</ul>
+		</section>
 
-        <ul>
-            <li>開発開始に必要なプロジェクト環境を作成</li>
-            <li>ログイン画面の実装を担当</li>
-            <li>新規登録機能の画面作成を担当</li>
-            <li>Gitを利用したソース管理への参加</li>
-            <li>動作確認および不具合調査を実施</li>
-        </ul>
-    </section>
+		<section id="contribution">
+			<h2>チームへの貢献</h2>
 
-    <section id="study">
-        <h2>学習記録</h2>
+			<ul>
+				<li>開発開始のための環境準備</li>
+				<li>ログイン機能の画面作成</li>
+				<li>新規登録画面のUI実装</li>
+				<li>GitHubによる共同開発への参加</li>
+				<li>不具合の原因調査と修正対応</li>
+			</ul>
+		</section>
 
-        <div class="card">
-            <h3>Linux</h3>
-            <p>サーバー操作やファイル管理について学習。</p>
-        </div>
+		<section id="struggle">
+			<h2>苦労したこと</h2>
 
-        <div class="card">
-            <h3>Git</h3>
-            <p>Clone、Pull、Push、Mergeを利用した共同開発を経験。</p>
-        </div>
+			<h3>個人ページのリンクエラー</h3>
 
-        <div class="card">
-            <h3>Tomcat</h3>
-            <p>Webアプリケーションのデプロイと公開方法を学習。</p>
-        </div>
-    </section>
+			<p>開発メンバー一覧から個人ページへ遷移できない問題が発生しました。</p>
 
-    <section>
-        <h2>苦労したこと</h2>
+			<ul>
+				<li>GitHub上では修正済み</li>
+				<li>学校サーバーのtaskappは古い状態</li>
+				<li>Tomcatへの反映も未実施</li>
+			</ul>
 
-        <ul>
-            <li>Tomcatのバージョン違いによるパスの誤り</li>
-            <li>git push時の non-fast-forward エラー</li>
-            <li>デプロイ後の画面表示エラーの調査</li>
-        </ul>
+			<p>ログ調査やgrepコマンドを利用して原因を特定し、
+				git pull と再デプロイによって解決しました。</p>
+		</section>
 
-        <p>
-            エラーの原因を調査し、Pull・Merge・再デプロイを行い解決しました。
-        </p>
-    </section>
+		<section id="learning">
+			<h2>学んだこと</h2>
 
-    <section id="product">
-        <h2>制作物</h2>
+			<div class="card-grid">
+				<div class="card">
+					<h3>Git</h3>
+					<p>pushだけではサーバーは更新されず、
+						pullによる最新ソース取得が必要であることを学びました。</p>
+				</div>
 
-        <h3>タスク管理アプリ</h3>
+				<div class="card">
+					<h3>Tomcat</h3>
+					<p>webapps/ROOTへ配置し直してデプロイする流れを理解しました。</p>
+				</div>
 
-        <p>
-            グループでタスク管理アプリケーションを開発しています。
-        </p>
+				<div class="card">
+					<h3>ApacheとTomcat</h3>
+					<p>Apacheがリクエストを受け取り、
+						Tomcatへ転送してJSPを実行していることを理解しました。</p>
+				</div>
 
-        <ul>
-            <li>ログイン機能</li>
-            <li>ユーザー登録機能</li>
-            <li>タスク管理機能</li>
-            <li>データベース連携</li>
-        </ul>
-    </section>
+				<div class="card">
+					<h3>調査力</h3>
+					<p>URL・grep・Git・Tomcatの状態を確認しながら、
+						問題を切り分ける方法を学びました。</p>
+				</div>
+			</div>
+		</section>
 
-    <section>
-        <h2>今後の目標</h2>
+		<section id="works">
+			<h2>制作物</h2>
 
-        <ul>
-            <li>Javaの理解を深める</li>
-            <li>SQLを活用した開発力向上</li>
-            <li>セキュリティ技術の学習</li>
-            <li>チーム開発経験を積む</li>
-        </ul>
-    </section>
+			<p>チームでタスク管理アプリを開発しています。</p>
 
-</div>
+			<div class="gallery">
+				<figure>
+					<img src="img/taskapp-login.png" alt="タスクボード画面（サイドバー表示）" class="screenshot">
+					<figcaption>タスク管理画面（サイドバー）</figcaption>
+				</figure>
 
-<footer>
-    © 2026 宮﨑 実可
-</footer>
+				<figure>
+					<img src="img/loginshot.png" alt="メールアドレスとパスワードを入力するログインフォーム" class="screenshot">
+					<figcaption>ログイン画面</figcaption>
+				</figure>
+
+				<figure>
+					<img src="img/register.png" alt="ユーザー名・メールアドレス・パスワードを入力する新規登録フォーム" class="screenshot">
+					<figcaption>新規登録画面</figcaption>
+				</figure>
+
+				<figure>
+					<img src="img/dashboard.png" alt="タスクをカード形式で表示するダッシュボード画面" class="screenshot">
+					<figcaption>タスクボード画面</figcaption>
+				</figure>
+			</div>
+
+			<ul>
+				<li>ログイン機能</li>
+				<li>ユーザー登録機能</li>
+				<li>タスク管理機能</li>
+				<li>JSPによる画面作成</li>
+			</ul>
+		</section>
+
+		<section id="goal">
+			<h2>今後の目標</h2>
+
+			<ul>
+				<li>Javaの理解を深める</li>
+				<li>データベース設計を学ぶ</li>
+				<li>セキュリティの知識を身につける</li>
+				<li>チーム開発経験を積む</li>
+			</ul>
+		</section>
+
+	</div>
+
+	<footer>
+		<p>&copy; 2026 宮﨑 実可</p>
+	</footer>
 
 </body>
 </html>
