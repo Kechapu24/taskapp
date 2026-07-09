@@ -15,7 +15,7 @@
 
 			<nav>
 				<a href="Higashi.jsp" class="active">トップページ</a> <a href="report.jsp">作業報告</a>
-				<a href="manual.jsp">マニュアル</a> <a href="works.jsp">制作物・資料</a>
+				<a href="works.jsp">成果物</a> <a href="docs.jsp">資料</a> 
 			</nav>
 
 			<section>
