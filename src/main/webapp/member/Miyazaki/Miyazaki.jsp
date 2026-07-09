@@ -7,15 +7,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>宮﨑 実可 | 個人ページ</title>
-<link rel="m.style.css">
 
+<link rel="stylesheet" href="m.style.css">
+</head>
+
+<body>
 <header>
     <h1>宮﨑 実可</h1>
     <p>システム開発演習 個人ページ</p>
 </header>
 
+</body>
+
 <nav>
-    ">自己紹介</a>
+    #profile自己紹介</a>
     #teamチーム紹介</a>
     #role担当内容</a>
     #contribution
