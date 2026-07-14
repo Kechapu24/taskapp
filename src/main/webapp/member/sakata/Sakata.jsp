@@ -1,135 +1,154 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>自己紹介ホームページ</title>
+<title>個人ホームページ</title>
 
 <link rel="stylesheet" href="css/style.css">
 
 </head>
 <body>
 
-<div class="container">
+	<!-- ヘッダー -->
+	<header class="header">
 
-    <!-- ヘッダー -->
-    <header class="header">
-        <h1>坂田駿右のホームページ</h1>
+		<div class="logo">
+			<h1>My Portfolio</h1>
+		</div>
 
-        <nav>
-            <ul class="menu">
-                <li><a href="index.jsp">ホーム</a></li>
-                <li><a href="profile.jsp">プロフィール</a></li>
-                <li><a href="hobby.jsp">趣味</a></li>
-                <li><a href="works.jsp">制作物</a></li>
-                <li><a href="contact.jsp">お問い合わせ</a></li>
-            </ul>
-        </nav>
-    </header>
+		<nav>
+			<ul class="menu">
 
-    <!-- メイン -->
-    <main>
+				<li><a href="#">ホーム</a></li>
+				<li><a href="#profile">プロフィール</a></li>
+				<li><a href="#works">制作物</a></li>
+				<li><a href="#skill">スキル</a></li>
+				<li><a href="#contact">お問い合わせ</a></li>
 
-        <!-- 自己紹介 -->
-        <section class="hero">
+			</ul>
+		</nav>
 
-            <h2>こんにちは</h2>
+	</header>
 
-            <p>
-                Java・HTML・CSS・JSPを勉強しています。
-            </p>
+	<div class="container">
 
-        </section>
+		<!-- 自己紹介 -->
+		<section class="hero">
 
-        <!-- プロフィール -->
-        <section class="card">
+			<h2>こんにちは</h2>
 
-            <h2>プロフィール</h2>
+			<p>
+				私のホームページをご覧いただきありがとうございます。<br>
+				Java・JSP・HTML・CSS・SQLを学習しながらシステム開発を行っています。
+			</p>
 
-            <table>
+		</section>
 
-                <tr>
-                    <th>名前</th>
-                    <td>坂田　駿右</td>
-                </tr>
+		<!-- プロフィール -->
+		<section id="profile" class="card">
 
-                <tr>
-                    <th>学校</th>
-                    <td>湖東カレッジ</td>
-                </tr>
+			<h2>プロフィール</h2>
 
-                <tr>
-                    <th>学科</th>
-                    <td>IT経済学科</td>
-                </tr>
+			<table>
 
-                <tr>
-                    <th>趣味</th>
-                    <td>ゲーム</td>
-                </tr>
+				<tr>
+					<th>名前</th>
+					<td>坂田 駿右</td>
+				</tr>
 
-                <tr>
-                    <th>目標</th>
-                    <td>無事に卒業する</td>
-                </tr>
+				<tr>
+					<th>学校</th>
+					<td>湖東カレッジ</td>
+				</tr>
 
-            </table>
+				<tr>
+					<th>学科</th>
+					<td>IT経済学科</td>
+				</tr>
 
-        </section>
+				<tr>
+					<th>趣味</th>
+					<td>ゲーム</td>
+				</tr>
 
-        <!-- 制作物 -->
-        <section class="card">
+				<tr>
+					<th>目標</th>
+					<td>システムエンジニア</td>
+				</tr>
 
-            <h2>制作物</h2>
+			</table>
 
-            <ul>
+		</section>
 
-                <li>タスク管理アプリ（4人チーム開発）</li>
+		<!-- 制作物 -->
+		<section id="works" class="card">
 
-                <li>Java課題</li>
+			<h2>制作物</h2>
 
-                <li>個人ホームページ</li>
+			<div class="work-box">
 
-            </ul>
+				<h3>タスク管理アプリ</h3>
 
-        </section>
+				<p>4人チームで開発しているWebアプリケーションです。</p>
 
-        <!-- スキル -->
-        <section class="card">
+			</div>
 
-            <h2>スキル</h2>
+			<div class="work-box">
 
-            <div class="skill">
+				<h3>Java課題</h3>
 
-                <span>Java</span>
+				<p>Javaの基本構文やオブジェクト指向を学習しました。</p>
 
-                <span>JSP</span>
+			</div>
 
-                <span>Servlet</span>
+			<div class="work-box">
 
-                <span>HTML</span>
+				<h3>個人ホームページ</h3>
 
-                <span>CSS</span>
+				<p>HTML・CSS・JSPを使って制作しています。</p>
 
-                <span>SQL</span>
+			</div>
 
-            </div>
+		</section>
 
-        </section>
+		<!-- スキル -->
+		<section id="skill" class="card">
 
-    </main>
+			<h2>スキル</h2>
 
-    <!-- フッター -->
-    <footer>
+			<div class="skill-list">
 
-        <p>
-            © 2026 My HomePage
-        </p>
+				<span>Java</span>
+				<span>JSP</span>
+				<span>Servlet</span>
+				<span>HTML</span>
+				<span>CSS</span>
+				<span>SQL</span>
+				<span>GitHub</span>
+				<span>Eclipse</span>
 
-    </footer>
+			</div>
 
-</div>
+		</section>
+
+		<!-- お問い合わせ -->
+		<section id="contact" class="card">
+
+			<h2>お問い合わせ</h2>
+
+			<p>ご連絡はメールまたは学校でお願いします。</p>
+
+		</section>
+
+	</div>
+
+	<footer>
+
+		<p>© 2026</p>
+
+	</footer>
 
 </body>
 </html>
