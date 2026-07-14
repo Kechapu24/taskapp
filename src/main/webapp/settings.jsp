@@ -1,4 +1,43 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%
+    // ==========================================
+    // ① DBから現在の設定を読み込む処理
+    // ==========================================
+    String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+    String dbUser = "taskuser";
+    String dbPass = "taskpass";
+    
+    // デフォルト値
+    String currentTheme = "light";
+    String currentBgColor = "#ffffff";
+    String currentTextColor = "#333333";
+    String currentFontSize = "medium";
+    
+    // ※ログイン機能が完成するまでは仮のID(例: 1)を使用します
+    int currentUserId = 1; 
+
+    try {
+        Class.forName("org.postgresql.Driver");
+        try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
+             PreparedStatement pstmt = conn.prepareStatement("SELECT theme, bg_color, text_color, font_size FROM user_settings WHERE user_id = ?")) {
+            
+            pstmt.setInt(1, currentUserId);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // DBにデータがあれば上書き
+                    currentTheme = rs.getString("theme");
+                    currentBgColor = rs.getString("bg_color");
+                    currentTextColor = rs.getString("text_color");
+                    currentFontSize = rs.getString("font_size");
+                }
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+%>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -6,6 +45,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>タスク管理アプリ - 設定</title>
 <link rel="stylesheet" href="css/style.css">
+
+<style>
+    :root {
+        --custom-bg-color: <%= currentBgColor %>;
+        --custom-text-color: <%= currentTextColor %>;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // bodyにテーマとフォントサイズのクラスを付与
+        document.body.classList.add('<%= currentTheme %>-theme');
+        document.body.classList.add('font-<%= currentFontSize %>');
+    });
+</script>
+
 </head>
 <body>
 
@@ -62,7 +116,7 @@
                             <h3>外観</h3>
                             <p>アプリのテーマカラーを選択します。</p>
                             <div class="setting-options">
-                                <label class="radio-label"><input type="radio" name="theme" value="light" onchange="changeTheme('light')" checked> ライト</label>
+                                <label class="radio-label"><input type="radio" name="theme" value="light" onchange="changeTheme('light')"> ライト</label>
                                 <label class="radio-label"><input type="radio" name="theme" value="dark" onchange="changeTheme('dark')"> ダーク</label>
                                 <label class="radio-label"><input type="radio" name="theme" value="custom" onchange="changeTheme('custom')"> カスタムカラー</label>
                             </div>
@@ -91,7 +145,7 @@
                                     <input type="radio" name="fontsize" value="small" onchange="changeFontSize(this.value)"> 小
                                 </label>
                                 <label class="radio-label">
-                                    <input type="radio" name="fontsize" value="medium" onchange="changeFontSize(this.value)" checked> 中（標準）
+                                    <input type="radio" name="fontsize" value="medium" onchange="changeFontSize(this.value)"> 中（標準）
                                 </label>
                                 <label class="radio-label">
                                     <input type="radio" name="fontsize" value="large" onchange="changeFontSize(this.value)"> 大
@@ -162,14 +216,14 @@
 
     <script>
         // ==========================================
-        // 初期読み込み時の設定反映 (LocalStorage)
+        // 読み込み時の設定反映 (DBからの値を使用)
         // ==========================================
         document.addEventListener("DOMContentLoaded", function() {
-            // 保存されている設定を取得（なければデフォルト値）
-            const savedTheme = localStorage.getItem('app-theme') || 'light';
-            const savedBgColor = localStorage.getItem('custom-bg-color') || '#ffffff';
-            const savedTextColor = localStorage.getItem('custom-text-color') || '#333333';
-            const savedFontSize = localStorage.getItem('app-fontSize') || 'medium';
+            // JSPで取得したDBの値をJavaScriptの変数に渡す
+            const savedTheme = '<%= currentTheme %>';
+            const savedBgColor = '<%= currentBgColor %>';
+            const savedTextColor = '<%= currentTextColor %>';
+            const savedFontSize = '<%= currentFontSize %>';
 
             // ① UI（ラジオボタン・カラーピッカー）の状態を合わせる
             document.querySelectorAll('input[name="theme"]').forEach(radio => {
@@ -181,28 +235,44 @@
             document.getElementById('bgColor').value = savedBgColor;
             document.getElementById('textColor').value = savedTextColor;
 
-            // ② 実際の画面に適用する
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-            } else if (savedTheme === 'custom') {
-                document.body.classList.add('custom-theme');
+            // ② カスタムテーマの場合はカラーピッカーを表示
+            if (savedTheme === 'custom') {
                 document.getElementById('custom-color-picker').style.display = 'block';
-                document.documentElement.style.setProperty('--custom-bg-color', savedBgColor);
-                document.documentElement.style.setProperty('--custom-text-color', savedTextColor);
-            }
-
-            if (savedFontSize === 'small') {
-                document.body.classList.add('font-small');
-            } else if (savedFontSize === 'large') {
-                document.body.classList.add('font-large');
             }
         });
+
+        // ==========================================
+        // サーバー(DB)へ設定を保存する共通関数
+        // ==========================================
+        function saveSettingsToDB() {
+            const theme = document.querySelector('input[name="theme"]:checked').value;
+            const fontSize = document.querySelector('input[name="fontsize"]:checked').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const textColor = document.getElementById('textColor').value;
+
+            // データをURLエンコードして送信する準備
+            const params = new URLSearchParams();
+            params.append('theme', theme);
+            params.append('fontSize', fontSize);
+            params.append('bgColor', bgColor);
+            params.append('textColor', textColor);
+
+            // save_settings.jsp にデータをPOST送信
+            fetch('save_settings.jsp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            }).then(response => {
+                if(response.ok) {
+                    console.log("データベースに設定を保存しました！");
+                }
+            }).catch(error => console.error("保存エラー:", error));
+        }
 
         // ==========================================
         // 各種設定の切り替え機能
         // ==========================================
 
-        // --- タブ切り替え機能 ---
         function switchTab(tabId) {
             document.querySelectorAll('.settings-item').forEach(item => item.classList.remove('active'));
             document.querySelectorAll('.setting-section').forEach(section => section.classList.remove('active'));
@@ -211,26 +281,26 @@
             document.getElementById('content-' + tabId).classList.add('active');
         }
 
-        // --- 外観（ダーク/カスタム）切り替え機能 ---
         function changeTheme(theme) {
             document.body.classList.remove('dark-theme', 'custom-theme');
+            document.body.classList.remove('light-theme'); // ライトテーマも一旦リセット
             document.getElementById('custom-color-picker').style.display = 'none';
             document.documentElement.style.removeProperty('--custom-bg-color');
             document.documentElement.style.removeProperty('--custom-text-color');
-
-            // 変更内容を LocalStorage に保存
-            localStorage.setItem('app-theme', theme);
 
             if (theme === 'dark') {
                 document.body.classList.add('dark-theme');
             } else if (theme === 'custom') {
                 document.body.classList.add('custom-theme');
                 document.getElementById('custom-color-picker').style.display = 'block';
-                applyCustomColors();
+                applyCustomColors(); // 色を適用
+            } else {
+                document.body.classList.add('light-theme');
             }
+            
+            saveSettingsToDB(); // ★変更時にDBへ保存
         }
 
-        // --- カスタムカラー適用機能 ---
         function applyCustomColors() {
             if (document.body.classList.contains('custom-theme')) {
                 const bgColor = document.getElementById('bgColor').value;
@@ -239,27 +309,17 @@
                 document.documentElement.style.setProperty('--custom-bg-color', bgColor);
                 document.documentElement.style.setProperty('--custom-text-color', textColor);
                 
-                // 変更内容を LocalStorage に保存
-                localStorage.setItem('custom-bg-color', bgColor);
-                localStorage.setItem('custom-text-color', textColor);
+                saveSettingsToDB(); // ★変更時にDBへ保存
             }
         }
 
-        // --- フォントサイズ切り替え機能 ---
         function changeFontSize(size) {
-            document.body.classList.remove('font-small', 'font-large');
+            document.body.classList.remove('font-small', 'font-medium', 'font-large');
+            document.body.classList.add('font-' + size);
             
-            // 変更内容を LocalStorage に保存
-            localStorage.setItem('app-fontSize', size);
-
-            if (size === 'small') {
-                document.body.classList.add('font-small');
-            } else if (size === 'large') {
-                document.body.classList.add('font-large');
-            }
+            saveSettingsToDB(); // ★変更時にDBへ保存
         }
 
-        // 開発メンバーメニューの開閉（フッター用）
         function toggleMemberMenu() {
             const menu = document.getElementById("memberSubmenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
