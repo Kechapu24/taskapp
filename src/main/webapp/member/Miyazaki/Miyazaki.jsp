@@ -13,7 +13,6 @@
 
 <body>
 	<header>
-		<p>専門学校湖東カレッジ　IT経済学科</p>
 		<h1>宮﨑 実可</h1>
 		<p>システム開発演習 個人ページ</p>
 	</header>
@@ -21,6 +20,7 @@
 	<nav>
 		<a href="#profile">自己紹介</a>
 		<a href="#team">私たちのチーム</a>
+		<a href="#progress">開発工程・進捗</a>
 		<a href="#role">担当内容</a>
 		<a href="#contribution">チームへの貢献</a>
 		<a href="#struggle">苦労したこと</a>
@@ -53,8 +53,57 @@
 				実際に動作確認を繰り返しながら開発しています。</p>
 		</section>
 
+		<section id="progress">
+			<h2>開発工程・進捗</h2>
+
+			<p>本演習では、V字モデルに沿った開発工程を意識して進めています。
+				要件定義でシステムの目的を決め、基本設計でユーザ目線の画面や機能を、
+				詳細設計で内部の処理やデータの流れを決めたうえで開発を行い、
+				単体テスト・結合テスト・総合テストの順に検証範囲を広げていく流れです。</p>
+
+			<table class="progress-table">
+				<thead>
+					<tr>
+						<th>工程</th>
+						<th>内容</th>
+						<th>状況</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>環境構築</td>
+						<td>個人サーバ・グループサーバの構築（AlmaLinux / Apache / Tomcat / PostgreSQL）</td>
+						<td><span class="status done">完了</span></td>
+					</tr>
+					<tr>
+						<td>要件定義・基本設計</td>
+						<td>タスク管理アプリの機能一覧・画面構成の検討</td>
+						<td><span class="status done">完了</span></td>
+					</tr>
+					<tr>
+						<td>詳細設計・開発</td>
+						<td>ログイン画面・新規登録画面・ダッシュボードの実装</td>
+						<td><span class="status inprogress">進行中</span></td>
+					</tr>
+					<tr>
+						<td>単体テスト（UT）</td>
+						<td>実装済み画面ごとの動作確認</td>
+						<td><span class="status inprogress">進行中</span></td>
+					</tr>
+					<tr>
+						<td>結合テスト（CT）</td>
+						<td>他機能・チームメンバーの実装との連携確認</td>
+						<td><span class="status todo">未着手</span></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p>現在は詳細設計・開発フェーズの後半で、各画面の実装と単体テストを並行して進めています。
+				今後はメンバーの実装した機能と連携させる結合テストに進む予定です。</p>
+		</section>
+
 		<section id="role">
-			<h2>担当内容</h2>
+			<h2>担当内容(宮﨑)</h2>
 
 			<ul>
 				<li>Eclipseプロジェクト作成</li>
@@ -147,7 +196,7 @@
 				</figure>
 
 				<figure>
-					<img src="img/dashboard.png" alt="タスクをカード形式で表示するダッシュボード画面" class="screenshot">
+					<img src="img/taskboard.png" alt="タスクをカード形式で表示するダッシュボード画面" class="screenshot">
 					<figcaption>タスクボード画面</figcaption>
 				</figure>
 			</div>

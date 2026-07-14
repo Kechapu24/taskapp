@@ -128,6 +128,57 @@ ul{
     margin-bottom:0;
 }
 
+/* 開発工程・進捗テーブル */
+.progress-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:15px 0;
+    font-size:14px;
+}
+
+.progress-table th,
+.progress-table td{
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid #e2e6ef;
+}
+
+.progress-table th{
+    background:#f0f4fc;
+    color:#2f6fe4;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.progress-table td:first-child{
+    white-space:nowrap;
+    font-weight:bold;
+}
+
+.status{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.status.done{
+    background:#e3f6e8;
+    color:#1e8a4c;
+}
+
+.status.inprogress{
+    background:#fff3d9;
+    color:#b8790a;
+}
+
+.status.todo{
+    background:#eceef2;
+    color:#777;
+}
+
 /* 制作物ギャラリー */
 .gallery{
     display:flex;
@@ -192,5 +243,11 @@ footer{
     .screenshot{
         width:100%;
         max-width:320px;
+    }
+
+    .progress-table{
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
     }
 }
