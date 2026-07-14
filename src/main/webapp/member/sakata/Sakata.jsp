@@ -11,7 +11,7 @@
 </head>
 <body>
 
-	<!-- ヘッダー -->
+	<!-- ヘッダー　 -->
 	<header class="header">
 
 		<div class="logo">
