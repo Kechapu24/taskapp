@@ -1,0 +1,176 @@
+@charset "UTF-8";
+
+:root {
+	--navy: #344b61;
+	--navy-dark: #263b4f;
+	--blue: #2f9fe4;
+	--blue-dark: #2187c7;
+	--bg: #eef2f5;
+	--card: #ffffff;
+	--text: #24313d;
+	--sub-text: #6d7b88;
+	--border: #d7e0e7;
+	--shadow: 0 8px 24px rgba(35, 58, 78, 0.12);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 48px 32px;
+	min-height: 100vh;
+	font-family:
+		"Noto Sans JP",
+		"Yu Gothic",
+		"Meiryo",
+		sans-serif;
+	color: var(--text);
+	background: var(--bg);
+}
+
+/* ページ全体の横幅 */
+.gallery {
+	width: min(1200px, 100%);
+	margin: 0 auto;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 28px;
+}
+
+/* 画像カード */
+.gallery a {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	color: var(--text);
+	text-decoration: none;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	box-shadow: var(--shadow);
+	transition:
+		transform 0.25s ease,
+		box-shadow 0.25s ease,
+		border-color 0.25s ease;
+}
+
+/* ホバー時 */
+.gallery a:hover {
+	transform: translateY(-6px);
+	border-color: var(--blue);
+	box-shadow: 0 14px 32px rgba(35, 58, 78, 0.2);
+}
+
+/* 画像表示領域 */
+.gallery img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: contain;
+	padding: 12px;
+	background: #f8fafc;
+	border-bottom: 1px solid var(--border);
+	transition: transform 0.25s ease;
+}
+
+.gallery a:hover img {
+	transform: scale(1.015);
+}
+
+/* 画像タイトル */
+.gallery p {
+	position: relative;
+	margin: 0;
+	padding: 17px 20px 17px 52px;
+	font-size: 17px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	background: #ffffff;
+}
+
+/* 左側の青いアイコン風装飾 */
+.gallery p::before {
+	content: "▣";
+	position: absolute;
+	top: 50%;
+	left: 20px;
+	color: var(--blue);
+	font-size: 20px;
+	transform: translateY(-50%);
+}
+
+/* AI画像のカード */
+.gallery a:nth-child(odd) p::after {
+	content: "清書版";
+	position: absolute;
+	top: 50%;
+	right: 18px;
+	padding: 4px 10px;
+	color: #ffffff;
+	font-size: 12px;
+	font-weight: 700;
+	background: var(--blue);
+	border-radius: 20px;
+	transform: translateY(-50%);
+}
+
+/* 手書き画像のカード */
+.gallery a:nth-child(even) p::after {
+	content: "手書き";
+	position: absolute;
+	top: 50%;
+	right: 18px;
+	padding: 4px 10px;
+	color: var(--navy-dark);
+	font-size: 12px;
+	font-weight: 700;
+	background: #dde5ec;
+	border-radius: 20px;
+	transform: translateY(-50%);
+}
+
+/* 画面幅が狭い場合 */
+@media screen and (max-width: 850px) {
+	body {
+		padding: 32px 20px;
+	}
+
+	.gallery {
+		grid-template-columns: 1fr;
+		gap: 22px;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	body {
+		padding: 20px 12px;
+	}
+
+	.gallery {
+		gap: 16px;
+	}
+
+	.gallery p {
+		padding: 15px 16px 15px 44px;
+		font-size: 15px;
+	}
+
+	.gallery p::before {
+		left: 16px;
+		font-size: 17px;
+	}
+
+	.gallery a:nth-child(odd) p::after,
+	.gallery a:nth-child(even) p::after {
+		right: 12px;
+		padding: 3px 8px;
+		font-size: 10px;
+	}
+	
+.gallery a:nth-child(even) img {
+	transform: rotate(-90deg);
+}
+}
