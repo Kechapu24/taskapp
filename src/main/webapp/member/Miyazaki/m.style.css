@@ -1,5 +1,8 @@
 @charset "UTF-8";
 
+/* ==========================================================
+   リセット & 基本設定
+========================================================== */
 *{
     margin:0;
     padding:0;
@@ -10,15 +13,33 @@ html{
     scroll-behavior:smooth;
 }
 
+:root{
+    --brand:#2f6fe4;
+    --brand-dark:#1e4fb0;
+    --bg:#f5f7fb;
+    --text:#333;
+    --nav-height:56px; /* nav の実際の高さと必ず一致させる（折り返しさせない） */
+}
+
 body{
-    font-family:"Yu Gothic", sans-serif;
-    background:#f5f7fb;
-    color:#333;
+    font-family:"Yu Gothic", "Hiragino Sans", sans-serif;
+    background:var(--bg);
+    color:var(--text);
     line-height:1.8;
 }
 
+/* キーボード操作時のフォーカスを見えるようにする（アクセシビリティ） */
+a:focus-visible,
+button:focus-visible{
+    outline:3px solid var(--brand-dark);
+    outline-offset:2px;
+}
+
+/* ==========================================================
+   ヘッダー
+========================================================== */
 header{
-    background:#2f6fe4;
+    background:var(--brand);
     color:white;
     text-align:center;
     padding:50px 20px;
@@ -34,25 +55,66 @@ header p{
     opacity:0.9;
 }
 
-/* ナビゲーション */
+
+/* ==========================================================
+   ナビゲーション
+   - 高さを var(--nav-height) に固定し、折り返させない
+   - 画面が狭い時は「折り返し」ではなく「横スクロール」にする
+     → これにより nav の高さが常に一定になり、
+       #section へジャンプしたときの scroll-margin-top のズレ
+       （＝リンク先が中途半端な位置で止まる問題）が解消する
+========================================================== */
 nav{
     background:white;
-    padding:12px 15px;
     position:sticky;
     top:0;
     z-index:100;
     box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    height:var(--nav-height);
+}
+
+nav{
     display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:5px;
+    flex-wrap:nowrap;           /* 折り返さない：これが縦並びに見える主因を防ぐ */
+    align-items:center;
+    gap:6px;
+
+    overflow-x:auto;            /* 入りきらない分は横スクロール */
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+
+    padding:0 10px;
+}
+
+/* 開発中アプリへのリンクボタン */
+nav app-link-btn{
+    display:inline-block;
+    margin-top:18px;
+    padding:10px 24px;
+    background:white;
+    color:var(--brand);
+    font-weight:bold;
+    font-size:14px;
+    text-decoration:none;
+    border-radius:24px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+nav app-link-btn:hover,
+nav app-link-btn:focus-visible{
+    transform:translateY(-2px);
+    box-shadow:0 5px 12px rgba(0,0,0,0.2);
+    outline:none;
 }
 
 nav a{
+    flex:0 0 auto;              /* 各項目は縮まず、横一列を維持 */
+    display:block;
     padding:8px 14px;
     border-radius:6px;
     text-decoration:none;
-    color:#2f6fe4;
+    color:var(--brand);
     font-weight:bold;
     font-size:14px;
     white-space:nowrap;
@@ -61,11 +123,14 @@ nav a{
 
 nav a:hover,
 nav a:focus-visible{
-    background:#2f6fe4;
+    background:var(--brand);
     color:white;
     outline:none;
 }
 
+/* ==========================================================
+   レイアウト全体
+========================================================== */
 .container{
     width:88%;
     max-width:1100px;
@@ -78,12 +143,16 @@ section{
     margin-bottom:25px;
     border-radius:12px;
     box-shadow:0 3px 8px rgba(0,0,0,0.08);
-    scroll-margin-top:80px; /* stickyナビの高さ分ずらしてジャンプ */
+
+    /* ジャンプ時、sticky nav の裏に隠れないよう常に nav の高さ分だけ余白を確保する。
+       nav の高さは var(--nav-height) で一本化しているので、
+       今後 nav の中身が増減してもここを直せば全リンクに反映される */
+    scroll-margin-top:calc(var(--nav-height) + 16px);
 }
 
 section h2{
-    color:#2f6fe4;
-    border-left:6px solid #2f6fe4;
+    color:var(--brand);
+    border-left:6px solid var(--brand);
     padding-left:10px;
     margin-bottom:15px;
     font-size:22px;
@@ -106,7 +175,9 @@ ul{
     padding-left:25px;
 }
 
-/* 学んだことカード */
+/* ==========================================================
+   「学んだこと」カード
+========================================================== */
 .card-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
@@ -115,7 +186,7 @@ ul{
 
 .card{
     background:#f8f9fc;
-    border-left:5px solid #2f6fe4;
+    border-left:5px solid var(--brand);
     padding:15px;
     border-radius:6px;
 }
@@ -128,7 +199,102 @@ ul{
     margin-bottom:0;
 }
 
-/* 制作物ギャラリー */
+/* ==========================================================
+   開発工程・進捗テーブル
+========================================================== */
+.progress-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin:18px 0;
+    font-size:14px;
+    border:1px solid #e2e6ef;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+.progress-table th,
+.progress-table td{
+    text-align:left;
+    vertical-align:top;
+    padding:12px 16px;
+    border-bottom:1px solid #e2e6ef;
+    border-right:1px solid #eef1f7;
+}
+
+.progress-table th:last-child,
+.progress-table td:last-child{
+    border-right:none;
+}
+
+.progress-table tbody tr:last-child td{
+    border-bottom:none;
+}
+
+.progress-table th{
+    background:#eaf0fd;
+    color:var(--brand);
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.progress-table td:first-child{
+    white-space:nowrap;
+    font-weight:bold;
+    width:14%;
+}
+
+/* 内容列：折り返させて詰まって見えないようにする */
+.progress-table td:nth-child(2){
+    width:auto;
+    line-height:1.6;
+}
+
+.progress-table td:nth-child(3){
+    white-space:nowrap;
+    width:14%;
+}
+
+.progress-table td:nth-child(4){
+    white-space:nowrap;
+    width:10%;
+}
+
+.progress-table tbody tr:nth-child(even){
+    background:#fafbfe;
+}
+
+.progress-table tbody tr:hover{
+    background:#f2f6ff;
+}
+
+.status{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.status.done{
+    background:#e3f6e8;
+    color:#1e8a4c;
+}
+
+.status.inprogress{
+    background:#fff3d9;
+    color:#b8790a;
+}
+
+.status.todo{
+    background:#eceef2;
+    color:#777;
+}
+
+/* ==========================================================
+   制作物ギャラリー
+========================================================== */
 .gallery{
     display:flex;
     flex-wrap:wrap;
@@ -161,15 +327,21 @@ figcaption{
     color:#555;
 }
 
+/* ==========================================================
+   フッター
+========================================================== */
 footer{
-    background:#2f6fe4;
+    background:var(--brand);
     color:white;
     text-align:center;
     padding:20px;
     margin-top:30px;
 }
 
-/* レスポンシブ対応 */
+/* ==========================================================
+   レスポンシブ対応（スマホ幅）
+   nav は折り返さず高さを維持したまま、横スクロールバーを表示する
+========================================================== */
 @media (max-width:600px){
     header h1{
         font-size:30px;
@@ -192,5 +364,11 @@ footer{
     .screenshot{
         width:100%;
         max-width:320px;
+    }
+
+    .progress-table{
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
     }
 }
