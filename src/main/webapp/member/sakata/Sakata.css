@@ -20,7 +20,7 @@ body{
 }
 
 /* -----------------------
-   ヘッダー
+   ヘッダー　
 ----------------------- */
 
 .header{
@@ -97,28 +97,49 @@ body{
 
 .hero{
 
-	background:white;
+	background-image: url("../images/background.jpg");
 
-	text-align:center;
+	background-size: cover;
 
-	padding:60px;
+	background-position: center;
 
-	border-radius:10px;
+	background-repeat: no-repeat;
 
-	box-shadow:0 3px 10px rgba(0,0,0,.1);
+	height: 450px;
 
-	margin-bottom:30px;
+	display: flex;
+
+	flex-direction: column;
+
+	justify-content: center;
+
+	align-items: center;
+
+	color: white;
+
+	text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+
+	border-radius: 10px;
+
+	margin-bottom: 30px;
 
 }
 
 .hero h2{
 
-	font-size:36px;
+	font-size:48px;
 
 	margin-bottom:20px;
 
 }
 
+.hero p{
+
+	font-size:22px;
+
+	line-height:1.8;
+
+}
 /* -----------------------
    カード
 ----------------------- */

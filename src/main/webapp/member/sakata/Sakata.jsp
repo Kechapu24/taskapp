@@ -11,7 +11,7 @@
 </head>
 <body>
 
-	<!-- ヘッダー　 -->
+	<!-- 　ヘッダー　 -->
 	<header class="header">
 
 		<div class="logo">
@@ -19,7 +19,7 @@
 		</div>
 
 		<nav>
-			<ul class="menu">
+			<ul chailass="menu">
 
 				<li><a href="#">ホーム</a></li>
 				<li><a href="#profile">プロフィール</a></li>
