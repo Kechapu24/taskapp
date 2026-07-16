@@ -94,7 +94,7 @@
 						</td>
 						<td><a
 							href="https://docs.google.com/document/d/1GbtfcZ_ujy8cuBMa1MbV_9eSQ083WbBSeeKhQOtI11Q/edit?tab=t.989reewvcl8w#heading=h.6ze914wglamt">DB連携マニュアル</a><br>
-						<a href="../../taskboard.jsp">タスクボード</a></td>
+							<a href="../../taskboard.jsp">タスクボード</a></td>
 					</tr>
 					<tr>
 						<td>7/1</td>
@@ -123,13 +123,18 @@
 					</tr>
 					<tr>
 						<td>7/14</td>
-						<td>個人ページ編集<br> 画面設計資料ページ作り<br> 作業報告に成果物欄追加</td>
-						<td><a href="docs.jsp">資料</a><br><a href="report.jsp">作業報告</a><br><a href="screen_design.jsp">画面設計資料</a></td>
+						<td>個人ページ編集<br> 画面設計資料ページ作り<br> 作業報告に成果物欄追加
+						</td>
+						<td><a href="docs.jsp">資料</a><br>
+						<a href="report.jsp">作業報告</a><br>
+						<a href="screen_design.jsp">画面設計資料</a></td>
 					</tr>
 					<tr>
-						<td></td>
-						<td></td>
-						<td></td>
+						<td>7/16</td>
+						<td>個人ページ編集<br> 成果物ページ作り <br> トップページ作り
+						</td>
+						<td><a href="works.jsp">成果物</a><br>
+						<a href="Higashi.jsp">トップページ</a></td>
 					</tr>
 					<tr>
 						<td></td>
