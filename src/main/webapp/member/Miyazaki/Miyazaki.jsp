@@ -92,19 +92,19 @@
 					<tr>
 						<td>詳細設計・開発 </td>
 						<td>ログイン画面・新規登録画面・ダッシュボードの実装</td>
-						<td>6月中旬〜7月</td>
+						<td>6月中旬〜10月</td>
 						<td><span class="status inprogress">進行中</span></td>
 					</tr>
 					<tr>
 						<td>単体テスト（UT）</td>
 						<td>実装済み画面ごとの動作確認</td>
-						<td>7月</td>
+						<td>10月</td>
 						<td><span class="status inprogress">進行中</span></td>
 					</tr>
 					<tr>
 						<td>結合テスト（CT）</td>
 						<td>他機能・チームメンバーの実装との連携確認</td>
-						<td>8月以降予定</td>
+						<td>11月以降予定</td>
 						<td><span class="status todo">未着手</span></td>
 					</tr>
 				</tbody>
@@ -129,7 +129,7 @@
 				<li>結合テスト：未着手</li>
 			</ul>
 
-			<p>現在の個人進捗率（開発工程）：約70％（7月時点）</p>
+			<p>現在の個人進捗率（開発工程）：約60％（7月時点）</p>
 
 			<p>今後はログイン認証処理やデータベース連携の実装を進め、 チームメンバーが担当する機能との結合テストを実施する予定です。</p>
 		</section>
