@@ -4,7 +4,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" href="../../css/Higashi.css">
+<link rel="stylesheet" href="css/Higashi.css">
 <title>資料 開発演習 個人ページ</title>
 </head>
 <body>
@@ -55,7 +55,7 @@
 					<p class="meta">
 						更新日：2026/06/04<br>形式：Googleドキュメント
 					</p>
-					<a href="GoogleドキュメントのURL" target="_blank" class="card-link">資料を見る</a>
+					<a href="https://docs.google.com/document/d/1bLK_RccCXs_kWZ8ZoiIOnSZFUnnXGzcgLwy71rcgpk8/edit?tab=t.dwdiudsxg6q6" target="_blank" class="card-link">資料を見る</a>
 				</div>
 
 				<div class="work-card" data-category="planning">
@@ -65,7 +65,7 @@
 					<p class="meta">
 						更新日：2026/06/04<br>形式：画像
 					</p>
-					<a href="画像のURL" target="_blank" class="card-link">画像を見る</a>
+					<a href="img/サイトマップ.png" target="_blank" class="card-link">画像を見る</a>
 				</div>
 
 				<div class="work-card" data-category="database">

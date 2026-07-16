@@ -4,7 +4,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" href="../../css/Higashi.css">
+<link rel="stylesheet" href="css/Higashi.css">
 <title>作業報告 開発演習 個人ページ</title>
 </head>
 <body>
