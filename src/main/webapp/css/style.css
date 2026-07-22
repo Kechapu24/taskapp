@@ -387,6 +387,48 @@
     height: 100px;
 }
 
+/* 削除モーダル */
+.delete-menu-button {
+    color: #e74c3c;
+}
+
+.delete-form {
+    margin-top: 18px;
+}
+
+.delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.cancel-button {
+    padding: 8px 14px;
+    background: #bdc3c7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancel-button:hover {
+    background: #95a5a6;
+}
+
+.delete-button {
+    padding: 8px 14px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.delete-button:hover {
+    background: #c0392b;
+}
+
 /* タスク追加のボタン */
 .modal-submit-btn {
     margin-top: 18px;
