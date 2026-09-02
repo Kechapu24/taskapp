@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <title>個人ホームページ</title>
 
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="Sakata.css">
 
 </head>
 <body>
