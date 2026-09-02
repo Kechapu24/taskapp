@@ -45,7 +45,7 @@
 				int doingCount = 0;
 				int doneCount = 0;
 
-				String countUrl = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 				String countUser = "taskuser";
 				String countPassword = "taskpass";
 
@@ -95,7 +95,7 @@
 								</h2>
 
 								<div class="toolbar">
-									<button id="filterBtn">⚙️ 絞り込み</button>
+									<button id="filterBtn">⚙️</button>
 								</div>
 
 								<button class="add-task-btn-small"
@@ -103,7 +103,7 @@
 							</div>
 
 							<%
-							String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+							String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 							String user = "taskuser";
 							String password = "taskpass";
 
