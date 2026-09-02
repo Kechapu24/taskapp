@@ -14,7 +14,7 @@ String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
 String userIdStr = request.getParameter("user_id");
 
-String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 String user = "taskuser";
 String password = "taskpass";
 
