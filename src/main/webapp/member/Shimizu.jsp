@@ -514,7 +514,7 @@
         }
         else if (text.includes('タスク') || text.includes('担当')) {
             return `
-                <div class="res-title">🎯 自身の担当ミッション</div>
+                <div class="res-title">🎯 自身の担当</div>
                 <div class="task-item">
                     <div class="task-title">フロントエンド・UI設計</div>
                     <div class="task-desc">ホームページを完成像に近づけるためのレイアウト構築</div>
