@@ -41,7 +41,6 @@ if (action != null) {
 				if (dueDate == null) dueDate = "";
 				String dateStr = dueDate;
 				if (!dateStr.isEmpty()) {
-					// 月/日の形式に変換 (例: 2026-05-20 -> 5/20)
 					String[] parts = dateStr.split("-");
 					if (parts.length == 3) {
 						dateStr = Integer.parseInt(parts[1]) + "/" + Integer.parseInt(parts[2]);
@@ -49,7 +48,6 @@ if (action != null) {
 				}
 				
 				boolean isChecked = "完了".equals(status);
-				
 				String escapedTaskName = taskName.replace("\"", "&quot;").replace("'", "\\'");
 				
 				out.print("<div class='personal-task-item'>");
@@ -159,7 +157,6 @@ if (action != null) {
 		box-sizing: border-box;
 	}
 	
-	/* 左右の2カラムレイアウト */
 	.left-column {
 		width: 45%;
 		background: #fff;
@@ -193,7 +190,6 @@ if (action != null) {
 		margin-bottom: 20px;
 	}
 	
-	/* 個人タスクリストのスタイル */
 	.personal-task-list {
 		display: flex;
 		flex-direction: column;
@@ -311,7 +307,6 @@ if (action != null) {
 		background: #f8d7da;
 	}
 
-	/* 追加ボタン */
 	.btn-add-personal {
 		width: 100%;
 		padding: 12px;
@@ -332,7 +327,6 @@ if (action != null) {
 		background: #0f5bc4;
 	}
 
-	/* モーダル共通 */
 	.modal-overlay {
 		display: none;
 		position: fixed;
@@ -506,7 +500,7 @@ if (action != null) {
 			</div>
 			
 			<script>
-				let modalMode = 'add'; // 'add' または 'edit'
+				let modalMode = 'add';
 				let targetTaskId = null;
 
 				window.addEventListener('DOMContentLoaded', () => {
