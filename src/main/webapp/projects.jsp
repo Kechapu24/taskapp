@@ -21,7 +21,7 @@ if (action != null) {
 		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
 		if ("getTasks".equals(action)) {
 			String pId = request.getParameter("projectId");
-			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.due_date, 'MM/DD') as fmt_date, u.user_name " +
+			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.due_date, 'YYYY/MM/DD') as fmt_date, u.user_name " +
 						 "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id " +
 						 "WHERE t.project_id = ? ORDER BY t.task_id ASC";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -34,18 +34,14 @@ if (action != null) {
 				int taskId = rs.getInt("task_id");
 				String taskName = rs.getString("task_name");
 				String status = rs.getString("status");
-				String priority = rs.getString("priority");
 				String dateStr = rs.getString("fmt_date");
-				String userName = rs.getString("user_name");
 				
-				if (dateStr == null) dateStr = "未設定";
+				if (dateStr == null) dateStr = "";
 				if (status == null) status = "未着手";
-				if (priority == null) priority = "中";
-				if (userName == null) userName = "未設定";
 				
 				boolean isChecked = "完了".equals(status);
 				
-				// 横並びのタスクカード
+				// 横並びのタスクカード（画像に合わせたシンプルなデザイン）
 				out.print("<div class='horizontal-task-card'>");
 				out.print("<div class='htc-left'>");
 				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + ">");
@@ -53,10 +49,9 @@ if (action != null) {
 				out.print("</div>");
 				
 				out.print("<div class='htc-right'>");
-				out.print("<span class='htc-badge status-" + status + "'>" + status + "</span>");
-				out.print("<span class='htc-badge priority-" + priority + "'>優先:" + priority + "</span>");
-				out.print("<span class='htc-info'>期限: " + dateStr + "</span>");
-				out.print("<span class='htc-info'>担当: " + userName + "</span>");
+				if (!dateStr.isEmpty()) {
+					out.print("<span class='htc-info'>📅 " + dateStr + "</span>");
+				}
 				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 				out.print("<div class='task-dropdown-menu'>");
 				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
@@ -243,9 +238,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		height: 100%;
 		background: #007bff;
 	}
-	.project-card .progress-text-inside {
-		display: none; /* 小さくするため非表示 */
-	}
 	.project-percent-badge {
 		font-size: 12px;
 		color: #555;
@@ -268,9 +260,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 10px 20px;
-		background: #f1f3f5;
-		border-bottom: 1px solid #ddd;
+		padding: 12px 20px;
+		background: #fff;
+		border-bottom: 1px solid #eaeaea;
 	}
 	
 	.bottom-task-header h2 {
@@ -279,36 +271,94 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		color: #333;
 	}
 	
+	/* ボタンを横並びにするエリア */
+	.bottom-header-actions {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+	}
+
+	.btn-primary-custom {
+		padding: 6px 14px;
+		cursor: pointer;
+		background: #1b6ef3;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		font-weight: bold;
+		font-size: 13px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.btn-primary-custom:hover {
+		background: #0f5bc4;
+	}
+
+	.btn-secondary-custom {
+		padding: 6px 14px;
+		cursor: pointer;
+		background: #fff;
+		color: #333;
+		border: 1px solid #dcdcdc;
+		border-radius: 6px;
+		font-weight: 500;
+		font-size: 13px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.btn-secondary-custom:hover {
+		background: #f8f9fa;
+	}
+
+	/* テーブル風の見出しラベル（タスク名・期限） */
+	.bottom-task-labels {
+		display: flex;
+		justify-content: space-between;
+		padding: 8px 25px;
+		font-size: 12px;
+		color: #6c757d;
+		background: #fff;
+	}
+
 	.bottom-task-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: 10px 20px;
+		padding: 0 20px 10px 20px;
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
 	}
 	
-	/* 横向きタスクカードのスタイル */
+	/* 横向きタスクカードのスタイル（画像合わせ） */
 	.horizontal-task-card {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		background: #fff;
-		border: 1px solid #e0e0e0;
-		border-radius: 6px;
-		padding: 8px 12px;
-		box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+		border: 1px solid #eaeaea;
+		border-radius: 8px;
+		padding: 10px 16px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
 	}
 	.htc-left {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 		flex: 1;
 		min-width: 0;
+	}
+	.task-check {
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+		accent-color: #1b6ef3;
 	}
 	.htc-name {
 		font-size: 14px;
 		color: #333;
+		font-weight: 500;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -320,27 +370,13 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	.htc-right {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 24px;
 		flex-shrink: 0;
 		position: relative;
 	}
-	.htc-badge {
-		font-size: 11px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		font-weight: bold;
-	}
-	.status-未着手 { background: #f0f0f0; color: #555; }
-	.status-進行中 { background: #cce5ff; color: #004085; }
-	.status-完了 { background: #d4edda; color: #155724; }
-	
-	.priority-低 { background: #e2e3e5; color: #383d41; }
-	.priority-中 { background: #fff3cd; color: #856404; }
-	.priority-高 { background: #f8d7da; color: #721c24; }
-	
 	.htc-info {
-		font-size: 12px;
-		color: #666;
+		font-size: 13px;
+		color: #6c757d;
 	}
 
 	/* タスク内メニューボタンの調整 */
@@ -348,9 +384,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background: none;
 		border: none;
 		cursor: pointer;
-		font-size: 16px;
-		color: #666;
+		font-size: 18px;
+		color: #6c757d;
 		padding: 0 4px;
+	}
+	.task-menu-trigger:hover {
+		color: #333;
 	}
 	.task-dropdown-menu {
 		display: none;
@@ -585,7 +624,14 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				<div class="bottom-task-section">
 					<div class="bottom-task-header">
 						<h2 id="bottomProjectTitle">タスク一覧</h2>
-						<button class="add-task-btn" onclick="addNewTask()" style="padding: 6px 14px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; font-size: 13px;">＋ タスクを追加</button>
+						<div class="bottom-header-actions">
+							<button class="btn-primary-custom" onclick="addNewTask()">+ タスクを追加</button>
+							<button class="btn-secondary-custom" onclick="alert('マイタスクに追加機能')">+ マイタスクに追加</button>
+						</div>
+					</div>
+					<div class="bottom-task-labels">
+						<span>タスク名</span>
+						<span style="margin-right: 25px;">期限</span>
 					</div>
 					<div class="bottom-task-body" id="taskContainer">
 						<!-- 非同期で横向きタスクカードが読み込まれます -->
@@ -718,7 +764,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					}
 					
 					currentRawProjectId = rawProjectId;
-					document.getElementById("bottomProjectTitle").innerText = projectName + " のタスク";
+					document.getElementById("bottomProjectTitle").innerText = projectName + "のタスク";
 					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center;">読み込み中...</div>';
 					
 					loadTasksFromDB();
@@ -878,7 +924,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				<div class="footer-member">
 					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
 					<ul class="member-submenu" id="memberSubmenu">
-						<li><a href="member/sakata/Sakata.jsp">坂田</a></li>
+						<li><a href="member/sakata/Sakata.jsp">Samata</a></li>
 						<li><a href="member/Shimizu.jsp">清水</a></li>
 						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
 						<li><a href="member/Miyazaki.jsp">宮崎</a></li>
