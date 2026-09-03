@@ -899,6 +899,19 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						const title = firstCard.getAttribute('data-name');
 						selectProject(rawId, title, firstCard);
 					}
+					
+					// ページ読み込み時に既に100%のものがあれば一番下に移動させる
+					document.querySelectorAll('.project-card').forEach(card => {
+						if (card.getAttribute("data-progress") === "100") {
+							card.classList.add("completed-project");
+							const listContainer = document.getElementById("projectList");
+							if (!card.hasAttribute("data-original-index")) {
+								const cards = Array.from(listContainer.children);
+								card.setAttribute("data-original-index", cards.indexOf(card));
+							}
+							listContainer.appendChild(card);
+						}
+					});
 				});
 
 				function addProject() {
@@ -922,7 +935,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const listContainer = document.getElementById("projectList");
 					const cards = Array.from(listContainer.getElementsByClassName("project-card"));
 
-					cards.sort((a, b) => {
+					// 100%未満のカードと、100%完了済みのカードを分離
+					const activeCards = cards.filter(c => c.getAttribute("data-progress") !== "100");
+					const completedCards = cards.filter(c => c.getAttribute("data-progress") === "100");
+
+					// 100%未満のカードだけをソート対象にする
+					activeCards.sort((a, b) => {
 						if (sortType === "newest") {
 							return parseInt(b.getAttribute("data-raw-id")) - parseInt(a.getAttribute("data-raw-id"));
 						} else if (sortType === "name") {
@@ -935,7 +953,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						return 0;
 					});
 
-					cards.forEach(card => listContainer.appendChild(card));
+					// 並び替えた未完了カードを先に追加し、そのあとに完了済みカードを必ず末尾に配置する
+					activeCards.forEach(card => listContainer.appendChild(card));
+					completedCards.forEach(card => listContainer.appendChild(card));
 				}
 
 				function selectProject(rawProjectId, projectName, cardElement) {
@@ -1159,7 +1179,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						const listContainer = document.getElementById("projectList");
 						if (percent === 100) {
 							currentProjectCard.classList.add("completed-project");
-							// 一番下に移動させる前に、元々の順番を復元できるように位置を保存しておく（初回のみ）
 							if (!currentProjectCard.hasAttribute("data-original-index")) {
 								const cards = Array.from(listContainer.children);
 								currentProjectCard.setAttribute("data-original-index", cards.indexOf(currentProjectCard));
@@ -1167,11 +1186,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							listContainer.appendChild(currentProjectCard);
 						} else {
 							currentProjectCard.classList.remove("completed-project");
-							// 100%未満に戻った場合、元の位置に戻す
 							if (currentProjectCard.hasAttribute("data-original-index")) {
 								const originalIndex = parseInt(currentProjectCard.getAttribute("data-original-index"));
 								const cards = Array.from(listContainer.children);
-								// 元の位置にあるべきカードの前に挿入する
 								let targetNode = null;
 								for (let i = 0; i < cards.length; i++) {
 									let idx = parseInt(cards[i].getAttribute("data-original-index"));
