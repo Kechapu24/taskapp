@@ -52,28 +52,43 @@ if (action != null) {
 			}
 			rs.close(); pstmt.close();
 		} 
-		// ② タスクの追加（モーダルからの入力に対応）
+		// ② タスクの追加（拡張された詳細情報に対応）
 		else if ("addTask".equals(action)) {
 			String pId = request.getParameter("projectId");
 			String tName = request.getParameter("taskName");
-			String dueDate = request.getParameter("dueDate"); // モーダルから期限を受け取る
+			String status = request.getParameter("status");
+			String priority = request.getParameter("priority");
+			String startDate = request.getParameter("startDate");
+			String dueDate = request.getParameter("dueDate");
+			String description = request.getParameter("description");
+			String userId = request.getParameter("userId");
 			
-			if (dueDate != null && !dueDate.isEmpty()) {
-				String sql = "INSERT INTO task (project_id, task_name, status, due_date) VALUES (?, ?, '未着手', CAST(? AS DATE))";
-				PreparedStatement pstmt = conn.prepareStatement(sql);
-				pstmt.setInt(1, Integer.parseInt(pId));
-				pstmt.setString(2, tName);
-				pstmt.setString(3, dueDate);
-				pstmt.executeUpdate();
-				pstmt.close();
-			} else {
-				String sql = "INSERT INTO task (project_id, task_name, status) VALUES (?, ?, '未着手')";
-				PreparedStatement pstmt = conn.prepareStatement(sql);
-				pstmt.setInt(1, Integer.parseInt(pId));
-				pstmt.setString(2, tName);
-				pstmt.executeUpdate();
-				pstmt.close();
+			String sql = "INSERT INTO task (project_id, task_name, status, priority, start_date, due_date, description) VALUES (?, ?, ?, ?, NULLIF(?, '')::DATE, NULLIF(?, '')::DATE, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setInt(1, Integer.parseInt(pId));
+			pstmt.setString(2, tName);
+			pstmt.setString(3, (status != null && !status.isEmpty()) ? status : "未着手");
+			pstmt.setString(4, (priority != null && !priority.isEmpty()) ? priority : "中");
+			pstmt.setString(5, startDate);
+			pstmt.setString(6, dueDate);
+			pstmt.setString(7, description);
+			pstmt.executeUpdate();
+			
+			// 担当者が選択されている場合は task_assignee にも登録
+			if (userId != null && !userId.isEmpty()) {
+				ResultSet generatedKeys = pstmt.getGeneratedKeys();
+				if (generatedKeys.next()) {
+					int newTaskId = generatedKeys.getInt(1);
+					String assigneeSql = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
+					PreparedStatement aStmt = conn.prepareStatement(assigneeSql);
+					aStmt.setInt(1, newTaskId);
+					aStmt.setInt(2, Integer.parseInt(userId));
+					aStmt.executeUpdate();
+					aStmt.close();
+				}
+				generatedKeys.close();
 			}
+			pstmt.close();
 		} 
 		// ③ タスクのチェック状態更新
 		else if ("toggleTask".equals(action)) {
@@ -141,7 +156,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <style>
 	.main-content { position: relative; }
 	
-	/* タスク追加モーダルのスタイル */
+	/* 拡張された大型タスク追加モーダルのスタイル */
 	.modal-overlay {
 		display: none;
 		position: fixed;
@@ -154,46 +169,70 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	}
 	.modal-content {
 		background: #fff;
-		padding: 25px;
-		border-radius: 8px;
-		width: 400px;
-		max-width: 90%;
-		box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+		padding: 30px;
+		border-radius: 10px;
+		width: 550px;
+		max-width: 95%;
+		max-height: 90vh;
+		overflow-y: auto;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 	}
 	.modal-content h3 {
 		margin-top: 0;
 		margin-bottom: 20px;
-		font-size: 1.2rem;
+		font-size: 1.3rem;
+		border-bottom: 2px solid #f0f2f5;
+		padding-bottom: 10px;
 	}
 	.modal-form-group {
-		margin-bottom: 15px;
+		margin-bottom: 16px;
 	}
 	.modal-form-group label {
 		display: block;
-		margin-bottom: 5px;
+		margin-bottom: 6px;
 		font-size: 14px;
 		font-weight: bold;
+		color: #333;
 	}
-	.modal-form-group input {
+	.modal-form-group input[type="text"],
+	.modal-form-group input[type="date"],
+	.modal-form-group select,
+	.modal-form-group textarea {
 		width: 100%;
-		padding: 8px;
+		padding: 10px;
 		box-sizing: border-box;
 		border: 1px solid #ccc;
-		border-radius: 4px;
+		border-radius: 6px;
+		font-size: 14px;
+	}
+	.modal-form-group textarea {
+		resize: vertical;
+	}
+	.modal-row {
+		display: flex;
+		gap: 15px;
+	}
+	.modal-row .modal-form-group {
+		flex: 1;
 	}
 	.modal-actions {
 		text-align: right;
-		margin-top: 20px;
+		margin-top: 25px;
+		border-top: 1px solid #f0f2f5;
+		padding-top: 15px;
 	}
 	.modal-actions button {
-		padding: 8px 16px;
+		padding: 10px 20px;
 		margin-left: 10px;
 		cursor: pointer;
 		border: none;
-		border-radius: 4px;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: bold;
 	}
 	.btn-cancel {
 		background-color: #e0e0e0;
+		color: #333;
 	}
 	.btn-cancel:hover {
 		background-color: #d0d0d0;
@@ -240,9 +279,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			<div class="content-body">
 				<div class="project-list" id="projectList">
 					<%
-					// ==========================================
-					// DBからプロジェクト一覧 ＋ 各プロジェクトのタスク進捗を取得
-					// ==========================================
 					String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 					String dbUser = "taskuser";
 					String dbPassword = "taskpass";
@@ -310,18 +346,72 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</div>
 			
-			<!-- タスク追加用モーダル -->
+			<!-- 拡張されたタスク追加モーダル -->
 			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
-					<h3>新しいタスクを追加</h3>
+					<h3>タスクの追加</h3>
+					
 					<div class="modal-form-group">
-						<label for="modalTaskName">タスク名 <span style="color:red;">*</span></label>
+						<label>タスク名 <span style="color:red;">*</span></label>
 						<input type="text" id="modalTaskName" placeholder="例：要件定義書の作成">
 					</div>
-					<div class="modal-form-group">
-						<label for="modalDueDate">期限</label>
-						<input type="date" id="modalDueDate">
+					
+					<div class="modal-row">
+						<div class="modal-form-group">
+							<label>状態</label>
+							<select id="modalStatus">
+								<option value="未着手">未着手</option>
+								<option value="進行中">進行中</option>
+								<option value="完了">完了</option>
+							</select>
+						</div>
+						<div class="modal-form-group">
+							<label>優先度</label>
+							<select id="modalPriority">
+								<option value="低">低</option>
+								<option value="中" selected>中</option>
+								<option value="高">高</option>
+							</select>
+						</div>
 					</div>
+					
+					<div class="modal-row">
+						<div class="modal-form-group">
+							<label>開始日</label>
+							<input type="date" id="modalStartDate">
+						</div>
+						<div class="modal-form-group">
+							<label>期限</label>
+							<input type="date" id="modalDueDate">
+						</div>
+					</div>
+					
+					<div class="modal-form-group">
+						<label>担当者</label>
+						<select id="modalUserId">
+							<option value="">未設定</option>
+							<%
+							try {
+								Class.forName("org.postgresql.Driver");
+								Connection userConn = DriverManager.getConnection(url, dbUser, dbPassword);
+								Statement userStmt = userConn.createStatement();
+								ResultSet userRs = userStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id");
+								while(userRs.next()) {
+							%>
+								<option value="<%= userRs.getInt("user_id") %>"><%= userRs.getString("user_name") %></option>
+							<%
+								}
+								userRs.close(); userStmt.close(); userConn.close();
+							} catch(Exception e) {}
+							%>
+						</select>
+					</div>
+					
+					<div class="modal-form-group">
+						<label>説明</label>
+						<textarea id="modalDescription" rows="4" placeholder="タスクの詳細や備考を入力..."></textarea>
+					</div>
+					
 					<div class="modal-actions">
 						<button class="btn-cancel" onclick="closeTaskModal()">キャンセル</button>
 						<button class="btn-save" onclick="submitNewTask()">保存</button>
@@ -373,10 +463,16 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					document.getElementById("taskOverlay").classList.remove("show");
 				}
 
-				// --- モーダル制御用の新機能 ---
+				// --- 拡張モーダル制御関数 ---
 				function addNewTask() {
 					document.getElementById("modalTaskName").value = "";
+					document.getElementById("modalStatus").value = "未着手";
+					document.getElementById("modalPriority").value = "中";
+					document.getElementById("modalStartDate").value = "";
 					document.getElementById("modalDueDate").value = "";
+					document.getElementById("modalUserId").value = "";
+					document.getElementById("modalDescription").value = "";
+					
 					document.getElementById("taskModal").style.display = "flex";
 				}
 
@@ -386,7 +482,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 				function submitNewTask() {
 					const taskName = document.getElementById("modalTaskName").value;
+					const status = document.getElementById("modalStatus").value;
+					const priority = document.getElementById("modalPriority").value;
+					const startDate = document.getElementById("modalStartDate").value;
 					const dueDate = document.getElementById("modalDueDate").value;
+					const userId = document.getElementById("modalUserId").value;
+					const description = document.getElementById("modalDescription").value;
 					
 					if (!taskName || taskName.trim() === "") {
 						alert("タスク名を入力してください。");
@@ -397,7 +498,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					params.append('action', 'addTask');
 					params.append('projectId', currentRawProjectId);
 					params.append('taskName', taskName);
+					params.append('status', status);
+					params.append('priority', priority);
+					params.append('startDate', startDate);
 					params.append('dueDate', dueDate);
+					params.append('userId', userId);
+					params.append('description', description);
 					
 					fetch('projects.jsp', {
 						method: 'POST',
