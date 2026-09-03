@@ -124,12 +124,11 @@ if (action != null) {
 			pstmt.executeUpdate();
 			pstmt.close();
 		}
-		// ⑤ プロジェクトの削除（紐づくタスクの割当やタスク本体も必要に応じて削除、または外部キー制約に依存）
+		// ⑤ プロジェクトの削除
 		else if ("deleteProject".equals(action)) {
 			String pId = request.getParameter("projectId");
 			int projectId = Integer.parseInt(pId);
 			
-			// 外部キー制約でタスクが残っている場合に備えて子要素から削除する
 			PreparedStatement pstmtAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id IN (SELECT task_id FROM task WHERE project_id = ?)");
 			pstmtAssignee.setInt(1, projectId);
 			pstmtAssignee.executeUpdate();
@@ -242,7 +241,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		gap: 8px;
 	}
 	
-	/* 画像に合わせたプロジェクトカードデザイン */
 	.project-card {
 		cursor: pointer;
 		transition: all 0.2s ease;
@@ -310,7 +308,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		align-items: center;
 		gap: 16px;
 		flex-shrink: 0;
-		position: relative; /* ドロップダウンメニューの基準位置 */
+		position: relative;
 	}
 	.project-percent-badge {
 		font-size: 13px;
@@ -320,7 +318,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		text-align: right;
 	}
 	
-	/* ステータスバッジ（進行中・未着手など） */
 	.status-badge {
 		font-size: 12px;
 		padding: 2px 10px;
@@ -340,7 +337,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		color: #0b7285;
 	}
 
-	/* プロジェクトカード内メニュー三点リーダー */
 	.project-menu-trigger {
 		background: none;
 		border: none;
@@ -353,7 +349,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		color: #333;
 	}
 
-	/* プロジェクト用ドロップダウンメニュー */
 	.project-dropdown-menu {
 		display: none;
 		position: absolute;
@@ -435,22 +430,15 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background: #f8f9fa;
 	}
 
-	.bottom-task-labels {
-		display: flex;
-		justify-content: space-between;
-		padding: 8px 25px;
-		font-size: 12px;
-		color: #6c757d;
-		background: #fff;
-	}
-
+	/* ▼▼▼ 横2列配置に変更したスタイル ▼▼▼ */
 	.bottom-task-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: 0 20px 10px 20px;
+		padding: 15px 20px;
 		display: flex;
-		flex-direction: column;
-		gap: 8px;
+		flex-wrap: wrap;       /* 折り返しを有効化 */
+		gap: 10px;             /* カード間の隙間 */
+		align-content: flex-start; /* 上詰めで配置 */
 	}
 	
 	.horizontal-task-card {
@@ -462,7 +450,11 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		border-radius: 8px;
 		padding: 10px 16px;
 		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+		width: calc(50% - 5px); /* 横に2列並べるための幅指定 */
+		box-sizing: border-box;  /* パディングを含めて計算 */
 	}
+	/* ▲▲▲ ----------------------- ▲▲▲ */
+
 	.htc-left {
 		display: flex;
 		align-items: center;
@@ -677,7 +669,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 			<!-- 画面上下分割コンテナ -->
 			<div class="split-container">
-				<!-- 上半分：プロジェクトの進捗一覧（フォルダアイコン・進捗バー・ステータス・並び替え機能付き） -->
+				<!-- 上半分：プロジェクトの進捗一覧 -->
 				<div class="top-project-section">
 					<div class="top-section-header">
 						<h2 class="top-section-title">プロジェクトの進捗一覧</h2>
@@ -719,7 +711,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								
 								int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
 								
-								// ステータスとバッジクラスの決定
 								String statusText = "未着手";
 								String statusClass = "not-started";
 								if (percent == 100) {
@@ -756,7 +747,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 										<div class="project-right-group">
 											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
 											<span class="status-badge <%= statusClass %>" id="badge_status_<%= domId %>"><%= statusText %></span>
-											<!-- プロジェクトの三点リーダーボタン -->
 											<button class="project-menu-trigger" onclick="event.stopPropagation(); toggleProjectMenu(this);">⋮</button>
 											<div class="project-dropdown-menu">
 												<button class="dropdown-delete-item" onclick="event.stopPropagation(); openProjectDeleteModal('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>')">削除</button>
@@ -783,12 +773,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							<button class="btn-secondary-custom" onclick="alert('マイタスクに追加機能')">+ マイタスクに追加</button>
 						</div>
 					</div>
-					<div class="bottom-task-labels">
-						<span>タスク名</span>
-						<span style="margin-right: 25px;">期限</span>
-					</div>
+					<!-- 横並びレイアウトのため項目名ラベルは非表示または削除しています -->
 					<div class="bottom-task-body" id="taskContainer">
-						<!-- 非同期で横向きタスクカードが読み込まれます -->
+						<!-- 非同期で横2列のタスクカードが読み込まれます -->
 					</div>
 				</div>
 			</div>
@@ -896,7 +883,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				let targetTaskIdForDelete = null;
 				let targetProjectIdForDelete = null;
 
-				// ページ読み込み時に一番上のプロジェクトを自動選択してタスクを表示する
 				window.addEventListener('DOMContentLoaded', () => {
 					const firstCard = document.querySelector('.project-card');
 					if (firstCard) {
@@ -922,7 +908,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					}
 				}
 
-				// プロジェクトの並び替え機能
 				function sortProjects() {
 					const sortType = document.getElementById("sortSelect").value;
 					const listContainer = document.getElementById("projectList");
@@ -930,25 +915,20 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 					cards.sort((a, b) => {
 						if (sortType === "newest") {
-							// 登録ID（新しい順）
 							return parseInt(b.getAttribute("data-raw-id")) - parseInt(a.getAttribute("data-raw-id"));
 						} else if (sortType === "name") {
-							// プロジェクト名順
 							const nameA = a.getAttribute("data-name");
 							const nameB = b.getAttribute("data-name");
 							return nameA.localeCompare(nameB, 'ja');
 						} else if (sortType === "progressDesc") {
-							// 進捗率の高い順
 							return parseInt(b.getAttribute("data-progress")) - parseInt(a.getAttribute("data-progress"));
 						}
 						return 0;
 					});
 
-					// 並び替えた順にDOMを再配置
 					cards.forEach(card => listContainer.appendChild(card));
 				}
 
-				// プロジェクトをクリックした時の処理（下半分の表示を切り替え）
 				function selectProject(rawProjectId, projectName, cardElement) {
 					document.querySelectorAll('.project-card').forEach(c => c.classList.remove('active-project'));
 					if (cardElement) {
@@ -958,7 +938,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					
 					currentRawProjectId = rawProjectId;
 					document.getElementById("bottomProjectTitle").innerText = projectName + "のタスク";
-					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center;">読み込み中...</div>';
+					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center; width: 100%;">読み込み中...</div>';
 					
 					loadTasksFromDB();
 				}
@@ -974,7 +954,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						});
 				}
 
-				// --- 拡張モーダル制御関数 ---
 				function addNewTask() {
 					if (!currentRawProjectId) {
 						alert("プロジェクトが選択されていません。");
@@ -1029,7 +1008,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					});
 				}
 				
-				// --- タスク削除確認用モーダル ---
 				function openDeleteModal(taskId, taskName) {
 					targetTaskIdForDelete = taskId;
 					document.getElementById("deleteMessage").innerText = "「" + taskName + "」を本当に削除しますか？";
@@ -1057,7 +1035,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					});
 				}
 
-				// --- プロジェクト削除確認用モーダル ---
 				function openProjectDeleteModal(projectId, projectName) {
 					targetProjectIdForDelete = projectId;
 					document.getElementById("projectDeleteMessage").innerText = "プロジェクト「" + projectName + "」および含まれるすべてのタスクを本当に削除しますか？";
@@ -1080,7 +1057,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						method: 'POST',
 						body: params
 					}).then(() => {
-						location.reload(); // 削除後はページをリロードして一覧を再構築
+						location.reload();
 					});
 				}
 				
@@ -1155,7 +1132,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						}
 						currentProjectCard.setAttribute("data-progress", percent);
 
-						// ステータスバッジの動的更新
 						if (statusBadge) {
 							statusBadge.className = "status-badge";
 							if (percent === 100) {
