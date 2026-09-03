@@ -439,10 +439,12 @@ if (action != null) {
 		<main class="main-content">
 			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
 				<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">マイタスク</h1>
-				<div class="main-search-box" style="margin: 0;">
-					<input type="text" class="search-input" placeholder="タスクを検索...">
+				<div style="display: flex; align-items: center; gap: 10px;">
+					<div class="main-search-box" style="margin: 0;">
+						<input type="text" class="search-input" placeholder="タスクを検索...">
+					</div>
+					<a href="account.jsp" class="account-button">アカウント情報</a>
 				</div>
-				<a href="account.jsp" class="account-button">アカウント情報</a>
 			</header>
 
 			<!-- メインコンテンツエリア（2カラム） -->
