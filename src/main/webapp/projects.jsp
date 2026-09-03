@@ -18,10 +18,12 @@ if (action != null) {
 		Class.forName("org.postgresql.Driver");
 		Connection conn = DriverManager.getConnection(url, user, password);
 		
-		// ① タスク一覧の取得
+		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
 		if ("getTasks".equals(action)) {
 			String pId = request.getParameter("projectId");
-			String sql = "SELECT task_id, task_name, status, TO_CHAR(due_date, 'MM/DD') as fmt_date FROM task WHERE project_id = ? ORDER BY task_id ASC";
+			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.due_date, 'MM/DD') as fmt_date, u.user_name " +
+						 "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id " +
+						 "WHERE t.project_id = ? ORDER BY t.task_id ASC";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, Integer.parseInt(pId));
 			ResultSet rs = pstmt.executeQuery();
@@ -32,28 +34,39 @@ if (action != null) {
 				int taskId = rs.getInt("task_id");
 				String taskName = rs.getString("task_name");
 				String status = rs.getString("status");
+				String priority = rs.getString("priority");
 				String dateStr = rs.getString("fmt_date");
+				String userName = rs.getString("user_name");
 				
-				if (dateStr == null) {
-					dateStr = "未設定";
-				}
+				if (dateStr == null) dateStr = "未設定";
+				if (status == null) status = "未着手";
+				if (priority == null) priority = "中";
+				if (userName == null) userName = "未設定";
 				
 				boolean isChecked = "完了".equals(status);
 				
-				out.print("<li class='task-li'>");
-				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + "> ");
-				out.print("<div class='task-content-text'>");
-				out.print("<span>" + taskName + "</span>");
-				out.print("<span class='task-date'>期限: " + dateStr + "</span>");
+				// 横並びのタスクカード
+				out.print("<div class='horizontal-task-card'>");
+				out.print("<div class='htc-left'>");
+				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + ">");
+				out.print("<span class='htc-name " + (isChecked ? "completed-task" : "") + "'>" + taskName + "</span>");
 				out.print("</div>");
+				
+				out.print("<div class='htc-right'>");
+				out.print("<span class='htc-badge status-" + status + "'>" + status + "</span>");
+				out.print("<span class='htc-badge priority-" + priority + "'>優先:" + priority + "</span>");
+				out.print("<span class='htc-info'>期限: " + dateStr + "</span>");
+				out.print("<span class='htc-info'>担当: " + userName + "</span>");
 				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 				out.print("<div class='task-dropdown-menu'>");
 				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
 				out.print("</div>");
-				out.print("</li>");
+				out.print("</div>");
+				
+				out.print("</div>");
 			}
 			if (!hasTask) {
-				out.print("<li style='padding: 15px; color: #777; text-align: center;'>タスクはまだ登録されていません。</li>");
+				out.print("<div style='padding: 20px; color: #777; text-align: center; width: 100%;'>タスクはまだ登録されていません。</div>");
 			}
 			rs.close(); pstmt.close();
 		} 
@@ -159,8 +172,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <link rel="stylesheet" href="css/style.css">
 <style>
 	.main-content { position: relative; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
-	
-	/* 上下分割レイアウト用のスタイル調整 */
 	.content-header { flex-shrink: 0; }
 	
 	.split-container {
@@ -171,14 +182,78 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background-color: #f8f9fa;
 	}
 	
-	/* 上半分：プロジェクト一覧エリア */
+	/* 上半分：プロジェクト一覧エリア（縦一列・コンパクト化） */
 	.top-project-section {
 		flex: 1;
 		overflow-y: auto;
-		padding: 15px 20px;
-		border-bottom: 2px solid #e0e0e0;
+		padding: 10px 15px;
+		border-bottom: 2px solid #ddd;
 	}
 	
+	.project-list-vertical {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	
+	/* プロジェクトカードを小さく・横幅1列に */
+	.project-card {
+		cursor: pointer;
+		transition: all 0.2s ease;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		padding: 6px 12px;
+		background: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 13px;
+	}
+	.project-card:hover {
+		border-color: #007bff;
+		background-color: #f8fbff;
+	}
+	.project-card.active-project {
+		border-color: #007bff;
+		background-color: #eef5ff;
+		font-weight: bold;
+	}
+	.project-card .project-info-block {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.project-card .project-title {
+		font-size: 13px;
+	}
+	.project-card .progress-container {
+		width: 120px;
+		margin-left: 15px;
+		margin-bottom: 0;
+	}
+	.project-card .progress-bar-bg {
+		height: 8px;
+		border-radius: 4px;
+		background: #e9ecef;
+		position: relative;
+		overflow: hidden;
+	}
+	.project-card .progress-bar-fill {
+		height: 100%;
+		background: #007bff;
+	}
+	.project-card .progress-text-inside {
+		display: none; /* 小さくするため非表示 */
+	}
+	.project-percent-badge {
+		font-size: 12px;
+		color: #555;
+		margin-left: 10px;
+		min-width: 35px;
+		text-align: right;
+	}
+
 	/* 下半分：選択されたプロジェクトのタスク表示エリア */
 	.bottom-task-section {
 		flex: 1;
@@ -193,7 +268,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 12px 20px;
+		padding: 10px 20px;
 		background: #f1f3f5;
 		border-bottom: 1px solid #ddd;
 	}
@@ -208,20 +283,102 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		flex: 1;
 		overflow-y: auto;
 		padding: 10px 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 	}
 	
-	/* プロジェクトカードにホバーやアクティブ時のスタイルを追加 */
-	.project-card {
+	/* 横向きタスクカードのスタイル */
+	.horizontal-task-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: #fff;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		padding: 8px 12px;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+	}
+	.htc-left {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex: 1;
+		min-width: 0;
+	}
+	.htc-name {
+		font-size: 14px;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.completed-task {
+		text-decoration: line-through;
+		color: #888;
+	}
+	.htc-right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-shrink: 0;
+		position: relative;
+	}
+	.htc-badge {
+		font-size: 11px;
+		padding: 2px 6px;
+		border-radius: 4px;
+		font-weight: bold;
+	}
+	.status-未着手 { background: #f0f0f0; color: #555; }
+	.status-進行中 { background: #cce5ff; color: #004085; }
+	.status-完了 { background: #d4edda; color: #155724; }
+	
+	.priority-低 { background: #e2e3e5; color: #383d41; }
+	.priority-中 { background: #fff3cd; color: #856404; }
+	.priority-高 { background: #f8d7da; color: #721c24; }
+	
+	.htc-info {
+		font-size: 12px;
+		color: #666;
+	}
+
+	/* タスク内メニューボタンの調整 */
+	.task-menu-trigger {
+		background: none;
+		border: none;
 		cursor: pointer;
-		transition: all 0.2s ease;
-		border: 2px solid transparent;
+		font-size: 16px;
+		color: #666;
+		padding: 0 4px;
 	}
-	.project-card:hover {
-		border-color: #b0d4ff;
+	.task-dropdown-menu {
+		display: none;
+		position: absolute;
+		right: 0;
+		top: 25px;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+		z-index: 100;
+		min-width: 80px;
 	}
-	.project-card.active-project {
-		border-color: #007bff;
-		background-color: #f0f7ff;
+	.task-dropdown-menu.open {
+		display: block;
+	}
+	.dropdown-delete-item {
+		width: 100%;
+		padding: 6px 12px;
+		background: none;
+		border: none;
+		color: #d9534f;
+		text-align: left;
+		cursor: pointer;
+		font-size: 13px;
+	}
+	.dropdown-delete-item:hover {
+		background: #f8d7da;
 	}
 
 	/* モーダルのスタイル共通 */
@@ -346,9 +503,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		</aside>
 
 		<main class="main-content">
-			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px; background: #fff; border-bottom: 1px solid #ddd;">
+			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
 				<div class="title-with-btn">
-					<h1 class="page-title" style="margin: 0; font-size: 1.4rem;">プロジェクト一覧</h1>
+					<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">プロジェクト一覧</h1>
 					<button class="add-project-btn" onclick="addProject()" title="プロジェクトを追加">＋</button>
 				</div>
 				<div style="display: flex; align-items: center; gap: 15px;">
@@ -361,17 +518,15 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 			<!-- 画面上下分割コンテナ -->
 			<div class="split-container">
-				<!-- 上半分：プロジェクト一覧 -->
+				<!-- 上半分：プロジェクト一覧（縦1列・コンパクト） -->
 				<div class="top-project-section">
-					<div class="project-list" id="projectList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+					<div class="project-list-vertical" id="projectList">
 						<%
 						String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 						String dbUser = "taskuser";
 						String dbPassword = "taskpass";
 						
 						boolean isFirst = true;
-						int firstProjectId = -1;
-						String firstProjectName = "";
 						
 						try {
 							Class.forName("org.postgresql.Driver");
@@ -398,24 +553,21 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
 								String domId = "db_proj_" + dbProjectId;
 								
-								// 一番最初（一番上）のプロジェクトを記録
+								boolean activeClass = isFirst;
 								if (isFirst) {
-									firstProjectId = dbProjectId;
-									firstProjectName = projectName;
 									isFirst = false;
 								}
 						%>
-								<div class="project-card <%= isFirst ? "active-project" : "" %>" id="card_<%= dbProjectId %>" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>" onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
+								<div class="project-card <%= activeClass ? "active-project" : "" %>" id="card_<%= dbProjectId %>" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>" onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
 									<div class="project-info-block">
-										<div>
-											<span class="project-title"><%= projectName %></span>
-											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
-										</div>
-										<div class="progress-container">
-											<div class="progress-bar-bg">
-												<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
-												<div class="progress-text-inside" id="text_<%= domId %>"><%= percent %>%</div>
+										<span class="project-title"><%= projectName %></span>
+										<div style="display: flex; align-items: center;">
+											<div class="progress-container">
+												<div class="progress-bar-bg">
+													<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
+												</div>
 											</div>
+											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
 										</div>
 									</div>
 								</div>
@@ -433,12 +585,10 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				<div class="bottom-task-section">
 					<div class="bottom-task-header">
 						<h2 id="bottomProjectTitle">タスク一覧</h2>
-						<button class="add-task-btn" onclick="addNewTask()" style="padding: 5px 12px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold;">＋ タスク追加</button>
+						<button class="add-task-btn" onclick="addNewTask()" style="padding: 6px 14px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; font-size: 13px;">＋ タスクを追加</button>
 					</div>
-					<div class="bottom-task-body">
-						<ul class="task-ul" id="taskUl" style="list-style: none; padding: 0; margin: 0;">
-							<!-- 非同期で読み込まれます -->
-						</ul>
+					<div class="bottom-task-body" id="taskContainer">
+						<!-- 非同期で横向きタスクカードが読み込まれます -->
 					</div>
 				</div>
 			</div>
@@ -561,7 +711,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 				// プロジェクトをクリックした時の処理（下半分の表示を切り替え）
 				function selectProject(rawProjectId, projectName, cardElement) {
-					// 既存のアクティブ表示を解除し、クリックされたカードをアクティブに
 					document.querySelectorAll('.project-card').forEach(c => c.classList.remove('active-project'));
 					if (cardElement) {
 						cardElement.classList.add('active-project');
@@ -569,8 +718,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					}
 					
 					currentRawProjectId = rawProjectId;
-					document.getElementById("bottomProjectTitle").innerText = projectName + " のタスク一覧";
-					document.getElementById("taskUl").innerHTML = '<li style="padding: 15px; color: #777; text-align: center;">読み込み中...</li>';
+					document.getElementById("bottomProjectTitle").innerText = projectName + " のタスク";
+					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center;">読み込み中...</div>';
 					
 					loadTasksFromDB();
 				}
@@ -581,7 +730,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					fetch('projects.jsp?action=getTasks&projectId=' + currentRawProjectId)
 						.then(response => response.text())
 						.then(html => {
-							document.getElementById("taskUl").innerHTML = html;
+							document.getElementById("taskContainer").innerHTML = html;
 							calculateProgressLocal();
 						});
 				}
@@ -679,7 +828,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						method: 'POST',
 						body: params
 					}).then(() => {
-						calculateProgressLocal();
+						loadTasksFromDB();
 					});
 				}
 
@@ -703,8 +852,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					if(!currentProjectCard) return;
 					
 					const projectId = currentProjectCard.getAttribute("data-id");
-					const taskUl = document.getElementById("taskUl");
-					const checkboxes = taskUl.querySelectorAll(".task-check");
+					const taskContainer = document.getElementById("taskContainer");
+					const checkboxes = taskContainer.querySelectorAll(".task-check");
 					const totalTasks = checkboxes.length;
 					
 					let checkedTasks = 0;
@@ -714,12 +863,10 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					
 					const percent = totalTasks > 0 ? Math.round((checkedTasks / totalTasks) * 100) : 0;
 					const barFill = document.getElementById('fill_' + projectId);
-					const barText = document.getElementById('text_' + projectId);
 					const badgeText = document.getElementById('badge_' + projectId);
 					
-					if (barFill && barText) {
+					if (barFill) {
 						barFill.style.width = percent + '%'; 
-						barText.innerText = percent + '%';   
 						if (badgeText) {
 							badgeText.innerText = percent + '%';
 						}
