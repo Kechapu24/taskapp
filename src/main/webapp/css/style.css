@@ -147,6 +147,7 @@
 	gap: 20px;
 	padding: 0px;
 	flex: 3;
+	min-width: 0;
 }
 
 .sidepanel {
@@ -163,6 +164,7 @@
 	background: #f4f6f8;
 	border-radius: 8px;
 	padding: 10px;
+	min-width: 0;
 }
 
 .task-column h2 {
@@ -233,14 +235,21 @@
 	background: white;
 	border-radius: 8px;
 	padding: 8px;
-	margin-bottom: 5px;
+	margin-bottom: 8px;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-	border: 3px solid transparent;
+	border-left: 3px solid transparent;
 	font-size: 13px;
+	min-width: 0;
 }
 
 .task-card h3 {
 	margin: 0%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+	flex: 1;
+	line-height: 1;
 }
 
 .priority {
@@ -266,15 +275,15 @@
 
 /* タスクカードの枠線 */
 .task-card.deadline-yellow {
-	border: 2px solid #f1c40f;
+	border-left: 3px solid #f1c40f;
 }
 
 .task-card.deadline-red {
-	border: 2px solid #e74c3c;
+	border-left: 3px solid #e74c3c;
 }
 
 .task-card.overdue {
-	border: 2px solid #6B7280;
+	border-left: 3px solid #6B7280;
 }
 
 /* タスクカード上部 */
@@ -284,10 +293,18 @@
 	align-items: center;
 }
 
+/* タスクカード下部 */
+.task-card-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 0px;
+}
+
 .task-card-actions {
 	display: flex;
 	gap: 12px;
-	margin-top: 10px;
+	margin-top: 0px;
 }
 
 .icon-button {

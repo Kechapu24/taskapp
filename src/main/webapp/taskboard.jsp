@@ -175,17 +175,20 @@
 									<%=rs.getString("project_name")%></p>
 								<p>
 									<%=rs.getString("assignees")%></p>
-								<p>
-									<%=rs.getDate("due_date")%></p>
 
-								<div class="task-card-actions">
-									<button class="icon-button"
-										onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-										💬 コメント</button>
+								<div class="task-card-bottom">
+									<p>
+										<%=rs.getDate("due_date")%></p>
 
-									<button class="icon-button"
-										onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-										📎 添付</button>
+									<div class="task-card-actions">
+										<button class="icon-button"
+											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											💬</button>
+
+										<button class="icon-button"
+											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											📎</button>
+									</div>
 								</div>
 
 								<!-- 詳細ポップアップ用の中身 -->
@@ -380,17 +383,20 @@
 									<%=rs.getString("project_name")%></p>
 								<p>
 									<%=rs.getString("assignees")%></p>
-								<p>
-									<%=rs.getDate("due_date")%></p>
 
-								<div class="task-card-actions">
-									<button class="icon-button"
-										onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-										💬 コメント</button>
+								<div class="task-card-bottom">
+									<p>
+										<%=rs.getDate("due_date")%></p>
 
-									<button class="icon-button"
-										onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-										📎 添付</button>
+									<div class="task-card-actions">
+										<button class="icon-button"
+											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											💬</button>
+
+										<button class="icon-button"
+											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											📎</button>
+									</div>
 								</div>
 
 								<!-- 詳細ポップアップ用の中身 -->
@@ -585,17 +591,20 @@
 									<%=rs.getString("project_name")%></p>
 								<p>
 									<%=rs.getString("assignees")%></p>
-								<p>
-									<%=rs.getDate("due_date")%></p>
 
-								<div class="task-card-actions">
-									<button class="icon-button"
-										onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-										💬 コメント</button>
+								<div class="task-card-bottom">
+									<p>
+										<%=rs.getDate("due_date")%></p>
 
-									<button class="icon-button"
-										onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-										📎 添付</button>
+									<div class="task-card-actions">
+										<button class="icon-button"
+											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											💬</button>
+
+										<button class="icon-button"
+											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											📎</button>
+									</div>
 								</div>
 
 								<!-- 詳細ポップアップ用の中身 -->
