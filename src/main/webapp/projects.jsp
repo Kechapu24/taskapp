@@ -262,6 +262,19 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		border-color: #1b6ef3;
 		background-color: #f4f8ff;
 	}
+	
+	/* ▼▼▼ 追加：進捗100%のプロジェクトを薄くするスタイル ▼▼▼ */
+	.project-card.completed-project {
+		opacity: 0.5;
+		background-color: #f8f9fa;
+		border-color: #e9ecef;
+	}
+	.project-card.completed-project:hover {
+		background-color: #f1f3f5;
+		border-color: #dee2e6;
+	}
+	/* ▲▲▲ ------------------------------------------------ ▲▲▲ */
+
 	.project-card .project-info-block {
 		width: 100%;
 		display: flex;
@@ -430,15 +443,14 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background: #f8f9fa;
 	}
 
-	/* ▼▼▼ 横2列配置に変更したスタイル ▼▼▼ */
 	.bottom-task-body {
 		flex: 1;
 		overflow-y: auto;
 		padding: 15px 20px;
 		display: flex;
-		flex-wrap: wrap;       /* 折り返しを有効化 */
-		gap: 10px;             /* カード間の隙間 */
-		align-content: flex-start; /* 上詰めで配置 */
+		flex-wrap: wrap;
+		gap: 10px;
+		align-content: flex-start;
 	}
 	
 	.horizontal-task-card {
@@ -450,10 +462,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		border-radius: 8px;
 		padding: 10px 16px;
 		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
-		width: calc(50% - 5px); /* 横に2列並べるための幅指定 */
-		box-sizing: border-box;  /* パディングを含めて計算 */
+		width: calc(50% - 5px);
+		box-sizing: border-box;
 	}
-	/* ▲▲▲ ----------------------- ▲▲▲ */
 
 	.htc-left {
 		display: flex;
@@ -727,7 +738,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 									isFirst = false;
 								}
 						%>
-								<div class="project-card <%= activeClass ? "active-project" : "" %>" 
+								<div class="project-card <%= activeClass ? "active-project" : "" %> <%= (percent == 100) ? "completed-project" : "" %>" 
 									 id="card_<%= dbProjectId %>" 
 									 data-id="<%= domId %>" 
 									 data-raw-id="<%= dbProjectId %>" 
@@ -773,7 +784,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							<button class="btn-secondary-custom" onclick="alert('マイタスクに追加機能')">+ マイタスクに追加</button>
 						</div>
 					</div>
-					<!-- 横並びレイアウトのため項目名ラベルは非表示または削除しています -->
 					<div class="bottom-task-body" id="taskContainer">
 						<!-- 非同期で横2列のタスクカードが読み込まれます -->
 					</div>
@@ -1144,6 +1154,15 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								statusBadge.innerText = "未着手";
 								statusBadge.classList.add("not-started");
 							}
+						}
+
+						// 100%になった場合にカードを一番下に移動して薄くする処理
+						const listContainer = document.getElementById("projectList");
+						if (percent === 100) {
+							currentProjectCard.classList.add("completed-project");
+							listContainer.appendChild(currentProjectCard);
+						} else {
+							currentProjectCard.classList.remove("completed-project");
 						}
 					}
 				}
