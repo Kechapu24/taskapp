@@ -5,18 +5,19 @@
 // 文字化け防止
 request.setCharacterEncoding("UTF-8");
 
+// データベース接続情報
+String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+String dbUser = "taskuser";
+String dbPassword = "taskpass";
+
 // ==========================================
 // 【新機能】タスクの裏側処理 (JavaScriptから非同期で呼ばれるAPI)
 // ==========================================
 String action = request.getParameter("action");
 if (action != null) {
-	String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-	String user = "taskuser";
-	String password = "taskpass";
-	
 	try {
 		Class.forName("org.postgresql.Driver");
-		Connection conn = DriverManager.getConnection(url, user, password);
+		Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
 		
 		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
 		if ("getTasks".equals(action)) {
@@ -41,7 +42,6 @@ if (action != null) {
 				
 				boolean isChecked = "完了".equals(status);
 				
-				// 横並びのタスクカード（画像に合わせたシンプルなデザイン）
 				out.print("<div class='horizontal-task-card'>");
 				out.print("<div class='htc-left'>");
 				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + ">");
@@ -137,13 +137,9 @@ if (action != null) {
 if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newProjectName") != null) {
 	String newProjectName = request.getParameter("newProjectName");
 	if (!newProjectName.trim().isEmpty()) {
-		String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-		String user = "taskuser";
-		String password = "taskpass";
-		
 		try {
 			Class.forName("org.postgresql.Driver");
-			Connection conn = DriverManager.getConnection(url, user, password);
+			Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
 			String sql = "INSERT INTO project (project_name, description) VALUES (?, ?)";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, newProjectName);
@@ -177,41 +173,75 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background-color: #f8f9fa;
 	}
 	
-	/* 上半分：プロジェクト一覧エリア（縦一列・コンパクト化） */
+	/* 上半分：プロジェクト進捗一覧エリア */
 	.top-project-section {
 		flex: 1;
 		overflow-y: auto;
-		padding: 10px 15px;
-		border-bottom: 2px solid #ddd;
+		padding: 12px 20px;
+		border-bottom: 2px solid #eaeaea;
+		background: #fff;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.top-section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 10px;
+	}
+
+	.top-section-title {
+		font-size: 1.05rem;
+		font-weight: bold;
+		color: #333;
+		margin: 0;
+	}
+
+	.sort-container {
+		font-size: 13px;
+		color: #555;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.sort-select {
+		padding: 4px 8px;
+		border: 1px solid #dcdcdc;
+		border-radius: 4px;
+		background: #fff;
+		font-size: 13px;
+		cursor: pointer;
 	}
 	
 	.project-list-vertical {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: 8px;
 	}
 	
-	/* プロジェクトカードを小さく・横幅1列に */
+	/* 画像に合わせたプロジェクトカードデザイン */
 	.project-card {
 		cursor: pointer;
 		transition: all 0.2s ease;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		padding: 6px 12px;
+		border: 1px solid #eaeaea;
+		border-radius: 8px;
+		padding: 10px 16px;
 		background: #fff;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		font-size: 13px;
+		font-size: 14px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
 	}
 	.project-card:hover {
-		border-color: #007bff;
-		background-color: #f8fbff;
+		border-color: #bce8ff;
+		background-color: #fcfdff;
 	}
 	.project-card.active-project {
-		border-color: #007bff;
-		background-color: #eef5ff;
-		font-weight: bold;
+		border-color: #1b6ef3;
+		background-color: #f4f8ff;
 	}
 	.project-card .project-info-block {
 		width: 100%;
@@ -219,13 +249,28 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		align-items: center;
 		justify-content: space-between;
 	}
+	.project-left-group {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 180px;
+	}
+	.project-folder-icon {
+		color: #6c757d;
+		font-size: 16px;
+	}
 	.project-card .project-title {
-		font-size: 13px;
+		font-size: 14px;
+		font-weight: 500;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.project-card .progress-container {
-		width: 120px;
-		margin-left: 15px;
-		margin-bottom: 0;
+		flex: 1;
+		max-width: 350px;
+		margin: 0 20px;
 	}
 	.project-card .progress-bar-bg {
 		height: 8px;
@@ -236,14 +281,54 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	}
 	.project-card .progress-bar-fill {
 		height: 100%;
-		background: #007bff;
+		background: #1b6ef3;
+		border-radius: 4px;
+	}
+	.project-right-group {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-shrink: 0;
 	}
 	.project-percent-badge {
-		font-size: 12px;
-		color: #555;
-		margin-left: 10px;
-		min-width: 35px;
+		font-size: 13px;
+		font-weight: 600;
+		color: #333;
+		min-width: 38px;
 		text-align: right;
+	}
+	
+	/* ステータスバッジ（進行中・未着手など） */
+	.status-badge {
+		font-size: 12px;
+		padding: 2px 10px;
+		border-radius: 12px;
+		font-weight: 500;
+	}
+	.status-badge.in-progress {
+		background: #e6f0ff;
+		color: #1b6ef3;
+	}
+	.status-badge.not-started {
+		background: #f1f3f5;
+		color: #6c757d;
+	}
+	.status-badge.completed {
+		background: #e3fafc;
+		color: #0b7285;
+	}
+
+	/* プロジェクトカード内メニュー三点リーダー */
+	.project-menu-trigger {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 18px;
+		color: #6c757d;
+		padding: 0 4px;
+	}
+	.project-menu-trigger:hover {
+		color: #333;
 	}
 
 	/* 下半分：選択されたプロジェクトのタスク表示エリア */
@@ -271,7 +356,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		color: #333;
 	}
 	
-	/* ボタンを横並びにするエリア */
 	.bottom-header-actions {
 		display: flex;
 		gap: 10px;
@@ -312,7 +396,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background: #f8f9fa;
 	}
 
-	/* テーブル風の見出しラベル（タスク名・期限） */
 	.bottom-task-labels {
 		display: flex;
 		justify-content: space-between;
@@ -331,7 +414,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		gap: 8px;
 	}
 	
-	/* 横向きタスクカードのスタイル（画像合わせ） */
 	.horizontal-task-card {
 		display: flex;
 		align-items: center;
@@ -379,7 +461,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		color: #6c757d;
 	}
 
-	/* タスク内メニューボタンの調整 */
 	.task-menu-trigger {
 		background: none;
 		border: none;
@@ -420,7 +501,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background: #f8d7da;
 	}
 
-	/* モーダルのスタイル共通 */
+	/* モーダル共通 */
 	.modal-overlay {
 		display: none;
 		position: fixed;
@@ -557,27 +638,36 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 			<!-- 画面上下分割コンテナ -->
 			<div class="split-container">
-				<!-- 上半分：プロジェクト一覧（縦1列・コンパクト） -->
+				<!-- 上半分：プロジェクトの進捗一覧（フォルダアイコン・進捗バー・ステータス・並び替え機能付き） -->
 				<div class="top-project-section">
+					<div class="top-section-header">
+						<h2 class="top-section-title">プロジェクトの進捗一覧</h2>
+						<div class="sort-container">
+							<span>並び替え：</span>
+							<select class="sort-select" id="sortSelect" onchange="sortProjects()">
+								<option value="newest">更新日 (新しい順)</option>
+								<option value="name">プロジェクト名</option>
+								<option value="progressDesc">進捗率の高い順</option>
+							</select>
+						</div>
+					</div>
+
 					<div class="project-list-vertical" id="projectList">
 						<%
-						String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-						String dbUser = "taskuser";
-						String dbPassword = "taskpass";
-						
 						boolean isFirst = true;
 						
 						try {
 							Class.forName("org.postgresql.Driver");
 							Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
 							
+							// 更新日やID順などで取得
 							String sqlSelect = 
-								"SELECT p.project_id, p.project_name, " +
+								"SELECT p.project_id, p.project_name, p.updated_at, " +
 								"COUNT(t.task_id) AS total_tasks, " +
 								"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
 								"FROM project p " +
 								"LEFT JOIN task t ON p.project_id = t.project_id " +
-								"GROUP BY p.project_id, p.project_name " +
+								"GROUP BY p.project_id, p.project_name, p.updated_at " +
 								"ORDER BY p.project_id DESC";
 								
 							Statement stmtSelect = connSelect.createStatement();
@@ -590,23 +680,45 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								int checkedTasks = rs.getInt("checked_tasks");
 								
 								int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
-								String domId = "db_proj_" + dbProjectId;
 								
+								// ステータスとバッジクラスの決定
+								String statusText = "未着手";
+								String statusClass = "not-started";
+								if (percent == 100) {
+									statusText = "完了";
+									statusClass = "completed";
+								} else if (percent > 0) {
+									statusText = "進行中";
+									statusClass = "in-progress";
+								}
+								
+								String domId = "db_proj_" + dbProjectId;
 								boolean activeClass = isFirst;
 								if (isFirst) {
 									isFirst = false;
 								}
 						%>
-								<div class="project-card <%= activeClass ? "active-project" : "" %>" id="card_<%= dbProjectId %>" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>" onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
+								<div class="project-card <%= activeClass ? "active-project" : "" %>" 
+									 id="card_<%= dbProjectId %>" 
+									 data-id="<%= domId %>" 
+									 data-raw-id="<%= dbProjectId %>" 
+									 data-name="<%= projectName %>"
+									 data-progress="<%= percent %>"
+									 onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
 									<div class="project-info-block">
-										<span class="project-title"><%= projectName %></span>
-										<div style="display: flex; align-items: center;">
-											<div class="progress-container">
-												<div class="progress-bar-bg">
-													<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
-												</div>
+										<div class="project-left-group">
+											<span class="project-folder-icon">📁</span>
+											<span class="project-title"><%= projectName %></span>
+										</div>
+										<div class="progress-container">
+											<div class="progress-bar-bg">
+												<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
 											</div>
+										</div>
+										<div class="project-right-group">
 											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
+											<span class="status-badge <%= statusClass %>" id="badge_status_<%= domId %>"><%= statusText %></span>
+											<button class="project-menu-trigger" onclick="event.stopPropagation(); alert('プロジェクト設定');">⋮</button>
 										</div>
 									</div>
 								</div>
@@ -734,7 +846,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const firstCard = document.querySelector('.project-card');
 					if (firstCard) {
 						const rawId = firstCard.getAttribute('data-raw-id');
-						const title = firstCard.querySelector('.project-title').innerText;
+						const title = firstCard.getAttribute('data-name');
 						selectProject(rawId, title, firstCard);
 					}
 				});
@@ -753,6 +865,32 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						document.body.appendChild(form);
 						form.submit();
 					}
+				}
+
+				// プロジェクトの並び替え機能
+				function sortProjects() {
+					const sortType = document.getElementById("sortSelect").value;
+					const listContainer = document.getElementById("projectList");
+					const cards = Array.from(listContainer.getElementsByClassName("project-card"));
+
+					cards.sort((a, b) => {
+						if (sortType === "newest") {
+							// 登録ID（新しい順）
+							return parseInt(b.getAttribute("data-raw-id")) - parseInt(a.getAttribute("data-raw-id"));
+						} else if (sortType === "name") {
+							// プロジェクト名順
+							const nameA = a.getAttribute("data-name");
+							const nameB = b.getAttribute("data-name");
+							return nameA.localeCompare(nameB, 'ja');
+						} else if (sortType === "progressDesc") {
+							// 進捗率の高い順
+							return parseInt(b.getAttribute("data-progress")) - parseInt(a.getAttribute("data-progress"));
+						}
+						return 0;
+					});
+
+					// 並び替えた順にDOMを再配置
+					cards.forEach(card => listContainer.appendChild(card));
 				}
 
 				// プロジェクトをクリックした時の処理（下半分の表示を切り替え）
@@ -910,11 +1048,28 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const percent = totalTasks > 0 ? Math.round((checkedTasks / totalTasks) * 100) : 0;
 					const barFill = document.getElementById('fill_' + projectId);
 					const badgeText = document.getElementById('badge_' + projectId);
+					const statusBadge = document.getElementById('badge_status_' + projectId);
 					
 					if (barFill) {
 						barFill.style.width = percent + '%'; 
 						if (badgeText) {
 							badgeText.innerText = percent + '%';
+						}
+						currentProjectCard.setAttribute("data-progress", percent);
+
+						// ステータスバッジの動的更新
+						if (statusBadge) {
+							statusBadge.className = "status-badge";
+							if (percent === 100) {
+								statusBadge.innerText = "完了";
+								statusBadge.classList.add("completed");
+							} else if (percent > 0) {
+								statusBadge.innerText = "進行中";
+								statusBadge.classList.add("in-progress");
+							} else {
+								statusBadge.innerText = "未着手";
+								statusBadge.classList.add("not-started");
+							}
 						}
 					}
 				}
