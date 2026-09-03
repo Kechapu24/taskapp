@@ -749,7 +749,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								int totalTasks = rs.getInt("total_tasks");
 								int checkedTasks = rs.getInt("checked_tasks");
 								
-								// Math.roundに合わせるため、SQL側でもROUNDまたは適切な演算にする（Java側と統一するため浮動小数点演算からroundに寄せる）
+								// 一の位まで正確に反映させるため、double型にキャストしてMath.roundを使用
 								int percent = (totalTasks > 0) ? (int)Math.round(((double)checkedTasks / totalTasks) * 100.0) : 0;
 								
 								String statusText = "未着手";
