@@ -660,14 +660,14 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							Class.forName("org.postgresql.Driver");
 							Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
 							
-							// 更新日やID順などで取得
+							// projectテーブルに updated_at カラムがないため、project_id 順（新着順）で取得するように修正
 							String sqlSelect = 
-								"SELECT p.project_id, p.project_name, p.updated_at, " +
+								"SELECT p.project_id, p.project_name, " +
 								"COUNT(t.task_id) AS total_tasks, " +
 								"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
 								"FROM project p " +
 								"LEFT JOIN task t ON p.project_id = t.project_id " +
-								"GROUP BY p.project_id, p.project_name, p.updated_at " +
+								"GROUP BY p.project_id, p.project_name " +
 								"ORDER BY p.project_id DESC";
 								
 							Statement stmtSelect = connSelect.createStatement();
