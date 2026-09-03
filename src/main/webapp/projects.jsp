@@ -26,7 +26,9 @@ if (action != null) {
 			pstmt.setInt(1, Integer.parseInt(pId));
 			ResultSet rs = pstmt.executeQuery();
 			
+			boolean hasTask = false;
 			while (rs.next()) {
+				hasTask = true;
 				int taskId = rs.getInt("task_id");
 				String taskName = rs.getString("task_name");
 				String status = rs.getString("status");
@@ -46,14 +48,16 @@ if (action != null) {
 				out.print("</div>");
 				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 				out.print("<div class='task-dropdown-menu'>");
-				// 削除ボタンをクリックしたときに、タスク名も一緒にモーダルへ渡すように修正
 				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
 				out.print("</div>");
 				out.print("</li>");
 			}
+			if (!hasTask) {
+				out.print("<li style='padding: 15px; color: #777; text-align: center;'>タスクはまだ登録されていません。</li>");
+			}
 			rs.close(); pstmt.close();
 		} 
-		// ② タスクの追加（拡張された詳細情報に対応）
+		// ② タスクの追加
 		else if ("addTask".equals(action)) {
 			String pId = request.getParameter("projectId");
 			String tName = request.getParameter("taskName");
@@ -154,8 +158,72 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <title>タスク管理アプリ - プロジェクト一覧</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
-	.main-content { position: relative; }
+	.main-content { position: relative; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
 	
+	/* 上下分割レイアウト用のスタイル調整 */
+	.content-header { flex-shrink: 0; }
+	
+	.split-container {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		overflow: hidden;
+		background-color: #f8f9fa;
+	}
+	
+	/* 上半分：プロジェクト一覧エリア */
+	.top-project-section {
+		flex: 1;
+		overflow-y: auto;
+		padding: 15px 20px;
+		border-bottom: 2px solid #e0e0e0;
+	}
+	
+	/* 下半分：選択されたプロジェクトのタスク表示エリア */
+	.bottom-task-section {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		background: #fff;
+		overflow: hidden;
+		box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+	}
+	
+	.bottom-task-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 20px;
+		background: #f1f3f5;
+		border-bottom: 1px solid #ddd;
+	}
+	
+	.bottom-task-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+		color: #333;
+	}
+	
+	.bottom-task-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 10px 20px;
+	}
+	
+	/* プロジェクトカードにホバーやアクティブ時のスタイルを追加 */
+	.project-card {
+		cursor: pointer;
+		transition: all 0.2s ease;
+		border: 2px solid transparent;
+	}
+	.project-card:hover {
+		border-color: #b0d4ff;
+	}
+	.project-card.active-project {
+		border-color: #007bff;
+		background-color: #f0f7ff;
+	}
+
 	/* モーダルのスタイル共通 */
 	.modal-overlay {
 		display: none;
@@ -244,7 +312,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	.btn-save:hover {
 		background-color: #0056b3;
 	}
-	/* 削除確認モーダル専用のスタイル */
 	.delete-modal-content {
 		width: 400px;
 		text-align: center;
@@ -279,9 +346,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		</aside>
 
 		<main class="main-content">
-			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px; background: #fff; border-bottom: 1px solid #ddd;">
 				<div class="title-with-btn">
-					<h1 class="page-title" style="margin: 0;">プロジェクト一覧</h1>
+					<h1 class="page-title" style="margin: 0; font-size: 1.4rem;">プロジェクト一覧</h1>
 					<button class="add-project-btn" onclick="addProject()" title="プロジェクトを追加">＋</button>
 				</div>
 				<div style="display: flex; align-items: center; gap: 15px;">
@@ -292,76 +359,91 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</header>
 
-			<div class="content-body">
-				<div class="project-list" id="projectList">
-					<%
-					String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-					String dbUser = "taskuser";
-					String dbPassword = "taskpass";
-					
-					try {
-						Class.forName("org.postgresql.Driver");
-						Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
+			<!-- 画面上下分割コンテナ -->
+			<div class="split-container">
+				<!-- 上半分：プロジェクト一覧 -->
+				<div class="top-project-section">
+					<div class="project-list" id="projectList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+						<%
+						String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+						String dbUser = "taskuser";
+						String dbPassword = "taskpass";
 						
-						String sqlSelect = 
-							"SELECT p.project_id, p.project_name, " +
-							"COUNT(t.task_id) AS total_tasks, " +
-							"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
-							"FROM project p " +
-							"LEFT JOIN task t ON p.project_id = t.project_id " +
-							"GROUP BY p.project_id, p.project_name " +
-							"ORDER BY p.project_id DESC";
+						boolean isFirst = true;
+						int firstProjectId = -1;
+						String firstProjectName = "";
+						
+						try {
+							Class.forName("org.postgresql.Driver");
+							Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
 							
-						Statement stmtSelect = connSelect.createStatement();
-						ResultSet rs = stmtSelect.executeQuery(sqlSelect);
+							String sqlSelect = 
+								"SELECT p.project_id, p.project_name, " +
+								"COUNT(t.task_id) AS total_tasks, " +
+								"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
+								"FROM project p " +
+								"LEFT JOIN task t ON p.project_id = t.project_id " +
+								"GROUP BY p.project_id, p.project_name " +
+								"ORDER BY p.project_id DESC";
+								
+							Statement stmtSelect = connSelect.createStatement();
+							ResultSet rs = stmtSelect.executeQuery(sqlSelect);
 
-						while(rs.next()) {
-							int dbProjectId = rs.getInt("project_id");
-							String projectName = rs.getString("project_name");
-							int totalTasks = rs.getInt("total_tasks");
-							int checkedTasks = rs.getInt("checked_tasks");
-							
-							int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
-							String domId = "db_proj_" + dbProjectId;
-					%>
-							<div class="project-card" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>">
-								<div class="project-info-block">
-									<div>
-										<span class="project-title"><%= projectName %></span>
-										<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
-									</div>
-									<div class="progress-container">
-										<div class="progress-bar-bg">
-											<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
-											<div class="progress-text-inside" id="text_<%= domId %>"><%= percent %>%</div>
+							while(rs.next()) {
+								int dbProjectId = rs.getInt("project_id");
+								String projectName = rs.getString("project_name");
+								int totalTasks = rs.getInt("total_tasks");
+								int checkedTasks = rs.getInt("checked_tasks");
+								
+								int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
+								String domId = "db_proj_" + dbProjectId;
+								
+								// 一番最初（一番上）のプロジェクトを記録
+								if (isFirst) {
+									firstProjectId = dbProjectId;
+									firstProjectName = projectName;
+									isFirst = false;
+								}
+						%>
+								<div class="project-card <%= isFirst ? "active-project" : "" %>" id="card_<%= dbProjectId %>" data-id="<%= domId %>" data-raw-id="<%= dbProjectId %>" onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
+									<div class="project-info-block">
+										<div>
+											<span class="project-title"><%= projectName %></span>
+											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
+										</div>
+										<div class="progress-container">
+											<div class="progress-bar-bg">
+												<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
+												<div class="progress-text-inside" id="text_<%= domId %>"><%= percent %>%</div>
+											</div>
 										</div>
 									</div>
 								</div>
-								<button class="open-box-btn" onclick="showPanel('<%= projectName %>', '<%= domId %>', '<%= dbProjectId %>')">＋</button>
-							</div>
-					<%
+						<%
+							}
+							rs.close(); stmtSelect.close(); connSelect.close();
+						} catch (Exception e) {
+							out.println("<p style='color:red; font-weight:bold;'>DBエラー：" + e.getMessage() + "</p>");
 						}
-						rs.close(); stmtSelect.close(); connSelect.close();
-					} catch (Exception e) {
-						out.println("<p style='color:red; font-weight:bold;'>DBエラー：" + e.getMessage() + "</p>");
-					}
-					%>
-				</div>
-			</div>
-			
-			<div class="task-panel-overlay" id="taskOverlay">
-				<div class="task-panel">
-					<div class="panel-header">
-						<button class="close-arrow-btn" onclick="hidePanel()">←</button>
-						<h2 class="panel-title" id="panelProjectTitle">プロジェクト名</h2>
-						<button class="add-task-btn" onclick="addNewTask()">＋</button>
+						%>
 					</div>
-					<div class="panel-body">
-						<ul class="task-ul" id="taskUl"></ul>
+				</div>
+
+				<!-- 下半分：選択されたプロジェクトのタスク一覧表示エリア -->
+				<div class="bottom-task-section">
+					<div class="bottom-task-header">
+						<h2 id="bottomProjectTitle">タスク一覧</h2>
+						<button class="add-task-btn" onclick="addNewTask()" style="padding: 5px 12px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold;">＋ タスク追加</button>
+					</div>
+					<div class="bottom-task-body">
+						<ul class="task-ul" id="taskUl" style="list-style: none; padding: 0; margin: 0;">
+							<!-- 非同期で読み込まれます -->
+						</ul>
 					</div>
 				</div>
 			</div>
 			
+			<!-- タスク追加用モーダル -->
 			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
 					<h3>タスクの追加</h3>
@@ -434,6 +516,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</div>
 
+			<!-- タスク削除確認用モーダル -->
 			<div id="deleteModal" class="modal-overlay">
 				<div class="modal-content delete-modal-content">
 					<h3>タスクの削除</h3>
@@ -448,7 +531,17 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			<script>
 				let currentProjectCard = null;
 				let currentRawProjectId = null;
-				let targetTaskIdForDelete = null; // 削除対象のタスクIDを保持する変数
+				let targetTaskIdForDelete = null;
+
+				// ページ読み込み時に一番上のプロジェクトを自動選択してタスクを表示する
+				window.addEventListener('DOMContentLoaded', () => {
+					const firstCard = document.querySelector('.project-card');
+					if (firstCard) {
+						const rawId = firstCard.getAttribute('data-raw-id');
+						const title = firstCard.querySelector('.project-title').innerText;
+						selectProject(rawId, title, firstCard);
+					}
+				});
 
 				function addProject() {
 					const projectName = prompt("新しいプロジェクト名を入力してください：");
@@ -466,18 +559,25 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					}
 				}
 
-				function showPanel(projectName, domId, rawProjectId) {
-					currentProjectCard = document.querySelector('[data-id="' + domId + '"]');
-					currentRawProjectId = rawProjectId;
+				// プロジェクトをクリックした時の処理（下半分の表示を切り替え）
+				function selectProject(rawProjectId, projectName, cardElement) {
+					// 既存のアクティブ表示を解除し、クリックされたカードをアクティブに
+					document.querySelectorAll('.project-card').forEach(c => c.classList.remove('active-project'));
+					if (cardElement) {
+						cardElement.classList.add('active-project');
+						currentProjectCard = cardElement;
+					}
 					
-					document.getElementById("panelProjectTitle").innerText = projectName;
-					document.getElementById("taskUl").innerHTML = '<li>読み込み中...</li>';
-					document.getElementById("taskOverlay").classList.add("show");
+					currentRawProjectId = rawProjectId;
+					document.getElementById("bottomProjectTitle").innerText = projectName + " のタスク一覧";
+					document.getElementById("taskUl").innerHTML = '<li style="padding: 15px; color: #777; text-align: center;">読み込み中...</li>';
 					
 					loadTasksFromDB();
 				}
 
 				function loadTasksFromDB() {
+					if (!currentRawProjectId) return;
+					
 					fetch('projects.jsp?action=getTasks&projectId=' + currentRawProjectId)
 						.then(response => response.text())
 						.then(html => {
@@ -486,12 +586,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						});
 				}
 
-				function hidePanel() {
-					document.getElementById("taskOverlay").classList.remove("show");
-				}
-
 				// --- 拡張モーダル制御関数 ---
 				function addNewTask() {
+					if (!currentRawProjectId) {
+						alert("プロジェクトが選択されていません。");
+						return;
+					}
 					document.getElementById("modalTaskName").value = "";
 					document.getElementById("modalStatus").value = "未着手";
 					document.getElementById("modalPriority").value = "中";
@@ -568,7 +668,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						loadTasksFromDB();
 					});
 				}
-				// ------------------------------
 				
 				function toggleTask(taskId, isChecked, projectId) {
 					const params = new URLSearchParams();
@@ -628,7 +727,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				}
 			</script>
 			
-			<footer class="footer">
+			<footer class="footer" style="flex-shrink: 0;">
 				<div class="footer-member">
 					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
 					<ul class="member-submenu" id="memberSubmenu">
