@@ -263,7 +263,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background-color: #f4f8ff;
 	}
 	
-	/* ▼▼▼ 追加：進捗100%のプロジェクトを薄くするスタイル ▼▼▼ */
+	/* 進捗100%のプロジェクトを薄くするスタイル */
 	.project-card.completed-project {
 		opacity: 0.5;
 		background-color: #f8f9fa;
@@ -273,7 +273,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		background-color: #f1f3f5;
 		border-color: #dee2e6;
 	}
-	/* ▲▲▲ ------------------------------------------------ ▲▲▲ */
 
 	.project-card .project-info-block {
 		width: 100%;
@@ -1156,13 +1155,37 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							}
 						}
 
-						// 100%になった場合にカードを一番下に移動して薄くする処理
+						// 100%になった時の移動＆透過処理、および減ったときの復元処理
 						const listContainer = document.getElementById("projectList");
 						if (percent === 100) {
 							currentProjectCard.classList.add("completed-project");
+							// 一番下に移動させる前に、元々の順番を復元できるように位置を保存しておく（初回のみ）
+							if (!currentProjectCard.hasAttribute("data-original-index")) {
+								const cards = Array.from(listContainer.children);
+								currentProjectCard.setAttribute("data-original-index", cards.indexOf(currentProjectCard));
+							}
 							listContainer.appendChild(currentProjectCard);
 						} else {
 							currentProjectCard.classList.remove("completed-project");
+							// 100%未満に戻った場合、元の位置に戻す
+							if (currentProjectCard.hasAttribute("data-original-index")) {
+								const originalIndex = parseInt(currentProjectCard.getAttribute("data-original-index"));
+								const cards = Array.from(listContainer.children);
+								// 元の位置にあるべきカードの前に挿入する
+								let targetNode = null;
+								for (let i = 0; i < cards.length; i++) {
+									let idx = parseInt(cards[i].getAttribute("data-original-index"));
+									if (!isNaN(idx) && idx > originalIndex) {
+										targetNode = cards[i];
+										break;
+									}
+								}
+								if (targetNode) {
+									listContainer.insertBefore(currentProjectCard, targetNode);
+								} else {
+									listContainer.appendChild(currentProjectCard);
+								}
+							}
 						}
 					}
 				}
