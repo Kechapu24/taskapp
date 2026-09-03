@@ -22,8 +22,8 @@ if (action != null) {
 		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
 		if ("getTasks".equals(action)) {
 			String pId = request.getParameter("projectId");
-			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.due_date, 'YYYY/MM/DD') as fmt_date, u.user_name " +
-						 "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id " +
+			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.start_date, 'YYYY-MM-DD') as fmt_start_date, TO_CHAR(t.due_date, 'YYYY-MM-DD') as fmt_due_date, t.description, ta.user_id " +
+						 "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
 						 "WHERE t.project_id = ? ORDER BY t.task_id ASC";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, Integer.parseInt(pId));
@@ -35,12 +35,28 @@ if (action != null) {
 				int taskId = rs.getInt("task_id");
 				String taskName = rs.getString("task_name");
 				String status = rs.getString("status");
-				String dateStr = rs.getString("fmt_date");
+				String priority = rs.getString("priority");
+				String startDate = rs.getString("fmt_start_date");
+				String dueDate = rs.getString("fmt_due_date");
+				String description = rs.getString("description");
+				int assigneeUserId = rs.getInt("user_id");
 				
-				if (dateStr == null) dateStr = "";
+				if (startDate == null) startDate = "";
+				if (dueDate == null) dueDate = "";
+				if (description == null) description = "";
 				if (status == null) status = "未着手";
+				if (priority == null) priority = "中";
+				
+				String dateStr = dueDate;
+				if (!dateStr.isEmpty()) {
+					dateStr = dateStr.replace("-", "/");
+				}
 				
 				boolean isChecked = "完了".equals(status);
+				
+				// 編集用にエスケープ処理
+				String escapedTaskName = taskName.replace("\"", "&quot;").replace("'", "\\'");
+				String escapedDesc = description.replace("\"", "&quot;").replace("\n", "\\n").replace("\r", "");
 				
 				out.print("<div class='horizontal-task-card'>");
 				out.print("<div class='htc-left'>");
@@ -54,6 +70,7 @@ if (action != null) {
 				}
 				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 				out.print("<div class='task-dropdown-menu'>");
+				out.print("<button class='dropdown-edit-item' onclick='openEditTaskModal(" + taskId + ", \"" + escapedTaskName + "\", \"" + status + "\", \"" + priority + "\", \"" + startDate + "\", \"" + dueDate + "\", \"" + assigneeUserId + "\", \"" + escapedDesc + "\")'>編集</button>");
 				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
 				out.print("</div>");
 				out.print("</div>");
@@ -102,6 +119,46 @@ if (action != null) {
 			}
 			pstmt.close();
 		} 
+		// ②-2 タスクの編集更新
+		else if ("editTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			String tName = request.getParameter("taskName");
+			String status = request.getParameter("status");
+			String priority = request.getParameter("priority");
+			String startDate = request.getParameter("startDate");
+			String dueDate = request.getParameter("dueDate");
+			String description = request.getParameter("description");
+			String userId = request.getParameter("userId");
+			
+			int taskIdInt = Integer.parseInt(tId);
+			
+			String sql = "UPDATE task SET task_name = ?, status = ?, priority = ?, start_date = NULLIF(?, '')::DATE, due_date = NULLIF(?, '')::DATE, description = ? WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, tName);
+			pstmt.setString(2, (status != null && !status.isEmpty()) ? status : "未着手");
+			pstmt.setString(3, (priority != null && !priority.isEmpty()) ? priority : "中");
+			pstmt.setString(4, startDate);
+			pstmt.setString(5, dueDate);
+			pstmt.setString(6, description);
+			pstmt.setInt(7, taskIdInt);
+			pstmt.executeUpdate();
+			pstmt.close();
+			
+			// 担当者の更新 (一度削除して再登録)
+			PreparedStatement delAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id = ?");
+			delAssignee.setInt(1, taskIdInt);
+			delAssignee.executeUpdate();
+			delAssignee.close();
+			
+			if (userId != null && !userId.isEmpty()) {
+				String insAssignee = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
+				PreparedStatement insStmt = conn.prepareStatement(insAssignee);
+				insStmt.setInt(1, taskIdInt);
+				insStmt.setInt(2, Integer.parseInt(userId));
+				insStmt.executeUpdate();
+				insStmt.close();
+			}
+		}
 		// ③ タスクのチェック状態更新
 		else if ("toggleTask".equals(action)) {
 			String tId = request.getParameter("taskId");
@@ -118,9 +175,16 @@ if (action != null) {
 		// ④ タスクの削除
 		else if ("deleteTask".equals(action)) {
 			String tId = request.getParameter("taskId");
+			int taskIdInt = Integer.parseInt(tId);
+			
+			PreparedStatement delAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id = ?");
+			delAssignee.setInt(1, taskIdInt);
+			delAssignee.executeUpdate();
+			delAssignee.close();
+
 			String sql = "DELETE FROM task WHERE task_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, Integer.parseInt(tId));
+			pstmt.setInt(1, taskIdInt);
 			pstmt.executeUpdate();
 			pstmt.close();
 		}
@@ -553,10 +617,24 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		border-radius: 4px;
 		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 		z-index: 100;
-		min-width: 80px;
+		min-width: 90px;
 	}
 	.task-dropdown-menu.open {
 		display: block;
+	}
+	.dropdown-edit-item {
+		width: 100%;
+		padding: 6px 12px;
+		background: none;
+		border: none;
+		color: #333;
+		text-align: left;
+		cursor: pointer;
+		font-size: 13px;
+		border-bottom: 1px solid #f0f2f5;
+	}
+	.dropdown-edit-item:hover {
+		background: #f8f9fa;
 	}
 	.dropdown-delete-item {
 		width: 100%;
@@ -749,7 +827,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 								int totalTasks = rs.getInt("total_tasks");
 								int checkedTasks = rs.getInt("checked_tasks");
 								
-								// 一の位まで正確に反映させるため、double型にキャストしてMath.roundを使用
 								int percent = (totalTasks > 0) ? (int)Math.round(((double)checkedTasks / totalTasks) * 100.0) : 0;
 								
 								String statusText = "未着手";
@@ -840,10 +917,10 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</div>
 
-			<!-- タスク追加用モーダル -->
+			<!-- タスク追加・編集用モーダル -->
 			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
-					<h3>タスクの追加</h3>
+					<h3 id="taskModalTitle">タスクの追加</h3>
 					
 					<div class="modal-form-group">
 						<label>タスク名 <span style="color:red;">*</span></label>
@@ -908,7 +985,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					
 					<div class="modal-actions">
 						<button class="btn-cancel" onclick="closeTaskModal()">キャンセル</button>
-						<button class="btn-save" onclick="submitNewTask()">保存</button>
+						<button class="btn-save" onclick="submitTaskModal()">保存</button>
 					</div>
 				</div>
 			</div>
@@ -942,6 +1019,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				let currentRawProjectId = null;
 				let targetTaskIdForDelete = null;
 				let targetProjectIdForDelete = null;
+				let taskModalMode = 'add'; // 'add' または 'edit'
+				let targetTaskIdForEdit = null;
 
 				// 上下リサイズ機能
 				const splitter = document.getElementById('splitter');
@@ -1079,6 +1158,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						alert("プロジェクトが選択されていません。");
 						return;
 					}
+					taskModalMode = 'add';
+					targetTaskIdForEdit = null;
+					document.getElementById("taskModalTitle").innerText = "タスクの追加";
 					document.getElementById("modalTaskName").value = "";
 					document.getElementById("modalStatus").value = "未着手";
 					document.getElementById("modalPriority").value = "中";
@@ -1090,11 +1172,26 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					document.getElementById("taskModal").style.display = "flex";
 				}
 
+				function openEditTaskModal(taskId, taskName, status, priority, startDate, dueDate, userId, description) {
+					taskModalMode = 'edit';
+					targetTaskIdForEdit = taskId;
+					document.getElementById("taskModalTitle").innerText = "タスクの編集";
+					document.getElementById("modalTaskName").value = taskName;
+					document.getElementById("modalStatus").value = status;
+					document.getElementById("modalPriority").value = priority;
+					document.getElementById("modalStartDate").value = startDate;
+					document.getElementById("modalDueDate").value = dueDate;
+					document.getElementById("modalUserId").value = (userId === "0" || userId === "null") ? "" : userId;
+					document.getElementById("modalDescription").value = description;
+					
+					document.getElementById("taskModal").style.display = "flex";
+				}
+
 				function closeTaskModal() {
 					document.getElementById("taskModal").style.display = "none";
 				}
 
-				function submitNewTask() {
+				function submitTaskModal() {
 					const taskName = document.getElementById("modalTaskName").value;
 					const status = document.getElementById("modalStatus").value;
 					const priority = document.getElementById("modalPriority").value;
@@ -1109,8 +1206,13 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					}
 
 					const params = new URLSearchParams();
-					params.append('action', 'addTask');
-					params.append('projectId', currentRawProjectId);
+					if (taskModalMode === 'add') {
+						params.append('action', 'addTask');
+						params.append('projectId', currentRawProjectId);
+					} else {
+						params.append('action', 'editTask');
+						params.append('taskId', targetTaskIdForEdit);
+					}
 					params.append('taskName', taskName);
 					params.append('status', status);
 					params.append('priority', priority);
@@ -1279,14 +1381,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							if (currentProjectCard.hasAttribute("data-original-index")) {
 								const originalIndex = parseInt(currentProjectCard.getAttribute("data-original-index"));
 								const cards = Array.from(listContainer.children);
-								let targetNode = null;
-								for (let i = 0; i < cards.length; i++) {
-									let idx = parseInt(cards[i].getAttribute("data-original-index"));
-									if (!isNaN(idx) && idx > originalIndex) {
-										targetNode = cards[i];
-										break;
-									}
-								}
+								let targetNode = dataOriginalIndexSearch(cards, originalIndex);
 								if (targetNode) {
 									listContainer.insertBefore(currentProjectCard, targetNode);
 								} else {
@@ -1295,6 +1390,16 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							}
 						}
 					}
+				}
+
+				function dataOriginalIndexSearch(cards, originalIndex) {
+					for (let i = 0; i < cards.length; i++) {
+						let idx = parseInt(cards[i].getAttribute("data-original-index"));
+						if (!isNaN(idx) && idx > originalIndex) {
+							return cards[i];
+						}
+					}
+					return null;
 				}
 			</script>
 			
