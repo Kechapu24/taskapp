@@ -697,7 +697,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
 				<div class="title-with-btn">
 					<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">プロジェクト一覧</h1>
-					<button class="add-project-btn" onclick="addProject()" title="プロジェクトを追加">＋</button>
+					<button class="add-project-btn" onclick="openProjectModal()" title="プロジェクトを追加">＋</button>
 				</div>
 				<div style="display: flex; align-items: center; gap: 15px;">
 					<div class="main-search-box" style="margin: 0;">
@@ -822,6 +822,23 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</div>
 			
+			<!-- プロジェクト追加用モーダル -->
+			<div id="projectModal" class="modal-overlay">
+				<div class="modal-content" style="width: 450px;">
+					<h3>プロジェクトの追加</h3>
+					
+					<div class="modal-form-group">
+						<label>プロジェクト名 <span style="color:red;">*</span></label>
+						<input type="text" id="modalProjectName" placeholder="例：新システム開発プロジェクト">
+					</div>
+					
+					<div class="modal-actions">
+						<button class="btn-cancel" onclick="closeProjectModal()">キャンセル</button>
+						<button class="btn-save" onclick="submitNewProject()">保存</button>
+					</div>
+				</div>
+			</div>
+
 			<!-- タスク追加用モーダル -->
 			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
@@ -944,7 +961,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const newHeight = e.clientY - containerRect.top;
 					const totalHeight = containerRect.height;
 					
-					// 最小限の余白を確保（上下それぞれ100px以上）
 					if (newHeight > 100 && newHeight < totalHeight - 100) {
 						const percentage = (newHeight / totalHeight) * 100;
 						topSection.style.height = percentage + '%';
@@ -967,7 +983,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						selectProject(rawId, title, firstCard);
 					}
 					
-					// ページ読み込み時に既に100%のものがあれば一番下に移動させる
 					document.querySelectorAll('.project-card').forEach(card => {
 						if (card.getAttribute("data-progress") === "100") {
 							card.classList.add("completed-project");
@@ -981,8 +996,17 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					});
 				});
 
-				function addProject() {
-					const projectName = prompt("新しいプロジェクト名を入力してください：");
+				function openProjectModal() {
+					document.getElementById("modalProjectName").value = "";
+					document.getElementById("projectModal").style.display = "flex";
+				}
+
+				function closeProjectModal() {
+					document.getElementById("projectModal").style.display = "none";
+				}
+
+				function submitNewProject() {
+					const projectName = document.getElementById("modalProjectName").value;
 					if (projectName && projectName.trim() !== "") {
 						const form = document.createElement("form");
 						form.method = "POST";
@@ -994,6 +1018,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						form.appendChild(input);
 						document.body.appendChild(form);
 						form.submit();
+					} else {
+						alert("プロジェクト名を入力してください。");
 					}
 				}
 
@@ -1002,11 +1028,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const listContainer = document.getElementById("projectList");
 					const cards = Array.from(listContainer.getElementsByClassName("project-card"));
 
-					// 100%未満のカードと、100%完了済みのカードを分離
 					const activeCards = cards.filter(c => c.getAttribute("data-progress") !== "100");
 					const completedCards = cards.filter(c => c.getAttribute("data-progress") === "100");
 
-					// 100%未満のカードだけをソート対象にする
 					activeCards.sort((a, b) => {
 						if (sortType === "newest") {
 							return parseInt(b.getAttribute("data-raw-id")) - parseInt(a.getAttribute("data-raw-id"));
@@ -1020,7 +1044,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						return 0;
 					});
 
-					// 並び替えた未完了カードを先に追加し、そのあとに完了済みカードを必ず末尾に配置する
 					activeCards.forEach(card => listContainer.appendChild(card));
 					completedCards.forEach(card => listContainer.appendChild(card));
 				}
@@ -1242,7 +1265,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							}
 						}
 
-						// 100%になった時の移動＆透過処理、および減ったときの復元処理
 						const listContainer = document.getElementById("projectList");
 						if (percent === 100) {
 							currentProjectCard.classList.add("completed-project");
