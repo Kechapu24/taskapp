@@ -145,7 +145,7 @@ if (action != null) {
 <link rel="stylesheet" href="css/style.css">
 <style>
 	.main-content { position: relative; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
-	.content-header { flex-shrink: 0; }
+	.content-header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
 	
 	.mytasks-container {
 		display: flex;
@@ -437,10 +437,10 @@ if (action != null) {
 		</aside>
 
 		<main class="main-content">
-			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
-				<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">マイタスク</h1>
+			<header class="content-header">
+				<h1 class="page-title">マイタスク</h1>
 				<div style="display: flex; align-items: center; gap: 10px;">
-					<div class="main-search-box" style="margin: 0;">
+					<div class="main-search-box">
 						<input type="text" class="search-input" placeholder="タスクを検索...">
 					</div>
 					<a href="account.jsp" class="account-button">アカウント情報</a>
