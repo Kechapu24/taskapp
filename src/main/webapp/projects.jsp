@@ -1229,7 +1229,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				function calculateProgressLocal() {
 					if(!currentProjectCard) return;
 					
-					const projectId = currentProjectCard.getAttribute("data-id");
+					const domId = currentProjectCard.getAttribute("data-id");
 					const taskContainer = document.getElementById("taskContainer");
 					const checkboxes = taskContainer.querySelectorAll(".task-check");
 					const totalTasks = checkboxes.length;
@@ -1240,9 +1240,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					});
 					
 					const percent = totalTasks > 0 ? Math.round((checkedTasks / totalTasks) * 100) : 0;
-					const barFill = document.getElementById('fill_' + projectId);
-					const badgeText = document.getElementById('badge_' + projectId);
-					const statusBadge = document.getElementById('badge_status_' + projectId);
+					const barFill = document.getElementById('fill_' + domId);
+					const badgeText = document.getElementById('badge_' + domId);
+					const statusBadge = document.getElementById('badge_status_' + domId);
 					
 					if (barFill) {
 						barFill.style.width = percent + '%'; 
