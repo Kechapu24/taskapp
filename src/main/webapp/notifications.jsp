@@ -38,6 +38,64 @@
 			<div class="content-body">
 
 				<div class="notification-item unread">
+				<!-- 期限が近い通知 -->
+<div class="notification-item unread">
+    <span class="notification-dot"></span>
+
+    <div class="notification-content">
+
+        <div class="notification-title">
+            期限が近づいています
+        </div>
+
+        <div class="notification-task">
+            タスク：ログイン機能実装
+        </div>
+
+        <div class="notification-project">
+            プロジェクト：タスク管理アプリ
+        </div>
+
+        <div class="notification-detail">
+            期限まであと1日です。早めに対応してください。
+        </div>
+
+        <div class="notification-date">
+            2026/06/17 09:00
+        </div>
+
+    </div>
+</div>
+
+
+<!-- 期限切れ通知 -->
+<div class="notification-item unread">
+    <span class="notification-dot"></span>
+
+    <div class="notification-content">
+
+        <div class="notification-title">
+            期限を過ぎています
+        </div>
+
+        <div class="notification-task">
+            タスク：データベース設計
+        </div>
+
+        <div class="notification-project">
+            プロジェクト：タスク管理アプリ
+        </div>
+
+        <div class="notification-detail">
+            このタスクは期限を過ぎています。対応状況を確認してください。
+        </div>
+
+        <div class="notification-date">
+            2026/06/17 08:30
+        </div>
+
+    </div>
+</div>
 					<span class="notification-dot"></span>
 
 					<div class="notification-content">
