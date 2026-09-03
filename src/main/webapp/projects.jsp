@@ -195,13 +195,41 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	
 	/* 上半分：プロジェクト進捗一覧エリア */
 	.top-project-section {
-		flex: 1;
+		height: 45%; /* 初期高さ */
+		min-height: 100px;
 		overflow-y: auto;
 		padding: 12px 20px;
-		border-bottom: 2px solid #eaeaea;
 		background: #fff;
 		display: flex;
 		flex-direction: column;
+		flex-shrink: 0;
+	}
+
+	/* 上下リサイズ用スプリッターバー */
+	.splitter {
+		height: 8px;
+		background-color: #eaeaea;
+		cursor: row-resize;
+		position: relative;
+		transition: background-color 0.2s;
+		flex-shrink: 0;
+	}
+	.splitter:hover, .splitter.dragging {
+		background-color: #1b6ef3;
+	}
+	.splitter::after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 30px;
+		height: 3px;
+		background-color: #ccc;
+		border-radius: 2px;
+	}
+	.splitter:hover::after, .splitter.dragging::after {
+		background-color: #fff;
 	}
 
 	.top-section-header {
@@ -384,7 +412,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		flex-direction: column;
 		background: #fff;
 		overflow: hidden;
-		box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+		min-height: 100px;
 	}
 	
 	.bottom-task-header {
@@ -394,6 +422,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		padding: 12px 20px;
 		background: #fff;
 		border-bottom: 1px solid #eaeaea;
+		flex-shrink: 0;
 	}
 	
 	.bottom-task-header h2 {
@@ -463,6 +492,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
 		width: calc(50% - 5px);
 		box-sizing: border-box;
+		height: fit-content;
 	}
 
 	.htc-left {
@@ -678,9 +708,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			</header>
 
 			<!-- 画面上下分割コンテナ -->
-			<div class="split-container">
+			<div class="split-container" id="splitContainer">
 				<!-- 上半分：プロジェクトの進捗一覧 -->
-				<div class="top-project-section">
+				<div class="top-project-section" id="topSection">
 					<div class="top-section-header">
 						<h2 class="top-section-title">プロジェクトの進捗一覧</h2>
 						<div class="sort-container">
@@ -773,6 +803,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						%>
 					</div>
 				</div>
+
+				<!-- 上下リサイズ用のバー -->
+				<div class="splitter" id="splitter"></div>
 
 				<!-- 下半分：選択されたプロジェクトのタスク一覧表示エリア -->
 				<div class="bottom-task-section">
@@ -891,6 +924,40 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				let currentRawProjectId = null;
 				let targetTaskIdForDelete = null;
 				let targetProjectIdForDelete = null;
+
+				// 上下リサイズ機能
+				const splitter = document.getElementById('splitter');
+				const topSection = document.getElementById('topSection');
+				const splitContainer = document.getElementById('splitContainer');
+				let isDragging = false;
+
+				splitter.addEventListener('mousedown', (e) => {
+					isDragging = true;
+					splitter.classList.add('dragging');
+					document.body.style.cursor = 'row-resize';
+					e.preventDefault();
+				});
+
+				window.addEventListener('mousemove', (e) => {
+					if (!isDragging) return;
+					const containerRect = splitContainer.getBoundingClientRect();
+					const newHeight = e.clientY - containerRect.top;
+					const totalHeight = containerRect.height;
+					
+					// 最小限の余白を確保（上下それぞれ100px以上）
+					if (newHeight > 100 && newHeight < totalHeight - 100) {
+						const percentage = (newHeight / totalHeight) * 100;
+						topSection.style.height = percentage + '%';
+					}
+				});
+
+				window.addEventListener('mouseup', () => {
+					if (isDragging) {
+						isDragging = false;
+						splitter.classList.remove('dragging');
+						document.body.style.cursor = 'default';
+					}
+				});
 
 				window.addEventListener('DOMContentLoaded', () => {
 					const firstCard = document.querySelector('.project-card');
