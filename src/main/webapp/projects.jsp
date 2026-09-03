@@ -11,7 +11,7 @@ String dbUser = "taskuser";
 String dbPassword = "taskpass";
 
 // ==========================================
-// 【新機能】タスクの裏側処理 (JavaScriptから非同期で呼ばれるAPI)
+// 【新機能】タスク・プロジェクトの裏側処理 (JavaScriptから非同期で呼ばれるAPI)
 // ==========================================
 String action = request.getParameter("action");
 if (action != null) {
@@ -123,6 +123,27 @@ if (action != null) {
 			pstmt.setInt(1, Integer.parseInt(tId));
 			pstmt.executeUpdate();
 			pstmt.close();
+		}
+		// ⑤ プロジェクトの削除（紐づくタスクの割当やタスク本体も必要に応じて削除、または外部キー制約に依存）
+		else if ("deleteProject".equals(action)) {
+			String pId = request.getParameter("projectId");
+			int projectId = Integer.parseInt(pId);
+			
+			// 外部キー制約でタスクが残っている場合に備えて子要素から削除する
+			PreparedStatement pstmtAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id IN (SELECT task_id FROM task WHERE project_id = ?)");
+			pstmtAssignee.setInt(1, projectId);
+			pstmtAssignee.executeUpdate();
+			pstmtAssignee.close();
+
+			PreparedStatement pstmtTask = conn.prepareStatement("DELETE FROM task WHERE project_id = ?");
+			pstmtTask.setInt(1, projectId);
+			pstmtTask.executeUpdate();
+			pstmtTask.close();
+
+			PreparedStatement pstmtProj = conn.prepareStatement("DELETE FROM project WHERE project_id = ?");
+			pstmtProj.setInt(1, projectId);
+			pstmtProj.executeUpdate();
+			pstmtProj.close();
 		}
 		conn.close();
 	} catch (Exception e) {
@@ -289,6 +310,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		align-items: center;
 		gap: 16px;
 		flex-shrink: 0;
+		position: relative; /* ドロップダウンメニューの基準位置 */
 	}
 	.project-percent-badge {
 		font-size: 13px;
@@ -329,6 +351,23 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	}
 	.project-menu-trigger:hover {
 		color: #333;
+	}
+
+	/* プロジェクト用ドロップダウンメニュー */
+	.project-dropdown-menu {
+		display: none;
+		position: absolute;
+		right: 0;
+		top: 25px;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+		z-index: 100;
+		min-width: 90px;
+	}
+	.project-dropdown-menu.open {
+		display: block;
 	}
 
 	/* 下半分：選択されたプロジェクトのタスク表示エリア */
@@ -660,7 +699,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							Class.forName("org.postgresql.Driver");
 							Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
 							
-							// projectテーブルに updated_at カラムがないため、project_id 順（新着順）で取得するように修正
 							String sqlSelect = 
 								"SELECT p.project_id, p.project_name, " +
 								"COUNT(t.task_id) AS total_tasks, " +
@@ -718,7 +756,11 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 										<div class="project-right-group">
 											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
 											<span class="status-badge <%= statusClass %>" id="badge_status_<%= domId %>"><%= statusText %></span>
-											<button class="project-menu-trigger" onclick="event.stopPropagation(); alert('プロジェクト設定');">⋮</button>
+											<!-- プロジェクトの三点リーダーボタン -->
+											<button class="project-menu-trigger" onclick="event.stopPropagation(); toggleProjectMenu(this);">⋮</button>
+											<div class="project-dropdown-menu">
+												<button class="dropdown-delete-item" onclick="event.stopPropagation(); openProjectDeleteModal('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>')">削除</button>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -835,11 +877,24 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					</div>
 				</div>
 			</div>
+
+			<!-- プロジェクト削除確認用モーダル -->
+			<div id="projectDeleteModal" class="modal-overlay">
+				<div class="modal-content delete-modal-content">
+					<h3>プロジェクトの削除</h3>
+					<p id="projectDeleteMessage" style="margin: 15px 0 25px 0; color: #555;"></p>
+					<div class="modal-actions" style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
+						<button class="btn-cancel" onclick="closeProjectDeleteModal()">キャンセル</button>
+						<button class="btn-delete-confirm" onclick="executeDeleteProject()">削除する</button>
+					</div>
+				</div>
+			</div>
 			
 			<script>
 				let currentProjectCard = null;
 				let currentRawProjectId = null;
 				let targetTaskIdForDelete = null;
+				let targetProjectIdForDelete = null;
 
 				// ページ読み込み時に一番上のプロジェクトを自動選択してタスクを表示する
 				window.addEventListener('DOMContentLoaded', () => {
@@ -974,7 +1029,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					});
 				}
 				
-				// --- 削除モーダル制御関数 ---
+				// --- タスク削除確認用モーダル ---
 				function openDeleteModal(taskId, taskName) {
 					targetTaskIdForDelete = taskId;
 					document.getElementById("deleteMessage").innerText = "「" + taskName + "」を本当に削除しますか？";
@@ -1001,6 +1056,33 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						loadTasksFromDB();
 					});
 				}
+
+				// --- プロジェクト削除確認用モーダル ---
+				function openProjectDeleteModal(projectId, projectName) {
+					targetProjectIdForDelete = projectId;
+					document.getElementById("projectDeleteMessage").innerText = "プロジェクト「" + projectName + "」および含まれるすべてのタスクを本当に削除しますか？";
+					document.getElementById("projectDeleteModal").style.display = "flex";
+				}
+
+				function closeProjectDeleteModal() {
+					targetProjectIdForDelete = null;
+					document.getElementById("projectDeleteModal").style.display = "none";
+				}
+
+				function executeDeleteProject() {
+					if (!targetProjectIdForDelete) return;
+
+					const params = new URLSearchParams();
+					params.append('action', 'deleteProject');
+					params.append('projectId', targetProjectIdForDelete);
+
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						location.reload(); // 削除後はページをリロードして一覧を再構築
+					});
+				}
 				
 				function toggleTask(taskId, isChecked, projectId) {
 					const params = new URLSearchParams();
@@ -1018,7 +1100,23 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 				function toggleTaskMenu(buttonElement) {
 					const menu = buttonElement.nextElementSibling;
-					document.querySelectorAll('.task-dropdown-menu').forEach(m => {
+					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
+						if (m !== menu) m.classList.remove('open');
+					});
+					menu.classList.toggle('open');
+					setTimeout(() => {
+						window.addEventListener('click', function closeMenu(e) {
+							if (!menu.contains(e.target) && e.target !== buttonElement) {
+								menu.classList.remove('open');
+								window.removeEventListener('click', closeMenu);
+							}
+						});
+					}, 0);
+				}
+
+				function toggleProjectMenu(buttonElement) {
+					const menu = buttonElement.nextElementSibling;
+					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
 						if (m !== menu) m.classList.remove('open');
 					});
 					menu.classList.toggle('open');
