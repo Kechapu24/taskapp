@@ -21,25 +21,21 @@ if (action != null) {
 		// ① タスク一覧の取得
 		if ("getTasks".equals(action)) {
 			String pId = request.getParameter("projectId");
-			// status と due_date を取得するように変更
 			String sql = "SELECT task_id, task_name, status, TO_CHAR(due_date, 'MM/DD') as fmt_date FROM task WHERE project_id = ? ORDER BY task_id ASC";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, Integer.parseInt(pId));
 			ResultSet rs = pstmt.executeQuery();
 			
-			// 取得したタスクをHTML（<li>タグ）にして画面に返す
 			while (rs.next()) {
 				int taskId = rs.getInt("task_id");
 				String taskName = rs.getString("task_name");
 				String status = rs.getString("status");
 				String dateStr = rs.getString("fmt_date");
 				
-				// 期限が未設定(NULL)の場合の対応
 				if (dateStr == null) {
 					dateStr = "未設定";
 				}
 				
-				// DBのstatusが「完了」だったらチェック状態にする
 				boolean isChecked = "完了".equals(status);
 				
 				out.print("<li class='task-li'>");
@@ -56,23 +52,33 @@ if (action != null) {
 			}
 			rs.close(); pstmt.close();
 		} 
-		// ② タスクの追加
+		// ② タスクの追加（モーダルからの入力に対応）
 		else if ("addTask".equals(action)) {
 			String pId = request.getParameter("projectId");
 			String tName = request.getParameter("taskName");
-			// 新規追加時は '未着手' として登録
-			String sql = "INSERT INTO task (project_id, task_name, status) VALUES (?, ?, '未着手')";
-			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, Integer.parseInt(pId));
-			pstmt.setString(2, tName);
-			pstmt.executeUpdate();
-			pstmt.close();
+			String dueDate = request.getParameter("dueDate"); // モーダルから期限を受け取る
+			
+			if (dueDate != null && !dueDate.isEmpty()) {
+				String sql = "INSERT INTO task (project_id, task_name, status, due_date) VALUES (?, ?, '未着手', CAST(? AS DATE))";
+				PreparedStatement pstmt = conn.prepareStatement(sql);
+				pstmt.setInt(1, Integer.parseInt(pId));
+				pstmt.setString(2, tName);
+				pstmt.setString(3, dueDate);
+				pstmt.executeUpdate();
+				pstmt.close();
+			} else {
+				String sql = "INSERT INTO task (project_id, task_name, status) VALUES (?, ?, '未着手')";
+				PreparedStatement pstmt = conn.prepareStatement(sql);
+				pstmt.setInt(1, Integer.parseInt(pId));
+				pstmt.setString(2, tName);
+				pstmt.executeUpdate();
+				pstmt.close();
+			}
 		} 
-		// ③ タスクのチェック状態更新（statusの変更）
+		// ③ タスクのチェック状態更新
 		else if ("toggleTask".equals(action)) {
 			String tId = request.getParameter("taskId");
 			boolean isChecked = Boolean.parseBoolean(request.getParameter("isChecked"));
-			// チェックされたら「完了」、外されたら「未着手」にする
 			String newStatus = isChecked ? "完了" : "未着手";
 			
 			String sql = "UPDATE task SET status = ? WHERE task_id = ?";
@@ -95,7 +101,6 @@ if (action != null) {
 	} catch (Exception e) {
 		e.printStackTrace();
 	}
-	// タスクAPI処理が終わったら、ページ全体のHTMLを出力せずにここで終了する
 	return; 
 }
 
@@ -135,6 +140,71 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <link rel="stylesheet" href="css/style.css">
 <style>
 	.main-content { position: relative; }
+	
+	/* タスク追加モーダルのスタイル */
+	.modal-overlay {
+		display: none;
+		position: fixed;
+		top: 0; left: 0;
+		width: 100%; height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		z-index: 2000;
+		justify-content: center;
+		align-items: center;
+	}
+	.modal-content {
+		background: #fff;
+		padding: 25px;
+		border-radius: 8px;
+		width: 400px;
+		max-width: 90%;
+		box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+	}
+	.modal-content h3 {
+		margin-top: 0;
+		margin-bottom: 20px;
+		font-size: 1.2rem;
+	}
+	.modal-form-group {
+		margin-bottom: 15px;
+	}
+	.modal-form-group label {
+		display: block;
+		margin-bottom: 5px;
+		font-size: 14px;
+		font-weight: bold;
+	}
+	.modal-form-group input {
+		width: 100%;
+		padding: 8px;
+		box-sizing: border-box;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+	.modal-actions {
+		text-align: right;
+		margin-top: 20px;
+	}
+	.modal-actions button {
+		padding: 8px 16px;
+		margin-left: 10px;
+		cursor: pointer;
+		border: none;
+		border-radius: 4px;
+	}
+	.btn-cancel {
+		background-color: #e0e0e0;
+	}
+	.btn-cancel:hover {
+		background-color: #d0d0d0;
+	}
+	.btn-save {
+		background-color: #007bff;
+		color: white;
+	}
+	.btn-save:hover {
+		background-color: #0056b3;
+	}
 </style>
 </head>
 <body>
@@ -181,7 +251,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						Class.forName("org.postgresql.Driver");
 						Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
 						
-						// 【修正】is_checkedではなく、status = '完了' の数をカウントする
 						String sqlSelect = 
 							"SELECT p.project_id, p.project_name, " +
 							"COUNT(t.task_id) AS total_tasks, " +
@@ -200,7 +269,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 							int totalTasks = rs.getInt("total_tasks");
 							int checkedTasks = rs.getInt("checked_tasks");
 							
-							// 進捗（パーセンテージ）を計算
 							int percent = (totalTasks > 0) ? Math.round(((float)checkedTasks / totalTasks) * 100) : 0;
 							String domId = "db_proj_" + dbProjectId;
 					%>
@@ -238,6 +306,25 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					</div>
 					<div class="panel-body">
 						<ul class="task-ul" id="taskUl"></ul>
+					</div>
+				</div>
+			</div>
+			
+			<!-- タスク追加用モーダル -->
+			<div id="taskModal" class="modal-overlay">
+				<div class="modal-content">
+					<h3>新しいタスクを追加</h3>
+					<div class="modal-form-group">
+						<label for="modalTaskName">タスク名 <span style="color:red;">*</span></label>
+						<input type="text" id="modalTaskName" placeholder="例：要件定義書の作成">
+					</div>
+					<div class="modal-form-group">
+						<label for="modalDueDate">期限</label>
+						<input type="date" id="modalDueDate">
+					</div>
+					<div class="modal-actions">
+						<button class="btn-cancel" onclick="closeTaskModal()">キャンセル</button>
+						<button class="btn-save" onclick="submitNewTask()">保存</button>
 					</div>
 				</div>
 			</div>
@@ -286,22 +373,41 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					document.getElementById("taskOverlay").classList.remove("show");
 				}
 
+				// --- モーダル制御用の新機能 ---
 				function addNewTask() {
-					const taskText = prompt("新しいタスク内容を入力してください：");
-					if (taskText && taskText.trim() !== "") {
-						const params = new URLSearchParams();
-						params.append('action', 'addTask');
-						params.append('projectId', currentRawProjectId);
-						params.append('taskName', taskText);
-						
-						fetch('projects.jsp', {
-							method: 'POST',
-							body: params
-						}).then(() => {
-							loadTasksFromDB();
-						});
-					}
+					document.getElementById("modalTaskName").value = "";
+					document.getElementById("modalDueDate").value = "";
+					document.getElementById("taskModal").style.display = "flex";
 				}
+
+				function closeTaskModal() {
+					document.getElementById("taskModal").style.display = "none";
+				}
+
+				function submitNewTask() {
+					const taskName = document.getElementById("modalTaskName").value;
+					const dueDate = document.getElementById("modalDueDate").value;
+					
+					if (!taskName || taskName.trim() === "") {
+						alert("タスク名を入力してください。");
+						return;
+					}
+
+					const params = new URLSearchParams();
+					params.append('action', 'addTask');
+					params.append('projectId', currentRawProjectId);
+					params.append('taskName', taskName);
+					params.append('dueDate', dueDate);
+					
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						closeTaskModal();
+						loadTasksFromDB();
+					});
+				}
+				// ------------------------------
 				
 				function toggleTask(taskId, isChecked, projectId) {
 					const params = new URLSearchParams();
@@ -368,7 +474,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					
 					if (barFill && barText) {
 						barFill.style.width = percent + '%'; 
-						barText.innerText = percent + '%';    
+						barText.innerText = percent + '%';   
 						if (badgeText) {
 							badgeText.innerText = percent + '%';
 						}
