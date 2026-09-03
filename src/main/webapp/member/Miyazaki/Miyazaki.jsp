@@ -6,35 +6,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="宮﨑実可のシステム開発演習 個人ページ。タスク管理アプリ開発における担当内容・進捗・学びをまとめています。">
+<meta name="description"
+	content="宮﨑実可のシステム開発演習 個人ページ。タスク管理アプリ開発における担当内容・進捗・学びをまとめています。">
 <title>宮﨑 実可 | 個人ページ</title>
 
 <link rel="stylesheet" href="m.style.css">
 </head>
 
 <body>
-<header>
-	<p>専門学校湖東カレッジ　IT経済学科</p>
-	<h1>宮﨑 実可</h1>
-	<p>システム開発演習 個人ページ</p>
-	
-</header>
+	<header>
+		<p>専門学校湖東カレッジ IT経済学科</p>
+		<h1>宮﨑 実可</h1>
+		<p>システム開発演習 個人ページ</p>
+
+	</header>
 
 	<nav>
-		<a href="#profile">自己紹介</a>
-		<a href="#team">私たちのチーム</a>
-		<a href="#progress">開発工程・進捗</a>
-		<a href="#myprogress">現在の進捗状況</a>
-		<a href="#role">担当内容</a>
-		<a href="#contribution">チームへの貢献</a>
-		<a href="#struggle">苦労したこと</a>
-		<a href="#learning">学んだこと</a>
-		<a href="#works">制作物</a>
-		<a href="#goal">今後の目標</a>
-		<a href="https://172.16.1.94/index.jsp" class="app-link-btn" target="_blank" rel="noopener">
-		作成中のアプリを見る
-	</a>
-		
+		<a href="#profile">自己紹介</a> <a href="#team">私たちのチーム</a> <a
+			href="#progress">開発工程・進捗</a> <a href="#myprogress">現在の進捗状況</a> <a
+			href="#role">担当内容</a> <a href="#contribution">チームへの貢献</a> <a
+			href="#struggle">苦労したこと</a> <a href="#learning">学んだこと</a> <a
+			href="#works">制作物</a> <a href="#goal">今後の目標</a> <a
+			href="https://172.16.1.119/index.jsp" class="app-link-btn"
+			target="_blank" rel="noopener"> 作成中のアプリを見る </a>
+
 	</nav>
 
 	<div class="container">
@@ -77,20 +72,20 @@
 				</thead>
 				<tbody>
 					<tr>
-						<td>環境構築 </td>
+						<td>環境構築</td>
 						<td>個人サーバ・グループサーバの構築（AlmaLinux / Apache / Tomcat /
 							PostgreSQL）</td>
 						<td>5月</td>
 						<td><span class="status done">完了</span></td>
 					</tr>
 					<tr>
-						<td>要件定義・基本設計 </td>
+						<td>要件定義・基本設計</td>
 						<td>タスク管理アプリの機能一覧・画面構成の検討</td>
 						<td>6月上旬</td>
 						<td><span class="status done">完了</span></td>
 					</tr>
 					<tr>
-						<td>詳細設計・開発 </td>
+						<td>詳細設計・開発</td>
 						<td>ログイン画面・新規登録画面・ダッシュボードの実装</td>
 						<td>6月中旬〜10月</td>
 						<td><span class="status inprogress">進行中</span></td>
@@ -181,8 +176,22 @@
 			<h3>Git操作とディレクトリ構造の理解</h3>
 
 			<p>当初はホームディレクトリとカレントディレクトリの違いが理解出来ず、git pullをどこで実行すればよいのかわからなかった。</p>
-			<p>調査を進める中で、taskappがGitリポジトリであり、その中になる.gitフォルダによってGit管理されていることを理解した。また、pwd・ls・cdコマンドを用いて現在位置やディレクトリ構造を理解しながら作業できるようになった。</p>
-	
+			<p>調査を進める中で、taskappがGitリポジトリであり、その中にある.gitフォルダによってGit管理されていることを理解した。また、pwd・ls・cdコマンドを用いて現在位置やディレクトリ構造を理解しながら作業できるようになった。</p>
+
+			<h3>ナビゲーションのレイアウト崩れ</h3>
+
+			<p>
+			<p>ナビゲーションを&lt;ul&gt;と&lt;li&gt;を用いた構造へ変更したところ、
+				リンクが縦並びになりレイアウトが崩れてしまった。</p>
+			</p>
+
+			<ul>
+				<li>CSSを確認し、サーバー反映の確認を行った。</li>
+			</ul>
+
+			<p>原因調査を行った結果、CSSの適用範囲や学校サーバーの反映状況は影響していることが分かり、修正することで解決した。</p>
+
+
 		</section>
 
 		<section id="learning">
@@ -212,8 +221,12 @@
 					<h3>Linux</h3>
 					<p>ホームディレクトリとカレントディレクトリの違い、pwd・ls・cdコマンドの使い方を学んだ。</p>
 				</div>
-				
-				
+
+				<div class="card">
+					<h3>Servlet</h3>
+					<p>Servletの役割やパッケージ構成を理解し、 ログイン処理実装に向けた準備を行った。</p>
+				</div>
+
 			</div>
 		</section>
 
@@ -271,7 +284,11 @@
 	</div>
 
 	<footer>
-		<p>&copy; <%= java.time.Year.now() %> 宮﨑 実可</p>
+		<p>
+			&copy;
+			<%=java.time.Year.now()%>
+			宮﨑 実可
+		</p>
 	</footer>
 
 </body>
