@@ -46,7 +46,8 @@ if (action != null) {
 				out.print("</div>");
 				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 				out.print("<div class='task-dropdown-menu'>");
-				out.print("<button class='dropdown-delete-item' onclick='deleteTask(" + taskId + ", \"" + pId + "\")'>削除</button>");
+				// 削除ボタンをクリックしたときに、タスク名も一緒にモーダルへ渡すように修正
+				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
 				out.print("</div>");
 				out.print("</li>");
 			}
@@ -74,7 +75,6 @@ if (action != null) {
 			pstmt.setString(7, description);
 			pstmt.executeUpdate();
 			
-			// 担当者が選択されている場合は task_assignee にも登録
 			if (userId != null && !userId.isEmpty()) {
 				ResultSet generatedKeys = pstmt.getGeneratedKeys();
 				if (generatedKeys.next()) {
@@ -156,7 +156,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <style>
 	.main-content { position: relative; }
 	
-	/* 拡張された大型タスク追加モーダルのスタイル */
+	/* モーダルのスタイル共通 */
 	.modal-overlay {
 		display: none;
 		position: fixed;
@@ -243,6 +243,22 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 	}
 	.btn-save:hover {
 		background-color: #0056b3;
+	}
+	/* 削除確認モーダル専用のスタイル */
+	.delete-modal-content {
+		width: 400px;
+		text-align: center;
+	}
+	.delete-modal-content h3 {
+		color: #d9534f;
+		border-bottom: none;
+	}
+	.btn-delete-confirm {
+		background-color: #d9534f;
+		color: white;
+	}
+	.btn-delete-confirm:hover {
+		background-color: #c9302c;
 	}
 </style>
 </head>
@@ -346,7 +362,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				</div>
 			</div>
 			
-			<!-- 拡張されたタスク追加モーダル -->
 			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
 					<h3>タスクの追加</h3>
@@ -418,10 +433,22 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					</div>
 				</div>
 			</div>
+
+			<div id="deleteModal" class="modal-overlay">
+				<div class="modal-content delete-modal-content">
+					<h3>タスクの削除</h3>
+					<p id="deleteMessage" style="margin: 15px 0 25px 0; color: #555;"></p>
+					<div class="modal-actions" style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
+						<button class="btn-cancel" onclick="closeDeleteModal()">キャンセル</button>
+						<button class="btn-delete-confirm" onclick="executeDeleteTask()">削除する</button>
+					</div>
+				</div>
+			</div>
 			
 			<script>
 				let currentProjectCard = null;
 				let currentRawProjectId = null;
+				let targetTaskIdForDelete = null; // 削除対象のタスクIDを保持する変数
 
 				function addProject() {
 					const projectName = prompt("新しいプロジェクト名を入力してください：");
@@ -513,6 +540,34 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						loadTasksFromDB();
 					});
 				}
+				
+				// --- 削除モーダル制御関数 ---
+				function openDeleteModal(taskId, taskName) {
+					targetTaskIdForDelete = taskId;
+					document.getElementById("deleteMessage").innerText = "「" + taskName + "」を本当に削除しますか？";
+					document.getElementById("deleteModal").style.display = "flex";
+				}
+
+				function closeDeleteModal() {
+					targetTaskIdForDelete = null;
+					document.getElementById("deleteModal").style.display = "none";
+				}
+
+				function executeDeleteTask() {
+					if (!targetTaskIdForDelete) return;
+					
+					const params = new URLSearchParams();
+					params.append('action', 'deleteTask');
+					params.append('taskId', targetTaskIdForDelete);
+					
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						closeDeleteModal();
+						loadTasksFromDB();
+					});
+				}
 				// ------------------------------
 				
 				function toggleTask(taskId, isChecked, projectId) {
@@ -526,21 +581,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						body: params
 					}).then(() => {
 						calculateProgressLocal();
-					});
-				}
-
-				function deleteTask(taskId, projectId) {
-					if(!confirm("本当に削除しますか？")) return;
-					
-					const params = new URLSearchParams();
-					params.append('action', 'deleteTask');
-					params.append('taskId', taskId);
-					
-					fetch('projects.jsp', {
-						method: 'POST',
-						body: params
-					}).then(() => {
-						loadTasksFromDB();
 					});
 				}
 
