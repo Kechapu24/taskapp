@@ -732,6 +732,14 @@
 
 						<div id="panelContent">タスクを選択してください</div>
 
+						<form method="get" action="taskboard.jsp" class="main-search-box">
+							<input type="text" name="keyword" class="search-input"
+								placeholder="タスクを検索"
+								value="<%=request.getParameter("keyword") == null ? "" : request.getParameter("keyword")%>">
+
+							<button type="submit">検索</button>
+						</form>
+
 					</div>
 				</div>
 
