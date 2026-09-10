@@ -1,154 +1,272 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
 <meta charset="UTF-8">
-<title>個人ホームページ</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SAKATA // PORTFOLIO</title>
 
 <link rel="stylesheet" href="Sakata.css">
 
 </head>
+
 <body>
 
-	<!-- 　ヘッダー　 -->
+
+	<!-- ========================================
+	     ヘッダー
+	======================================== -->
+
 	<header class="header">
 
 		<div class="logo">
-			<h1>My Portfolio</h1>
+			<h1>SAKATA // PORTFOLIO</h1>
 		</div>
 
-		<nav>
-			<ul chailass="menu">
 
-				<li><a href="#">ホーム</a></li>
-				<li><a href="#profile">プロフィール</a></li>
-				<li><a href="#works">制作物</a></li>
-				<li><a href="#skill">スキル</a></li>
-				<li><a href="#contact">お問い合わせ</a></li>
+		<nav>
+
+			<ul class="menu">
+
+				<li>
+					<a href="#">HOME</a>
+				</li>
+
+				<li>
+					<a href="#profile">PROFILE</a>
+				</li>
+
+				<li>
+					<a href="#works">WORKS</a>
+				</li>
+
+				<li>
+					<a href="#skill">SKILLS</a>
+				</li>
+
+				<li>
+					<a href="#contact">CONTACT</a>
+				</li>
 
 			</ul>
+
 		</nav>
 
 	</header>
 
+
+
+	<!-- ========================================
+	     メインコンテンツ
+	======================================== -->
+
 	<div class="container">
 
-		<!-- 自己紹介 -->
+
+		<!-- ====================================
+		     トップ・自己紹介
+		===================================== -->
+
 		<section class="hero">
 
-			<h2>こんにちは</h2>
+			<h2>SAKATA</h2>
 
 			<p>
-				私のホームページをご覧いただきありがとうございます。<br>
-				Java・JSP・HTML・CSS・SQLを学習しながらシステム開発を行っています。
+				STUDENT / DEVELOPER<br>
+				IT ECONOMICS / WEB DEVELOPMENT
+			</p>
+
+			<p>
+				Java・JSP・HTML・CSS・SQLを学習しながら<br>
+				システム開発に取り組んでいます。
 			</p>
 
 		</section>
 
-		<!-- プロフィール -->
+
+
+		<!-- ====================================
+		     プロフィール
+		===================================== -->
+
 		<section id="profile" class="card">
 
-			<h2>プロフィール</h2>
+			<h2>PROFILE</h2>
 
 			<table>
 
 				<tr>
-					<th>名前</th>
+
+					<th>NAME</th>
+
 					<td>坂田 駿右</td>
+
 				</tr>
 
+
 				<tr>
-					<th>学校</th>
+
+					<th>SCHOOL</th>
+
 					<td>湖東カレッジ</td>
+
 				</tr>
 
+
 				<tr>
-					<th>学科</th>
+
+					<th>DEPARTMENT</th>
+
 					<td>IT経済学科</td>
+
 				</tr>
 
+
 				<tr>
-					<th>趣味</th>
+
+					<th>HOBBY</th>
+
 					<td>ゲーム</td>
+
 				</tr>
 
+
 				<tr>
-					<th>目標</th>
+
+					<th>GOAL</th>
+
 					<td>システムエンジニア</td>
+
 				</tr>
 
 			</table>
 
 		</section>
 
-		<!-- 制作物 -->
+
+
+		<!-- ====================================
+		     制作物
+		===================================== -->
+
 		<section id="works" class="card">
 
-			<h2>制作物</h2>
+			<h2>WORKS</h2>
+
 
 			<div class="work-box">
 
-				<h3>タスク管理アプリ</h3>
+				<h3>TASK MANAGEMENT APP</h3>
 
-				<p>4人チームで開発しているWebアプリケーションです。</p>
+				<p>
+					4人チームで開発しているタスク管理Webアプリケーションです。
+					プロジェクト管理、タスク管理、通知機能などの実装に取り組んでいます。
+				</p>
 
 			</div>
 
+
 			<div class="work-box">
 
-				<h3>Java課題</h3>
+				<h3>JAVA PROGRAMMING</h3>
 
-				<p>Javaの基本構文やオブジェクト指向を学習しました。</p>
+				<p>
+					Javaの基本構文、配列、メソッド、
+					オブジェクト指向、継承、カプセル化などを学習しました。
+				</p>
 
 			</div>
 
+
 			<div class="work-box">
 
-				<h3>個人ホームページ</h3>
+				<h3>PERSONAL HOMEPAGE</h3>
 
-				<p>HTML・CSS・JSPを使って制作しています。</p>
+				<p>
+					JSP・HTML・CSSを使用して制作している個人ホームページです。
+				</p>
 
 			</div>
 
 		</section>
 
-		<!-- スキル -->
+
+
+		<!-- ====================================
+		     スキル
+		===================================== -->
+
 		<section id="skill" class="card">
 
-			<h2>スキル</h2>
+			<h2>SKILLS</h2>
+
 
 			<div class="skill-list">
 
 				<span>Java</span>
+
 				<span>JSP</span>
+
 				<span>Servlet</span>
+
 				<span>HTML</span>
+
 				<span>CSS</span>
+
 				<span>SQL</span>
+
 				<span>GitHub</span>
+
 				<span>Eclipse</span>
 
 			</div>
 
 		</section>
 
-		<!-- お問い合わせ -->
+
+
+		<!-- ====================================
+		     お問い合わせ
+		===================================== -->
+
 		<section id="contact" class="card">
 
-			<h2>お問い合わせ</h2>
+			<h2>CONTACT</h2>
 
-			<p>ご連絡はメールまたは学校でお願いします。</p>
+			<p>
+				ご連絡はメールまたは学校でお願いします。
+			</p>
 
 		</section>
 
+
 	</div>
+
+
+
+	<!-- ========================================
+	     フッター
+	======================================== -->
 
 	<footer>
 
-		<p>© 2026</p>
+		<p>
+			SYSTEM // SAKATA PORTFOLIO
+		</p>
+
+		<p>
+			© 2026 SAKATA
+		</p>
 
 	</footer>
 
+
 </body>
+
 </html>

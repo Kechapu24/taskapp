@@ -41,6 +41,13 @@
 			<div class="content-body">
 
 				<%
+				String keyword = request.getParameter("keyword");
+				String filterProjectId = request.getParameter("project_id");
+				String filterUserId = request.getParameter("user_id");
+				String filterPriority = request.getParameter("priority");
+				String filterDeadline = request.getParameter("deadline");
+				String sort = request.getParameter("sort");
+
 				int todoCount = 0;
 				int doingCount = 0;
 				int doneCount = 0;
@@ -116,17 +123,81 @@
 								+ "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
 								+ "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
 								+ "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
-								+ "COALESCE(MIN(tg.tag_id), 0) AS tag_id, "
 								+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags " + "FROM task t "
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = '未着手' "
-								+ "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
-								+ "ORDER BY t.due_date";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
 
-								Statement stmt = conn.createStatement();
-								ResultSet rs = stmt.executeQuery(sql);
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									sql += "AND t.task_name ILIKE ? ";
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									sql += "AND t.project_id = ? ";
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
+									+ "AND ta2.user_id = ?" + ") ";
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									sql += "AND t.priority = ? ";
+								}
+
+								if ("overdue".equals(filterDeadline)) {
+									sql += "AND t.due_date < CURRENT_DATE ";
+								} else if ("today".equals(filterDeadline)) {
+									sql += "AND t.due_date <= CURRENT_DATE ";
+								} else if ("week".equals(filterDeadline)) {
+									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
+								}
+
+								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
+								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
+
+								if ("due_desc".equals(sort)) {
+
+									sql += "ORDER BY t.due_date DESC NULLS LAST";
+
+								} else if ("priority".equals(sort)) {
+
+									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
+									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
+
+								} else if ("name".equals(sort)) {
+
+									sql += "ORDER BY t.task_name ASC";
+
+								} else {
+
+									sql += "ORDER BY t.due_date ASC NULLS LAST";
+								}
+
+								PreparedStatement stmt = conn.prepareStatement(sql);
+
+								int param = 1;
+
+								stmt.setString(param++, "未着手");
+
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									stmt.setString(param++, "%" + keyword.trim() + "%");
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterProjectId));
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterUserId));
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									stmt.setString(param++, filterPriority);
+								}
+
+								ResultSet rs = stmt.executeQuery();
 
 								while (rs.next()) {
 
@@ -329,12 +400,77 @@
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = '進行中' "
-								+ "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
-								+ "ORDER BY t.due_date";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
 
-								Statement stmt = conn.createStatement();
-								ResultSet rs = stmt.executeQuery(sql);
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									sql += "AND t.task_name ILIKE ? ";
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									sql += "AND t.project_id = ? ";
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
+									+ "AND ta2.user_id = ?" + ") ";
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									sql += "AND t.priority = ? ";
+								}
+
+								if ("overdue".equals(filterDeadline)) {
+									sql += "AND t.due_date < CURRENT_DATE ";
+								} else if ("today".equals(filterDeadline)) {
+									sql += "AND t.due_date <= CURRENT_DATE ";
+								} else if ("week".equals(filterDeadline)) {
+									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
+								}
+
+								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
+								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
+
+								if ("due_desc".equals(sort)) {
+
+									sql += "ORDER BY t.due_date DESC NULLS LAST";
+
+								} else if ("priority".equals(sort)) {
+
+									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
+									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
+
+								} else if ("name".equals(sort)) {
+
+									sql += "ORDER BY t.task_name ASC";
+
+								} else {
+
+									sql += "ORDER BY t.due_date ASC NULLS LAST";
+								}
+
+								PreparedStatement stmt = conn.prepareStatement(sql);
+
+								int param = 1;
+
+								stmt.setString(param++, "進行中");
+
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									stmt.setString(param++, "%" + keyword.trim() + "%");
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterProjectId));
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterUserId));
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									stmt.setString(param++, filterPriority);
+								}
+
+								ResultSet rs = stmt.executeQuery();
 
 								while (rs.next()) {
 
@@ -537,12 +673,77 @@
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = '完了' "
-								+ "GROUP BY t.task_id, t.task_name, t.description, t.status, t.priority, t.start_date, t.due_date, p.project_name "
-								+ "ORDER BY t.due_date";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
 
-								Statement stmt = conn.createStatement();
-								ResultSet rs = stmt.executeQuery(sql);
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									sql += "AND t.task_name ILIKE ? ";
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									sql += "AND t.project_id = ? ";
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
+									+ "AND ta2.user_id = ?" + ") ";
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									sql += "AND t.priority = ? ";
+								}
+
+								if ("overdue".equals(filterDeadline)) {
+									sql += "AND t.due_date < CURRENT_DATE ";
+								} else if ("today".equals(filterDeadline)) {
+									sql += "AND t.due_date <= CURRENT_DATE ";
+								} else if ("week".equals(filterDeadline)) {
+									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
+								}
+
+								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
+								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
+
+								if ("due_desc".equals(sort)) {
+
+									sql += "ORDER BY t.due_date DESC NULLS LAST";
+
+								} else if ("priority".equals(sort)) {
+
+									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
+									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
+
+								} else if ("name".equals(sort)) {
+
+									sql += "ORDER BY t.task_name ASC";
+
+								} else {
+
+									sql += "ORDER BY t.due_date ASC NULLS LAST";
+								}
+
+								PreparedStatement stmt = conn.prepareStatement(sql);
+
+								int param = 1;
+
+								stmt.setString(param++, "未着手");
+
+								if (keyword != null && !keyword.trim().isEmpty()) {
+									stmt.setString(param++, "%" + keyword.trim() + "%");
+								}
+
+								if (filterProjectId != null && !filterProjectId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterProjectId));
+								}
+
+								if (filterUserId != null && !filterUserId.isEmpty()) {
+									stmt.setInt(param++, Integer.parseInt(filterUserId));
+								}
+
+								if (filterPriority != null && !filterPriority.isEmpty()) {
+									stmt.setString(param++, filterPriority);
+								}
+
+								ResultSet rs = stmt.executeQuery();
 
 								while (rs.next()) {
 
@@ -728,9 +929,150 @@
 					<!-- 右：サイドパネル -->
 					<div class="sidepanel" id="sidepanel">
 
-						<h2>詳細</h2>
+						<!-- タブ -->
+						<div class="sidepanel-tabs">
+							<button type="button" class="sidepanel-tab active"
+								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
-						<div id="panelContent">タスクを選択してください</div>
+							<button type="button" class="sidepanel-tab"
+								onclick="switchSideTab('sort', this)">並び替え</button>
+
+							<button type="button" class="sidepanel-tab"
+								onclick="switchSideTab('detail', this)">詳細</button>
+						</div>
+
+
+						<!-- 検索・絞り込み -->
+						<div class="sidepanel-content active" id="filterPanel">
+
+							<h3>タスク検索</h3>
+
+							<form method="get" action="taskboard.jsp" class="filter-form">
+
+								<input type="text" name="keyword" class="filter-input"
+									placeholder="タスク名を検索"
+									value="<%=request.getParameter("keyword") == null ? "" : request.getParameter("keyword")%>">
+
+								<label>プロジェクト</label> <select name="project_id">
+
+									<option value="">すべて</option>
+
+									<option value="1"
+										<%="1".equals(request.getParameter("project_id")) ? "selected" : ""%>>
+										販売管理システム</option>
+
+									<option value="2"
+										<%="2".equals(request.getParameter("project_id")) ? "selected" : ""%>>
+										在庫管理システム</option>
+
+									<option value="3"
+										<%="3".equals(request.getParameter("project_id")) ? "selected" : ""%>>
+										社内ポータルサイト</option>
+
+									<option value="4"
+										<%="4".equals(request.getParameter("project_id")) ? "selected" : ""%>>
+										勤怠管理システム</option>
+
+								</select> <label>担当者</label> <select name="user_id">
+
+									<option value="">すべて</option>
+
+									<option value="1"
+										<%="1".equals(request.getParameter("user_id")) ? "selected" : ""%>>
+										伊藤</option>
+
+									<option value="2"
+										<%="2".equals(request.getParameter("user_id")) ? "selected" : ""%>>
+										高橋</option>
+
+									<option value="3"
+										<%="3".equals(request.getParameter("user_id")) ? "selected" : ""%>>
+										中村</option>
+
+									<option value="4"
+										<%="4".equals(request.getParameter("user_id")) ? "selected" : ""%>>
+										小林</option>
+
+									<option value="5"
+										<%="5".equals(request.getParameter("user_id")) ? "selected" : ""%>>
+										加藤</option>
+
+								</select> <label>優先度</label> <select name="priority">
+									<option value="">すべて</option>
+
+									<option value="高"
+										<%="高".equals(request.getParameter("priority")) ? "selected" : ""%>>
+										高</option>
+
+									<option value="中"
+										<%="中".equals(request.getParameter("priority")) ? "selected" : ""%>>
+										中</option>
+
+									<option value="低"
+										<%="低".equals(request.getParameter("priority")) ? "selected" : ""%>>
+										低</option>
+								</select> <label>期限</label> <select name="deadline">
+
+									<option value="">すべて</option>
+
+									<option value="overdue"
+										<%="overdue".equals(request.getParameter("deadline")) ? "selected" : ""%>>
+										期限超過</option>
+
+									<option value="today"
+										<%="today".equals(request.getParameter("deadline")) ? "selected" : ""%>>
+										今日まで</option>
+
+									<option value="week"
+										<%="week".equals(request.getParameter("deadline")) ? "selected" : ""%>>
+										7日以内</option>
+
+								</select>
+
+								<div class="filter-buttons">
+									<button type="submit" class="filter-submit">適用</button>
+
+									<a href="taskboard.jsp" class="filter-reset"> リセット </a>
+								</div>
+
+							</form>
+
+						</div>
+
+
+						<!-- 並び替え -->
+						<div class="sidepanel-content" id="sortPanel">
+
+							<h3>並び替え</h3>
+
+							<form method="get" action="taskboard.jsp" class="filter-form">
+
+								<!-- 検索条件を維持したいのでhiddenで引き継ぐ -->
+								<input type="hidden" name="keyword"
+									value="<%=request.getParameter("keyword") == null ? "" : request.getParameter("keyword")%>">
+
+								<label>並び順</label> <select name="sort">
+									<option value="due_asc">期限が近い順</option>
+									<option value="due_desc">期限が遠い順</option>
+									<option value="priority">優先度順</option>
+									<option value="name">タスク名順</option>
+								</select>
+
+								<button type="submit" class="filter-submit">適用</button>
+
+							</form>
+
+						</div>
+
+
+						<!-- 詳細 -->
+						<div class="sidepanel-content" id="detailPanel">
+
+							<h3>タスク詳細</h3>
+
+							<div id="panelContent">タスクを選択してください</div>
+
+						</div>
 
 					</div>
 				</div>
@@ -831,6 +1173,43 @@
 						statusInput.value = status;
 
 						closeAllTaskMenus();
+					}
+				</script>
+
+				<script>
+					function switchSideTab(tabName, button) {
+
+						// 全パネルを非表示
+						const contents = document
+								.querySelectorAll(".sidepanel-content");
+
+						contents.forEach(function(content) {
+							content.classList.remove("active");
+						});
+
+						// 全タブのactiveを外す
+						const tabs = document
+								.querySelectorAll(".sidepanel-tab");
+
+						tabs.forEach(function(tab) {
+							tab.classList.remove("active");
+						});
+
+						// 選択したパネルを表示
+						if (tabName === "filter") {
+							document.getElementById("filterPanel").classList
+									.add("active");
+
+						} else if (tabName === "sort") {
+							document.getElementById("sortPanel").classList
+									.add("active");
+
+						} else if (tabName === "detail") {
+							document.getElementById("detailPanel").classList
+									.add("active");
+						}
+
+						button.classList.add("active");
 					}
 				</script>
 

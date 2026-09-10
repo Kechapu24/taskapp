@@ -10,5 +10,8 @@ TRUNCATE TABLE
     project_member,
     personal_task,
     users,
-    project
+    project,
+    user_settings,
+    organization,
+    org_member
 RESTART IDENTITY CASCADE;

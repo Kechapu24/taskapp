@@ -1,266 +1,541 @@
 @charset "UTF-8";
-/* -----------------------
-   全体　　
------------------------ */
 
-*{
-	margin:0;
-	padding:0;
-	box-sizing:border-box;
+/* ========================================
+   全体
+======================================== */
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
-body{
-
-	font-family:"Yu Gothic",sans-serif;
-
-	background:#ecf0f1;
-
-	color:#333;
-
+html {
+	scroll-behavior: smooth;
 }
 
-/* -----------------------
-   ヘッダー　
------------------------ */
-
-.header{
-
-	background:#34495e;
-
-	color:white;
-
-	padding:20px 40px;
-
-	display:flex;
-
-	justify-content:space-between;
-
-	align-items:center;
-
+body {
+	font-family: "Yu Gothic", "Meiryo", sans-serif;
+	background: #080b0e;
+	color: #e8e8e8;
+	line-height: 1.7;
 }
 
-.logo h1{
 
-	font-size:28px;
+/* ========================================
+   ヘッダー
+======================================== */
 
-}
+.header {
+	background: rgba(5, 8, 10, 0.95);
+	border-bottom: 1px solid #00ff9c;
 
-.menu{
+	color: #ffffff;
 
-	list-style:none;
-
-	display:flex;
-
-}
-
-.menu li{
-
-	margin-left:25px;
-
-}
-
-.menu a{
-
-	color:white;
-
-	text-decoration:none;
-
-	font-size:16px;
-
-	transition:.3s;
-
-}
-
-.menu a:hover{
-
-	color:#1abc9c;
-
-}
-
-/* -----------------------
-   メイン
------------------------ */
-
-.container{
-
-	width:90%;
-
-	margin:auto;
-
-	padding:30px 0;
-
-}
-
-/* -----------------------
-   自己紹介
------------------------ */
-
-.hero{
-
-	background-image: url("../images/background.jpg");
-
-	background-size: cover;
-
-	background-position: center;
-
-	background-repeat: no-repeat;
-
-	height: 450px;
+	padding: 18px 40px;
 
 	display: flex;
-
-	flex-direction: column;
-
-	justify-content: center;
-
+	justify-content: space-between;
 	align-items: center;
 
-	color: white;
+	position: sticky;
+	top: 0;
+	z-index: 1000;
 
-	text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+	box-shadow: 0 0 15px rgba(0, 255, 156, 0.15);
+}
 
-	border-radius: 10px;
+
+/* ロゴ */
+
+.logo h1 {
+	font-size: 26px;
+	letter-spacing: 4px;
+	color: #00ff9c;
+
+	text-shadow:
+	0 0 5px #00ff9c,
+	0 0 15px rgba(0, 255, 156, 0.5);
+}
+
+
+/* ========================================
+   メニュー
+======================================== */
+
+.menu {
+	list-style: none;
+	display: flex;
+	gap: 10px;
+}
+
+.menu li {
+	margin-left: 0;
+}
+
+.menu a {
+	display: block;
+
+	color: #bfc7c9;
+	text-decoration: none;
+
+	font-size: 14px;
+	letter-spacing: 1px;
+
+	padding: 8px 14px;
+
+	border: 1px solid transparent;
+
+	transition: 0.3s;
+}
+
+.menu a::before {
+	content: "> ";
+	color: #00ff9c;
+}
+
+.menu a:hover {
+	color: #00ff9c;
+
+	border: 1px solid #00ff9c;
+
+	background: rgba(0, 255, 156, 0.05);
+
+	box-shadow:
+	0 0 8px rgba(0, 255, 156, 0.3);
+
+	transform: translateY(-2px);
+}
+
+
+/* ========================================
+   メインコンテナ
+======================================== */
+
+.container {
+	width: 90%;
+	max-width: 1200px;
+
+	margin: auto;
+
+	padding: 40px 0;
+}
+
+
+/* ========================================
+   自己紹介・トップ画面
+======================================== */
+
+.hero {
+	height: 500px;
+
+	background:
+	linear-gradient(
+		rgba(0, 0, 0, 0.65),
+		rgba(0, 0, 0, 0.75)
+	),
+	url("images/background.jpg");
+
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	text-align: center;
+
+	border: 1px solid #00ff9c;
+
+	position: relative;
+
+	overflow: hidden;
+
+	box-shadow:
+	0 0 20px rgba(0, 255, 156, 0.15);
+
+	margin-bottom: 40px;
+}
+
+
+/* 左上の表示 */
+
+.hero::before {
+	content: "SYSTEM ONLINE";
+
+	position: absolute;
+
+	top: 20px;
+	left: 25px;
+
+	color: #00ff9c;
+
+	font-size: 12px;
+
+	letter-spacing: 2px;
+
+	text-shadow: 0 0 8px #00ff9c;
+}
+
+
+/* 右上の表示 */
+
+.hero::after {
+	content: "STATUS : ACTIVE";
+
+	position: absolute;
+
+	top: 20px;
+	right: 25px;
+
+	color: #ff3b6b;
+
+	font-size: 12px;
+
+	letter-spacing: 2px;
+}
+
+
+/* メインタイトル */
+
+.hero h2 {
+	font-size: 64px;
+
+	letter-spacing: 12px;
+
+	color: #ffffff;
+
+	margin-bottom: 20px;
+
+	text-shadow:
+	0 0 5px #ffffff,
+	0 0 15px #00ff9c,
+	0 0 30px rgba(0, 255, 156, 0.7);
+
+}
+
+
+/* 自己紹介文章 */
+
+.hero p {
+	font-size: 18px;
+
+	color: #d9d9d9;
+
+	line-height: 2;
+
+	letter-spacing: 1px;
+}
+
+
+/* ========================================
+   共通カード
+======================================== */
+
+.card {
+	background: #0d1216;
+
+	border: 1px solid #26343a;
+
+	padding: 30px;
 
 	margin-bottom: 30px;
 
+	position: relative;
+
+	box-shadow:
+	0 5px 20px rgba(0, 0, 0, 0.4);
+
+	transition: 0.3s;
 }
 
-.hero h2{
+.card:hover {
+	border-color: #00ff9c;
 
-	font-size:48px;
+	box-shadow:
+	0 0 20px rgba(0, 255, 156, 0.12);
 
-	margin-bottom:20px;
-
+	transform: translateY(-3px);
 }
 
-.hero p{
 
-	font-size:22px;
+/* カードの左上 */
 
-	line-height:1.8;
+.card::before {
+	content: "■";
 
-}
-/* -----------------------
-   カード
------------------------ */
+	position: absolute;
 
-.card{
+	top: 12px;
+	left: 15px;
 
-	background:white;
+	color: #00ff9c;
 
-	padding:25px;
-
-	margin-bottom:30px;
-
-	border-radius:10px;
-
-	box-shadow:0 3px 10px rgba(0,0,0,.1);
-
+	font-size: 10px;
 }
 
-.card h2{
 
-	margin-bottom:20px;
+/* 見出し */
 
-	color:#3498db;
+.card h2 {
+	color: #00ff9c;
 
+	font-size: 24px;
+
+	letter-spacing: 3px;
+
+	margin-bottom: 25px;
+
+	padding-left: 10px;
+
+	border-left: 3px solid #00ff9c;
+
+	text-shadow:
+	0 0 8px rgba(0, 255, 156, 0.4);
 }
 
-/* -----------------------
+
+/* ========================================
    プロフィール
------------------------ */
+======================================== */
 
-table{
+table {
+	width: 100%;
 
-	width:100%;
+	border-collapse: collapse;
 
-	border-collapse:collapse;
-
+	background: #090d10;
 }
 
-th{
+th {
+	width: 180px;
 
-	background:#3498db;
+	background: #111a1f;
 
-	color:white;
+	color: #00ff9c;
 
-	width:180px;
+	text-align: left;
 
+	letter-spacing: 1px;
 }
 
-th,td{
+th,
+td {
+	padding: 14px 18px;
 
-	padding:12px;
-
-	border:1px solid #ddd;
-
+	border: 1px solid #26343a;
 }
 
-/* -----------------------
+td {
+	color: #d5d5d5;
+}
+
+tr:hover td {
+	background: rgba(0, 255, 156, 0.03);
+}
+
+
+/* ========================================
    制作物
------------------------ */
+======================================== */
 
-.work-box{
+.work-box {
+	background: #090d10;
 
-	border-left:6px solid #3498db;
+	border: 1px solid #26343a;
 
-	padding:15px;
+	border-left: 4px solid #00ff9c;
 
-	margin-bottom:20px;
+	padding: 20px;
 
-	background:#f9f9f9;
+	margin-bottom: 20px;
 
+	position: relative;
+
+	transition: 0.3s;
 }
 
-.work-box h3{
+.work-box:hover {
+	border-color: #00ff9c;
 
-	margin-bottom:10px;
+	background: #0c1417;
 
+	box-shadow:
+	0 0 15px rgba(0, 255, 156, 0.1);
+
+	transform: translateX(5px);
 }
 
-/* -----------------------
+
+.work-box h3 {
+	color: #ffffff;
+
+	font-size: 19px;
+
+	margin-bottom: 10px;
+
+	letter-spacing: 2px;
+}
+
+.work-box h3::before {
+	content: "[ PROJECT ] ";
+
+	color: #00ff9c;
+
+	font-size: 12px;
+}
+
+.work-box p {
+	color: #aeb7ba;
+}
+
+
+/* ========================================
    スキル
------------------------ */
+======================================== */
 
-.skill-list{
+.skill-list {
+	display: flex;
 
-	display:flex;
+	flex-wrap: wrap;
 
-	flex-wrap:wrap;
-
-	gap:10px;
-
+	gap: 12px;
 }
 
-.skill-list span{
+.skill-list span {
+	background: #090d10;
 
-	background:#3498db;
+	color: #00ff9c;
 
-	color:white;
+	border: 1px solid #00ff9c;
 
-	padding:10px 18px;
+	padding: 8px 16px;
 
-	border-radius:30px;
+	font-size: 14px;
 
-	font-size:15px;
+	letter-spacing: 1px;
 
+	position: relative;
+
+	transition: 0.3s;
 }
 
-/* -----------------------
+.skill-list span::before {
+	content: "#";
+	color: #ff3b6b;
+}
+
+.skill-list span:hover {
+	background: #00ff9c;
+
+	color: #080b0e;
+
+	box-shadow:
+	0 0 15px rgba(0, 255, 156, 0.5);
+
+	transform: translateY(-3px);
+}
+
+
+/* ========================================
    フッター
------------------------ */
+======================================== */
 
-footer{
+footer {
+	background: #050708;
 
-	background:#34495e;
+	color: #697477;
 
-	color:white;
+	text-align: center;
 
-	text-align:center;
+	padding: 25px;
 
-	padding:20px;
+	border-top: 1px solid #26343a;
 
+	font-size: 13px;
+
+	letter-spacing: 2px;
 }
-.hero {
-background-image: url("images/background.jpg");
+
+
+/* ========================================
+   スクロールバー
+======================================== */
+
+::-webkit-scrollbar {
+	width: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: #080b0e;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #26343a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #00ff9c;
+}
+
+
+/* ========================================
+   スマートフォン対応
+======================================== */
+
+@media screen and (max-width: 768px) {
+
+	.header {
+		flex-direction: column;
+
+		padding: 20px;
+	}
+
+	.logo {
+		margin-bottom: 15px;
+	}
+
+	.menu {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.menu a {
+		font-size: 12px;
+		padding: 6px 8px;
+	}
+
+	.container {
+		width: 94%;
+	}
+
+	.hero {
+		height: 400px;
+	}
+
+	.hero h2 {
+		font-size: 40px;
+		letter-spacing: 6px;
+	}
+
+	.hero p {
+		font-size: 14px;
+	}
+
+	th {
+		width: 100px;
+	}
+
+	th,
+	td {
+		padding: 10px;
+		font-size: 13px;
+	}
+
+	.card {
+		padding: 20px;
+	}
+
 }
