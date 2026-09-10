@@ -14,4 +14,5 @@ TRUNCATE TABLE
     user_settings,
     organization,
     org_member
+    
 RESTART IDENTITY CASCADE;
