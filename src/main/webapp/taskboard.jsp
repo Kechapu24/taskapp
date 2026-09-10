@@ -149,7 +149,7 @@
 								if ("overdue".equals(filterDeadline)) {
 									sql += "AND t.due_date < CURRENT_DATE ";
 								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date <= CURRENT_DATE ";
+									sql += "AND t.due_date = CURRENT_DATE ";
 								} else if ("week".equals(filterDeadline)) {
 									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
 								}
@@ -422,7 +422,7 @@
 								if ("overdue".equals(filterDeadline)) {
 									sql += "AND t.due_date < CURRENT_DATE ";
 								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date <= CURRENT_DATE ";
+									sql += "AND t.due_date = CURRENT_DATE ";
 								} else if ("week".equals(filterDeadline)) {
 									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
 								}
@@ -695,7 +695,7 @@
 								if ("overdue".equals(filterDeadline)) {
 									sql += "AND t.due_date < CURRENT_DATE ";
 								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date <= CURRENT_DATE ";
+									sql += "AND t.due_date = CURRENT_DATE ";
 								} else if ("week".equals(filterDeadline)) {
 									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
 								}
@@ -935,9 +935,6 @@
 								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
 							<button type="button" class="sidepanel-tab"
-								onclick="switchSideTab('sort', this)">並び替え</button>
-
-							<button type="button" class="sidepanel-tab"
 								onclick="switchSideTab('detail', this)">詳細</button>
 						</div>
 
@@ -1037,12 +1034,6 @@
 
 							</form>
 
-						</div>
-
-
-						<!-- 並び替え -->
-						<div class="sidepanel-content" id="sortPanel">
-
 							<h3>並び替え</h3>
 
 							<form method="get" action="taskboard.jsp" class="filter-form">
@@ -1063,7 +1054,6 @@
 							</form>
 
 						</div>
-
 
 						<!-- 詳細 -->
 						<div class="sidepanel-content" id="detailPanel">

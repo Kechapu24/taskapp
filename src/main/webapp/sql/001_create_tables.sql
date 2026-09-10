@@ -9,7 +9,6 @@ DROP TABLE IF EXISTS task;
 DROP TABLE IF EXISTS project_member;
 DROP TABLE IF EXISTS org_member;
 DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS organization;
 DROP TABLE IF EXISTS project;
 DROP TABLE IF EXISTS personal_task;
 
@@ -20,12 +19,6 @@ CREATE TABLE project (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE organization (
-    org_id SERIAL PRIMARY KEY,
-    org_name VARCHAR(100) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     user_name VARCHAR(50) NOT NULL,
@@ -33,17 +26,6 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role VARCHAR(30) DEFAULT 'member'
 );
-
-CREATE TABLE org_member (
-    org_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    org_role VARCHAR(30) DEFAULT 'member',
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (org_id, user_id),
-    FOREIGN KEY (org_id) REFERENCES organization(org_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
-	
 
 CREATE TABLE task (
     task_id SERIAL PRIMARY KEY,
@@ -133,30 +115,4 @@ CREATE TABLE personal_task (
     status VARCHAR(30) DEFAULT '進行中',
     due_date DATE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
-is_read = false
-);
-UPDATE notifications
-SET is_read = true
-WHERE user_id = ?
-);
-CREATE TABLE notifications(
-    notification_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    type VARCHAR(30),
-    task_id INT,
-    project_id INT,
-    detail TEXT,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at DATETIME
-);
-CREATE TABLE notification (
-    notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    task_name VARCHAR(100),
-    project_name VARCHAR(100),
-    type VARCHAR(30),
-    detail TEXT,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
