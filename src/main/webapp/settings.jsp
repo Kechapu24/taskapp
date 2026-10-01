@@ -1,28 +1,90 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
 <%
+    request.setCharacterEncoding("UTF-8");
+
     // ==========================================
-    // ① セッションから設定を読み込む（ラグ解消処理）
+    // ① 保存処理（POST送信されてきた場合）
+    // ==========================================
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        String theme = request.getParameter("theme");
+        String fontSize = request.getParameter("fontSize");
+        String bgColor = request.getParameter("bgColor");
+        String textColor = request.getParameter("textColor");
+
+        String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+        String dbUser = "taskuser";
+        String dbPass = "taskpass";
+        int currentUserId = 1;
+
+        if (theme != null && fontSize != null) {
+            try {
+                Class.forName("org.postgresql.Driver");
+                
+                // DB更新処理 (UPDATE)
+                String sql = "UPDATE user_settings SET theme = ?, font_size = ?, bg_color = ?, text_color = ? WHERE user_id = ?";
+                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
+                     PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    
+                    pstmt.setString(1, theme);
+                    pstmt.setString(2, fontSize);
+                    pstmt.setString(3, bgColor);
+                    pstmt.setString(4, textColor);
+                    pstmt.setInt(5, currentUserId);
+                    
+                    int updatedRows = pstmt.executeUpdate();
+                    
+                    // レコードがなければ新規挿入 (INSERT)
+                    if (updatedRows == 0) {
+                        String insertSql = "INSERT INTO user_settings (user_id, theme, font_size, bg_color, text_color) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
+                            insertPstmt.setInt(1, currentUserId);
+                            insertPstmt.setString(2, theme);
+                            insertPstmt.setString(3, fontSize);
+                            insertPstmt.setString(4, bgColor);
+                            insertPstmt.setString(5, textColor);
+                            insertPstmt.executeUpdate();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // セッションも同期更新
+            session.setAttribute("currentTheme", theme);
+            session.setAttribute("currentFontSize", fontSize);
+            session.setAttribute("currentBgColor", bgColor);
+            session.setAttribute("currentTextColor", textColor);
+        }
+
+        // JavaScriptからの非同期通信(Ajax)の場合はレスポンスを返して処理を終了
+        if ("1".equals(request.getParameter("ajax"))) {
+            out.print("SUCCESS");
+            return; // ここで処理を止め、下のHTMLは出力しない
+        }
+    }
+
+    // ==========================================
+    // ② 設定読み込み処理（初回表示・画面描画用）
     // ==========================================
     String currentTheme = (String) session.getAttribute("currentTheme");
     String currentBgColor = (String) session.getAttribute("currentBgColor");
     String currentTextColor = (String) session.getAttribute("currentTextColor");
     String currentFontSize = (String) session.getAttribute("currentFontSize");
 
-    // セッションにデータがない場合（ログイン直後や初回アクセス時）のみDBにアクセスする
+    // セッションにデータがない場合のみDBから取得
     if (currentTheme == null) {
         String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
         String dbUser = "taskuser";
         String dbPass = "taskpass";
         
-        // デフォルト値
         currentTheme = "light";
         currentBgColor = "#ffffff";
         currentTextColor = "#333333";
         currentFontSize = "medium";
         
-        // ※ログイン機能が完成するまでは仮のID(例: 1)を使用します
-        int currentUserId = 1; 
+        int currentUserId = 1;
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -33,7 +95,6 @@
                 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
-                        // DBにデータがあれば上書き
                         currentTheme = rs.getString("theme");
                         currentBgColor = rs.getString("bg_color");
                         currentTextColor = rs.getString("text_color");
@@ -45,7 +106,7 @@
             e.printStackTrace();
         }
 
-        // 取得した値をセッションに保存（次回以降のDBアクセスをスキップ）
+        // 取得した値をセッションに保存
         session.setAttribute("currentTheme", currentTheme);
         session.setAttribute("currentBgColor", currentBgColor);
         session.setAttribute("currentTextColor", currentTextColor);
@@ -255,22 +316,26 @@
         });
 
         // ==========================================
-        // サーバー(DB & セッション)へ設定を保存する共通関数
+        // 自分自身(settings.jsp)のPOST処理へ送信する関数
         // ==========================================
         function saveSettingsToDB() {
-            const theme = document.querySelector('input[name="theme"]:checked').value;
-            const fontSize = document.querySelector('input[name="fontsize"]:checked').value;
+            const selectedTheme = document.querySelector('input[name="theme"]:checked');
+            const selectedFontSize = document.querySelector('input[name="fontsize"]:checked');
+            
+            const theme = selectedTheme ? selectedTheme.value : 'light';
+            const fontSize = selectedFontSize ? selectedFontSize.value : 'medium';
             const bgColor = document.getElementById('bgColor').value;
             const textColor = document.getElementById('textColor').value;
 
             const params = new URLSearchParams();
+            params.append('ajax', '1'); // 自分自身のPOST処理を呼び出すフラグ
             params.append('theme', theme);
             params.append('fontSize', fontSize);
             params.append('bgColor', bgColor);
             params.append('textColor', textColor);
 
-            // save_settings.jsp にデータをPOST送信
-            fetch('save_settings.jsp', {
+            // 自分自身(settings.jsp)にPOST送信
+            fetch('settings.jsp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: params
