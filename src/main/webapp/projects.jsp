@@ -1,558 +1,1101 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+
+<%
+// 文字化け防止
+request.setCharacterEncoding("UTF-8");
+
+// データベース接続情報
+String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+String dbUser = "taskuser";
+String dbPassword = "taskpass";
+
+// ==========================================
+// 【新機能】タスク・プロジェクトの裏側処理 (JavaScriptから非同期で呼ばれるAPI)
+// ==========================================
+String action = request.getParameter("action");
+if (action != null) {
+	try {
+		Class.forName("org.postgresql.Driver");
+		Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
+		
+		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
+		if ("getTasks".equals(action)) {
+			String pId = request.getParameter("projectId");
+			String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.start_date, 'YYYY-MM-DD') as fmt_start_date, TO_CHAR(t.due_date, 'YYYY-MM-DD') as fmt_due_date, t.description, ta.user_id " +
+						 "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
+						 "WHERE t.project_id = ? ORDER BY t.task_id ASC";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, Integer.parseInt(pId));
+			ResultSet rs = pstmt.executeQuery();
+			
+			boolean hasTask = false;
+			while (rs.next()) {
+				hasTask = true;
+				int taskId = rs.getInt("task_id");
+				String taskName = rs.getString("task_name");
+				String status = rs.getString("status");
+				String priority = rs.getString("priority");
+				String startDate = rs.getString("fmt_start_date");
+				String dueDate = rs.getString("fmt_due_date");
+				String description = rs.getString("description");
+				int assigneeUserId = rs.getInt("user_id");
+				
+				if (startDate == null) startDate = "";
+				if (dueDate == null) dueDate = "";
+				if (description == null) description = "";
+				if (status == null) status = "未着手";
+				if (priority == null) priority = "中";
+				
+				String dateStr = dueDate;
+				if (!dateStr.isEmpty()) {
+					dateStr = dateStr.replace("-", "/");
+				}
+				
+				boolean isChecked = "完了".equals(status);
+				
+				// 編集用にエスケープ処理
+				String escapedTaskName = taskName.replace("\"", "&quot;").replace("'", "\\'");
+				String escapedDesc = description.replace("\"", "&quot;").replace("\n", "\\n").replace("\r", "");
+				
+				out.print("<div class='horizontal-task-card'>");
+				out.print("<div class='htc-left'>");
+				out.print("<input type='checkbox' class='task-check' onchange='toggleTask(" + taskId + ", this.checked, \"" + pId + "\")' " + (isChecked ? "checked" : "") + ">");
+				out.print("<span class='htc-name " + (isChecked ? "completed-task" : "") + "'>" + taskName + "</span>");
+				out.print("</div>");
+				
+				out.print("<div class='htc-right'>");
+				if (!dateStr.isEmpty()) {
+					out.print("<span class='htc-info'>📅 " + dateStr + "</span>");
+				}
+				out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
+				out.print("<div class='task-dropdown-menu'>");
+				out.print("<button class='dropdown-edit-item' onclick='openEditTaskModal(" + taskId + ", \"" + escapedTaskName + "\", \"" + status + "\", \"" + priority + "\", \"" + startDate + "\", \"" + dueDate + "\", \"" + assigneeUserId + "\", \"" + escapedDesc + "\")'>編集</button>");
+				out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \"" + taskName.replace("\"", "&quot;") + "\")'>削除</button>");
+				out.print("</div>");
+				out.print("</div>");
+				
+				out.print("</div>");
+			}
+			if (!hasTask) {
+				out.print("<div style='padding: 20px; color: #777; text-align: center; width: 100%;'>タスクはまだ登録されていません。</div>");
+			}
+			rs.close(); pstmt.close();
+		} 
+		// ② タスクの追加
+		else if ("addTask".equals(action)) {
+			String pId = request.getParameter("projectId");
+			String tName = request.getParameter("taskName");
+			String status = request.getParameter("status");
+			String priority = request.getParameter("priority");
+			String startDate = request.getParameter("startDate");
+			String dueDate = request.getParameter("dueDate");
+			String description = request.getParameter("description");
+			String userId = request.getParameter("userId");
+			
+			String sql = "INSERT INTO task (project_id, task_name, status, priority, start_date, due_date, description) VALUES (?, ?, ?, ?, NULLIF(?, '')::DATE, NULLIF(?, '')::DATE, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setInt(1, Integer.parseInt(pId));
+			pstmt.setString(2, tName);
+			pstmt.setString(3, (status != null && !status.isEmpty()) ? status : "未着手");
+			pstmt.setString(4, (priority != null && !priority.isEmpty()) ? priority : "中");
+			pstmt.setString(5, startDate);
+			pstmt.setString(6, dueDate);
+			pstmt.setString(7, description);
+			pstmt.executeUpdate();
+			
+			if (userId != null && !userId.isEmpty()) {
+				ResultSet generatedKeys = pstmt.getGeneratedKeys();
+				if (generatedKeys.next()) {
+					int newTaskId = generatedKeys.getInt(1);
+					String assigneeSql = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
+					PreparedStatement aStmt = conn.prepareStatement(assigneeSql);
+					aStmt.setInt(1, newTaskId);
+					aStmt.setInt(2, Integer.parseInt(userId));
+					aStmt.executeUpdate();
+					aStmt.close();
+				}
+				generatedKeys.close();
+			}
+			pstmt.close();
+		} 
+		// ②-2 タスクの編集更新
+		else if ("editTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			String tName = request.getParameter("taskName");
+			String status = request.getParameter("status");
+			String priority = request.getParameter("priority");
+			String startDate = request.getParameter("startDate");
+			String dueDate = request.getParameter("dueDate");
+			String description = request.getParameter("description");
+			String userId = request.getParameter("userId");
+			
+			int taskIdInt = Integer.parseInt(tId);
+			
+			String sql = "UPDATE task SET task_name = ?, status = ?, priority = ?, start_date = NULLIF(?, '')::DATE, due_date = NULLIF(?, '')::DATE, description = ? WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, tName);
+			pstmt.setString(2, (status != null && !status.isEmpty()) ? status : "未着手");
+			pstmt.setString(3, (priority != null && !priority.isEmpty()) ? priority : "中");
+			pstmt.setString(4, startDate);
+			pstmt.setString(5, dueDate);
+			pstmt.setString(6, description);
+			pstmt.setInt(7, taskIdInt);
+			pstmt.executeUpdate();
+			pstmt.close();
+			
+			// 担当者の更新 (一度削除して再登録)
+			PreparedStatement delAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id = ?");
+			delAssignee.setInt(1, taskIdInt);
+			delAssignee.executeUpdate();
+			delAssignee.close();
+			
+			if (userId != null && !userId.isEmpty()) {
+				String insAssignee = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
+				PreparedStatement insStmt = conn.prepareStatement(insAssignee);
+				insStmt.setInt(1, taskIdInt);
+				insStmt.setInt(2, Integer.parseInt(userId));
+				insStmt.executeUpdate();
+				insStmt.close();
+			}
+		}
+		// ③ タスクのチェック状態更新
+		else if ("toggleTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			boolean isChecked = Boolean.parseBoolean(request.getParameter("isChecked"));
+			String newStatus = isChecked ? "完了" : "未着手";
+			
+			String sql = "UPDATE task SET status = ? WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newStatus);
+			pstmt.setInt(2, Integer.parseInt(tId));
+			pstmt.executeUpdate();
+			pstmt.close();
+		} 
+		// ④ タスクの削除
+		else if ("deleteTask".equals(action)) {
+			String tId = request.getParameter("taskId");
+			int taskIdInt = Integer.parseInt(tId);
+			
+			PreparedStatement delAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id = ?");
+			delAssignee.setInt(1, taskIdInt);
+			delAssignee.executeUpdate();
+			delAssignee.close();
+
+			String sql = "DELETE FROM task WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, taskIdInt);
+			pstmt.executeUpdate();
+			pstmt.close();
+		}
+		// ⑤ プロジェクトの削除
+		else if ("deleteProject".equals(action)) {
+			String pId = request.getParameter("projectId");
+			int projectId = Integer.parseInt(pId);
+			
+			PreparedStatement pstmtAssignee = conn.prepareStatement("DELETE FROM task_assignee WHERE task_id IN (SELECT task_id FROM task WHERE project_id = ?)");
+			pstmtAssignee.setInt(1, projectId);
+			pstmtAssignee.executeUpdate();
+			pstmtAssignee.close();
+
+			PreparedStatement pstmtTask = conn.prepareStatement("DELETE FROM task WHERE project_id = ?");
+			pstmtTask.setInt(1, projectId);
+			pstmtTask.executeUpdate();
+			pstmtTask.close();
+
+			PreparedStatement pstmtProj = conn.prepareStatement("DELETE FROM project WHERE project_id = ?");
+			pstmtProj.setInt(1, projectId);
+			pstmtProj.executeUpdate();
+			pstmtProj.close();
+		}
+		conn.close();
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	return; 
+}
+
+// ==========================================
+// プロジェクトの追加（DBへのINSERT）処理
+// ==========================================
+if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newProjectName") != null) {
+	String newProjectName = request.getParameter("newProjectName");
+	if (!newProjectName.trim().isEmpty()) {
+		try {
+			Class.forName("org.postgresql.Driver");
+			Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
+			String sql = "INSERT INTO project (project_name, description) VALUES (?, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newProjectName);
+			pstmt.setString(2, "");
+			pstmt.executeUpdate();
+			pstmt.close(); conn.close();
+		} catch (Exception e) { e.printStackTrace(); }
+		
+		response.sendRedirect("projects.jsp");
+		return;
+	}
+}
+%>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>プロジェクト・タスク管理</title>
-	<style>
-		/* ==========================================================
-		   テーマ定義 (CSS Variables)
-		   ========================================================== */
-		:root {
-			--bg-color: #f4f6f9;
-			--card-bg: #ffffff;
-			--text-color: #333333;
-			--text-muted: #777777;
-			--border-color: #e0e0e0;
-			--primary-color: #007bff;
-			--primary-hover: #0056b3;
-			--danger-color: #dc3545;
-			--modal-bg: #ffffff;
-			--overlay-bg: rgba(0, 0, 0, 0.5);
-			--dropdown-bg: #ffffff;
-			--dropdown-hover: #f0f0f0;
-			--input-bg: #ffffff;
-			--input-border: #ccc;
-			--shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-			--header-bg: #ffffff;
-			
-			/* ステータスカラー */
-			--status-completed-bg: #d4edda;
-			--status-completed-text: #155724;
-			--status-inprogress-bg: #fff3cd;
-			--status-inprogress-text: #856404;
-			--status-notstarted-bg: #e2e3e5;
-			--status-notstarted-text: #383d41;
-		}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タスク管理アプリ - プロジェクト一覧</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+	.main-content { position: relative; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
+	.content-header { flex-shrink: 0; }
+	
+	.split-container {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		overflow: hidden;
+		background-color: #f8f9fa;
+	}
+	
+	/* 上半分：プロジェクト進捗一覧エリア */
+	.top-project-section {
+		height: 45%; /* 初期高さ */
+		min-height: 100px;
+		overflow-y: auto;
+		padding: 12px 20px;
+		background: #fff;
+		display: flex;
+		flex-direction: column;
+		flex-shrink: 0;
+	}
 
-		/* ダークモードの設定 */
-		[data-theme="dark"] {
-			--bg-color: #121212;
-			--card-bg: #1e1e1e;
-			--text-color: #e0e0e0;
-			--text-muted: #aaaaaa;
-			--border-color: #333333;
-			--primary-color: #3b82f6;
-			--primary-hover: #2563eb;
-			--danger-color: #ef4444;
-			--modal-bg: #242424;
-			--overlay-bg: rgba(0, 0, 0, 0.75);
-			--dropdown-bg: #2a2a2a;
-			--dropdown-hover: #3a3a3a;
-			--input-bg: #2a2a2a;
-			--input-border: #444444;
-			--shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-			--header-bg: #1e1e1e;
+	/* 上下リサイズ用スプリッターバー */
+	.splitter {
+		height: 8px;
+		background-color: #eaeaea;
+		cursor: row-resize;
+		position: relative;
+		transition: background-color 0.2s;
+		flex-shrink: 0;
+	}
+	.splitter:hover, .splitter.dragging {
+		background-color: #1b6ef3;
+	}
+	.splitter::after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 30px;
+		height: 3px;
+		background-color: #ccc;
+		border-radius: 2px;
+	}
+	.splitter:hover::after, .splitter.dragging::after {
+		background-color: #fff;
+	}
 
-			/* ステータスカラー（ダーク用） */
-			--status-completed-bg: #1b4332;
-			--status-completed-text: #75e6da;
-			--status-inprogress-bg: #5c4d10;
-			--status-inprogress-text: #ffe066;
-			--status-notstarted-bg: #333333;
-			--status-notstarted-text: #cccccc;
-		}
+	.top-section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 10px;
+	}
 
-		/* ==========================================================
-		   ベーススタイル
-		   ========================================================== */
-		* {
-			box-sizing: border-box;
-			transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-		}
+	.top-section-title {
+		font-size: 1.05rem;
+		font-weight: bold;
+		color: #333;
+		margin: 0;
+	}
 
-		body {
-			margin: 0;
-			font-family: 'Helvetica Neue', Arial, sans-serif;
-			background-color: var(--bg-color);
-			color: var(--text-color);
-			display: flex;
-			flex-direction: column;
-			min-height: 100vh;
-		}
+	.sort-container {
+		font-size: 13px;
+		color: #555;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
 
-		.app-container {
-			display: flex;
-			flex-direction: column;
-			flex: 1;
-		}
+	.sort-select {
+		padding: 4px 8px;
+		border: 1px solid #dcdcdc;
+		border-radius: 4px;
+		background: #fff;
+		font-size: 13px;
+		cursor: pointer;
+	}
+	
+	.project-list-vertical {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.project-card {
+		cursor: pointer;
+		transition: all 0.2s ease;
+		border: 1px solid #eaeaea;
+		border-radius: 8px;
+		padding: 10px 16px;
+		background: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 14px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+	}
+	.project-card:hover {
+		border-color: #bce8ff;
+		background-color: #fcfdff;
+	}
+	.project-card.active-project {
+		border-color: #1b6ef3;
+		background-color: #f4f8ff;
+	}
+	
+	/* 進捗100%のプロジェクトを薄くするスタイル */
+	.project-card.completed-project {
+		opacity: 0.5;
+		background-color: #f8f9fa;
+		border-color: #e9ecef;
+	}
+	.project-card.completed-project:hover {
+		background-color: #f1f3f5;
+		border-color: #dee2e6;
+	}
 
-		header {
-			background-color: var(--header-bg);
-			padding: 15px 30px;
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			border-bottom: 1px solid var(--border-color);
-			box-shadow: var(--shadow);
-		}
+	.project-card .project-info-block {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.project-left-group {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 180px;
+	}
+	.project-folder-icon {
+		color: #6c757d;
+		font-size: 16px;
+	}
+	.project-card .project-title {
+		font-size: 14px;
+		font-weight: 500;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.project-card .progress-container {
+		flex: 1;
+		max-width: 350px;
+		margin: 0 20px;
+	}
+	.project-card .progress-bar-bg {
+		height: 8px;
+		border-radius: 4px;
+		background: #e9ecef;
+		position: relative;
+		overflow: hidden;
+	}
+	.project-card .progress-bar-fill {
+		height: 100%;
+		background: #1b6ef3;
+		border-radius: 4px;
+	}
+	.project-right-group {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-shrink: 0;
+		position: relative;
+	}
+	.project-percent-badge {
+		font-size: 13px;
+		font-weight: 600;
+		color: #333;
+		min-width: 38px;
+		text-align: right;
+	}
+	
+	.status-badge {
+		font-size: 12px;
+		padding: 2px 10px;
+		border-radius: 12px;
+		font-weight: 500;
+	}
+	.status-badge.in-progress {
+		background: #e6f0ff;
+		color: #1b6ef3;
+	}
+	.status-badge.not-started {
+		background: #f1f3f5;
+		color: #6c757d;
+	}
+	.status-badge.completed {
+		background: #e3fafc;
+		color: #0b7285;
+	}
 
-		.header-title {
-			font-size: 1.5rem;
-			font-weight: bold;
-		}
+	.project-menu-trigger {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 18px;
+		color: #6c757d;
+		padding: 0 4px;
+	}
+	.project-menu-trigger:hover {
+		color: #333;
+	}
 
-		.theme-toggle-btn {
-			background-color: transparent;
-			border: 1px solid var(--border-color);
-			color: var(--text-color);
-			padding: 8px 16px;
-			border-radius: 20px;
-			cursor: pointer;
-			font-size: 0.9rem;
-			display: flex;
-			align-items: center;
-			gap: 6px;
-		}
+	.project-dropdown-menu {
+		display: none;
+		position: absolute;
+		right: 0;
+		top: 25px;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+		z-index: 100;
+		min-width: 90px;
+	}
+	.project-dropdown-menu.open {
+		display: block;
+	}
 
-		.theme-toggle-btn:hover {
-			background-color: var(--dropdown-hover);
-		}
+	/* 下半分：選択されたプロジェクトのタスク表示エリア */
+	.bottom-task-section {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		background: #fff;
+		overflow: hidden;
+		min-height: 100px;
+	}
+	
+	.bottom-task-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 20px;
+		background: #fff;
+		border-bottom: 1px solid #eaeaea;
+		flex-shrink: 0;
+	}
+	
+	.bottom-task-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+		color: #333;
+	}
+	
+	.bottom-header-actions {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+	}
 
-		main {
-			padding: 20px 30px;
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			gap: 25px;
-		}
+	.btn-primary-custom {
+		padding: 6px 14px;
+		cursor: pointer;
+		background: #1b6ef3;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		font-weight: bold;
+		font-size: 13px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.btn-primary-custom:hover {
+		background: #0f5bc4;
+	}
 
-		/* ==========================================================
-		   カード & コントロール表示
-		   ========================================================== */
-		.controls-section {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			gap: 15px;
-			flex-wrap: wrap;
-		}
+	.btn-secondary-custom {
+		padding: 6px 14px;
+		cursor: pointer;
+		background: #fff;
+		color: #333;
+		border: 1px solid #dcdcdc;
+		border-radius: 6px;
+		font-weight: 500;
+		font-size: 13px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.btn-secondary-custom:hover {
+		background: #f8f9fa;
+	}
 
-		.project-input-group {
-			display: flex;
-			gap: 10px;
-		}
+	.bottom-task-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 15px 20px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		align-content: flex-start;
+	}
+	
+	.horizontal-task-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: #fff;
+		border: 1px solid #eaeaea;
+		border-radius: 8px;
+		padding: 10px 16px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+		width: calc(50% - 5px);
+		box-sizing: border-box;
+		height: fit-content;
+	}
 
-		input[type="text"], input[type="date"], select, textarea {
-			background-color: var(--input-bg);
-			color: var(--text-color);
-			border: 1px solid var(--input-border);
-			padding: 8px 12px;
-			border-radius: 6px;
-			outline: none;
-		}
+	.htc-left {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex: 1;
+		min-width: 0;
+	}
+	.task-check {
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+		accent-color: #1b6ef3;
+	}
+	.htc-name {
+		font-size: 14px;
+		color: #333;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.completed-task {
+		text-decoration: line-through;
+		color: #888;
+	}
+	.htc-right {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+		flex-shrink: 0;
+		position: relative;
+	}
+	.htc-info {
+		font-size: 13px;
+		color: #6c757d;
+	}
 
-		input[type="text"]:focus, select:focus, textarea:focus {
-			border-color: var(--primary-color);
-		}
+	.task-menu-trigger {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 18px;
+		color: #6c757d;
+		padding: 0 4px;
+	}
+	.task-menu-trigger:hover {
+		color: #333;
+	}
+	.task-dropdown-menu {
+		display: none;
+		position: absolute;
+		right: 0;
+		top: 25px;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+		z-index: 100;
+		min-width: 90px;
+	}
+	.task-dropdown-menu.open {
+		display: block;
+	}
+	.dropdown-edit-item {
+		width: 100%;
+		padding: 6px 12px;
+		background: none;
+		border: none;
+		color: #333;
+		text-align: left;
+		cursor: pointer;
+		font-size: 13px;
+		border-bottom: 1px solid #f0f2f5;
+	}
+	.dropdown-edit-item:hover {
+		background: #f8f9fa;
+	}
+	.dropdown-delete-item {
+		width: 100%;
+		padding: 6px 12px;
+		background: none;
+		border: none;
+		color: #d9534f;
+		text-align: left;
+		cursor: pointer;
+		font-size: 13px;
+	}
+	.dropdown-delete-item:hover {
+		background: #f8d7da;
+	}
 
-		button.btn {
-			background-color: var(--primary-color);
-			color: #fff;
-			border: none;
-			padding: 8px 16px;
-			border-radius: 6px;
-			cursor: pointer;
-			font-weight: bold;
-		}
-
-		button.btn:hover {
-			background-color: var(--primary-hover);
-		}
-
-		button.btn-danger {
-			background-color: var(--danger-color);
-		}
-
-		.project-list {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-			gap: 20px;
-		}
-
-		.project-card {
-			background-color: var(--card-bg);
-			border: 1px solid var(--border-color);
-			border-radius: 10px;
-			padding: 16px;
-			box-shadow: var(--shadow);
-			position: relative;
-			cursor: pointer;
-		}
-
-		.project-card.active-project {
-			border: 2px solid var(--primary-color);
-		}
-
-		.project-card-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			margin-bottom: 12px;
-		}
-
-		.progress-bar-container {
-			background-color: var(--border-color);
-			height: 8px;
-			border-radius: 4px;
-			overflow: hidden;
-			margin: 10px 0;
-		}
-
-		.progress-bar-fill {
-			background-color: var(--primary-color);
-			height: 100%;
-			width: 0%;
-			transition: width 0.3s ease;
-		}
-
-		.status-badge {
-			padding: 4px 8px;
-			border-radius: 12px;
-			font-size: 0.75rem;
-			font-weight: bold;
-		}
-
-		.status-badge.completed { background-color: var(--status-completed-bg); color: var(--status-completed-text); }
-		.status-badge.in-progress { background-color: var(--status-inprogress-bg); color: var(--status-inprogress-text); }
-		.status-badge.not-started { background-color: var(--status-notstarted-bg); color: var(--status-notstarted-text); }
-
-		/* ==========================================================
-		   ドロップダウンメニュー
-		   ========================================================== */
-		.menu-btn {
-			background: none;
-			border: none;
-			color: var(--text-color);
-			font-size: 1.2rem;
-			cursor: pointer;
-		}
-
-		.project-dropdown-menu, .task-dropdown-menu {
-			display: none;
-			position: absolute;
-			right: 10px;
-			top: 35px;
-			background-color: var(--dropdown-bg);
-			border: 1px solid var(--border-color);
-			border-radius: 6px;
-			box-shadow: var(--shadow);
-			z-index: 100;
-			overflow: hidden;
-		}
-
-		.project-dropdown-menu.open, .task-dropdown-menu.open {
-			display: block;
-		}
-
-		.project-dropdown-menu a, .task-dropdown-menu a {
-			display: block;
-			padding: 8px 16px;
-			color: var(--text-color);
-			text-decoration: none;
-			font-size: 0.85rem;
-		}
-
-		.project-dropdown-menu a:hover, .task-dropdown-menu a:hover {
-			background-color: var(--dropdown-hover);
-		}
-
-		/* ==========================================================
-		   モーダル
-		   ========================================================== */
-		.modal-overlay {
-			display: none;
-			position: fixed;
-			top: 0; left: 0; right: 0; bottom: 0;
-			background-color: var(--overlay-bg);
-			align-items: center;
-			justify-content: center;
-			z-index: 1000;
-		}
-
-		.modal-content {
-			background-color: var(--modal-bg);
-			color: var(--text-color);
-			border: 1px solid var(--border-color);
-			padding: 24px;
-			border-radius: 10px;
-			width: 100%;
-			max-width: 480px;
-			box-shadow: var(--shadow);
-		}
-
-		.modal-form-group {
-			margin-bottom: 15px;
-			display: flex;
-			flex-direction: column;
-			gap: 5px;
-		}
-
-		.modal-actions {
-			display: flex;
-			justify-content: flex-end;
-			gap: 10px;
-			margin-top: 20px;
-		}
-
-		/* ==========================================================
-		   フッター
-		   ========================================================== */
-		.footer {
-			background-color: var(--header-bg);
-			border-top: 1px solid var(--border-color);
-			padding: 15px 30px;
-			text-align: center;
-			position: relative;
-		}
-
-		.footer-member {
-			position: relative;
-			display: inline-block;
-		}
-
-		.footer-member a {
-			color: var(--text-color);
-			text-decoration: none;
-		}
-
-		.member-submenu {
-			display: none;
-			position: absolute;
-			bottom: 100%;
-			left: 50%;
-			transform: translateX(-50%);
-			background-color: var(--dropdown-bg);
-			border: 1px solid var(--border-color);
-			list-style: none;
-			padding: 8px 0;
-			margin: 0 0 8px 0;
-			border-radius: 6px;
-			box-shadow: var(--shadow);
-			min-width: 120px;
-		}
-
-		.member-submenu li a {
-			display: block;
-			padding: 6px 16px;
-			font-size: 0.85rem;
-		}
-
-		.member-submenu li a:hover {
-			background-color: var(--dropdown-hover);
-		}
-	</style>
+	/* モーダル共通 */
+	.modal-overlay {
+		display: none;
+		position: fixed;
+		top: 0; left: 0;
+		width: 100%; height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		z-index: 2000;
+		justify-content: center;
+		align-items: center;
+	}
+	.modal-content {
+		background: #fff;
+		padding: 30px;
+		border-radius: 10px;
+		width: 550px;
+		max-width: 95%;
+		max-height: 90vh;
+		overflow-y: auto;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+	}
+	.modal-content h3 {
+		margin-top: 0;
+		margin-bottom: 20px;
+		font-size: 1.3rem;
+		border-bottom: 2px solid #f0f2f5;
+		padding-bottom: 10px;
+	}
+	.modal-form-group {
+		margin-bottom: 16px;
+	}
+	.modal-form-group label {
+		display: block;
+		margin-bottom: 6px;
+		font-size: 14px;
+		font-weight: bold;
+		color: #333;
+	}
+	.modal-form-group input[type="text"],
+	.modal-form-group input[type="date"],
+	.modal-form-group select,
+	.modal-form-group textarea {
+		width: 100%;
+		padding: 10px;
+		box-sizing: border-box;
+		border: 1px solid #ccc;
+		border-radius: 6px;
+		font-size: 14px;
+	}
+	.modal-form-group textarea {
+		resize: vertical;
+	}
+	.modal-row {
+		display: flex;
+		gap: 15px;
+	}
+	.modal-row .modal-form-group {
+		flex: 1;
+	}
+	.modal-actions {
+		text-align: right;
+		margin-top: 25px;
+		border-top: 1px solid #f0f2f5;
+		padding-top: 15px;
+	}
+	.modal-actions button {
+		padding: 10px 20px;
+		margin-left: 10px;
+		cursor: pointer;
+		border: none;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: bold;
+	}
+	.btn-cancel {
+		background-color: #e0e0e0;
+		color: #333;
+	}
+	.btn-cancel:hover {
+		background-color: #d0d0d0;
+	}
+	.btn-save {
+		background-color: #007bff;
+		color: white;
+	}
+	.btn-save:hover {
+		background-color: #0056b3;
+	}
+	.delete-modal-content {
+		width: 400px;
+		text-align: center;
+	}
+	.delete-modal-content h3 {
+		color: #d9534f;
+		border-bottom: none;
+	}
+	.btn-delete-confirm {
+		background-color: #d9534f;
+		color: white;
+	}
+	.btn-delete-confirm:hover {
+		background-color: #c9302c;
+	}
+</style>
 </head>
 <body>
 
 	<div class="app-container">
-		<!-- ヘッダー (テーマ切り替えボタン配置) -->
-		<header>
-			<div class="header-title">プロジェクト & タスク管理</div>
-			<button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
-				🌙 ダークモード
-			</button>
-		</header>
+		<aside class="sidebar">
+			<div class="sidebar-brand">タスク管理</div>
+			<ul class="sidebar-menu">
+				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
+				<li class="menu-item active"><a href="projects.jsp">プロジェクト一覧</a></li>
+				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
+				<li class="menu-item"><a href="settings.jsp">設定</a></li>
+				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
+				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
+				<li class="menu-item"><a href="logs.jsp">ログ</a></li>
+			</ul>
+		</aside>
 
-		<main>
-			<!-- プロジェクトコントロール -->
-			<div class="controls-section">
-				<div class="project-input-group">
-					<input type="text" id="newProjectName" placeholder="新しいプロジェクト名">
-					<button class="btn" onclick="createProject()">追加</button>
+		<main class="main-content">
+			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
+				<div class="title-with-btn">
+					<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">プロジェクト一覧</h1>
+					<button class="add-project-btn" onclick="openProjectModal()" title="プロジェクトを追加">＋</button>
 				</div>
-				<div>
-					<label for="sortSelect">並び替え: </label>
-					<select id="sortSelect" onchange="sortProjects()">
-						<option value="newest">作成順（新しい順）</option>
-						<option value="name">名前順</option>
-						<option value="progressDesc">進捗率順</option>
-					</select>
+				<div style="display: flex; align-items: center; gap: 15px;">
+					<div class="main-search-box" style="margin: 0;">
+						<input type="text" class="search-input" placeholder="タスクを検索...">
+					</div>
+					<a href="account.jsp" class="account-button">アカウント情報</a>
 				</div>
-			</div>
+			</header>
 
-			<!-- プロジェクト一覧 -->
-			<div class="project-list" id="projectList">
-				<!-- サンプルカード（Java / JSPループで生成する領域） -->
-				<div class="project-card" data-raw-id="1" data-id="p1" data-name="Webシステム構築" data-progress="0" onclick="selectProject('1', 'Webシステム構築', this)">
-					<div class="project-card-header">
-						<strong>Webシステム構築</strong>
-						<div>
-							<button class="menu-btn" onclick="event.stopPropagation(); toggleProjectMenu(this)">⋮</button>
-							<div class="project-dropdown-menu">
-								<a href="#" onclick="openProjectDeleteModal('1', 'Webシステム構築')">削除</a>
-							</div>
+			<!-- 画面上下分割コンテナ -->
+			<div class="split-container" id="splitContainer">
+				<!-- 上半分：プロジェクトの進捗一覧 -->
+				<div class="top-project-section" id="topSection">
+					<div class="top-section-header">
+						<h2 class="top-section-title">プロジェクトの進捗一覧</h2>
+						<div class="sort-container">
+							<span>並び替え：</span>
+							<select class="sort-select" id="sortSelect" onchange="sortProjects()">
+								<option value="newest">更新日 (新しい順)</option>
+								<option value="name">プロジェクト名</option>
+								<option value="progressDesc">進捗率の高い順</option>
+							</select>
 						</div>
 					</div>
-					<div class="progress-bar-container">
-						<div class="progress-bar-fill" id="fill_p1"></div>
+
+					<div class="project-list-vertical" id="projectList">
+						<%
+						boolean isFirst = true;
+						
+						try {
+							Class.forName("org.postgresql.Driver");
+							Connection connSelect = DriverManager.getConnection(url, dbUser, dbPassword);
+							
+							String sqlSelect = 
+								"SELECT p.project_id, p.project_name, " +
+								"COUNT(t.task_id) AS total_tasks, " +
+								"SUM(CASE WHEN t.status = '完了' THEN 1 ELSE 0 END) AS checked_tasks " +
+								"FROM project p " +
+								"LEFT JOIN task t ON p.project_id = t.project_id " +
+								"GROUP BY p.project_id, p.project_name " +
+								"ORDER BY p.project_id DESC";
+								
+							Statement stmtSelect = connSelect.createStatement();
+							ResultSet rs = stmtSelect.executeQuery(sqlSelect);
+
+							while(rs.next()) {
+								int dbProjectId = rs.getInt("project_id");
+								String projectName = rs.getString("project_name");
+								int totalTasks = rs.getInt("total_tasks");
+								int checkedTasks = rs.getInt("checked_tasks");
+								
+								int percent = (totalTasks > 0) ? (int)Math.round(((double)checkedTasks / totalTasks) * 100.0) : 0;
+								
+								String statusText = "未着手";
+								String statusClass = "not-started";
+								if (percent == 100) {
+									statusText = "完了";
+									statusClass = "completed";
+								} else if (percent > 0) {
+									statusText = "進行中";
+									statusClass = "in-progress";
+								}
+								
+								String domId = "db_proj_" + dbProjectId;
+								boolean activeClass = isFirst;
+								if (isFirst) {
+									isFirst = false;
+								}
+						%>
+								<div class="project-card <%= activeClass ? "active-project" : "" %> <%= (percent == 100) ? "completed-project" : "" %>" 
+									 id="card_<%= dbProjectId %>" 
+									 data-id="<%= domId %>" 
+									 data-raw-id="<%= dbProjectId %>" 
+									 data-name="<%= projectName %>"
+									 data-progress="<%= percent %>"
+									 onclick="selectProject('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>', this)">
+									<div class="project-info-block">
+										<div class="project-left-group">
+											<span class="project-folder-icon">📁</span>
+											<span class="project-title"><%= projectName %></span>
+										</div>
+										<div class="progress-container">
+											<div class="progress-bar-bg">
+												<div class="progress-bar-fill" id="fill_<%= domId %>" style="width: <%= percent %>%;"></div>
+											</div>
+										</div>
+										<div class="project-right-group">
+											<span class="project-percent-badge" id="badge_<%= domId %>"><%= percent %>%</span>
+											<span class="status-badge <%= statusClass %>" id="badge_status_<%= domId %>"><%= statusText %></span>
+											<button class="project-menu-trigger" onclick="event.stopPropagation(); toggleProjectMenu(this);">⋮</button>
+											<div class="project-dropdown-menu">
+												<button class="dropdown-delete-item" onclick="event.stopPropagation(); openProjectDeleteModal('<%= dbProjectId %>', '<%= projectName.replace("'", "\\'") %>')">削除</button>
+											</div>
+										</div>
+									</div>
+								</div>
+						<%
+							}
+							rs.close(); stmtSelect.close(); connSelect.close();
+						} catch (Exception e) {
+							out.println("<p style='color:red; font-weight:bold;'>DBエラー：" + e.getMessage() + "</p>");
+						}
+						%>
 					</div>
-					<div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-						<span class="status-badge not-started" id="badge_status_p1">未着手</span>
-						<span id="badge_p1">0%</span>
+				</div>
+
+				<!-- 上下リサイズ用のバー -->
+				<div class="splitter" id="splitter"></div>
+
+				<!-- 下半分：選択されたプロジェクトのタスク一覧表示エリア -->
+				<div class="bottom-task-section">
+					<div class="bottom-task-header">
+						<h2 id="bottomProjectTitle">タスク一覧</h2>
+						<div class="bottom-header-actions">
+							<button class="btn-primary-custom" onclick="addNewTask()">+ タスクを追加</button>
+							<button class="btn-secondary-custom" onclick="alert('マイタスクに追加機能')">+ マイタスクに追加</button>
+						</div>
+					</div>
+					<div class="bottom-task-body" id="taskContainer">
+						<!-- 非同期で横2列のタスクカードが読み込まれます -->
 					</div>
 				</div>
 			</div>
-
-			<hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-
-			<!-- タスク管理セクション -->
-			<div>
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-					<h2 id="bottomProjectTitle" style="margin:0;">プロジェクトを選択してください</h2>
-					<button class="btn" onclick="addNewTask()">+ タスクを追加</button>
-				</div>
-				<div id="taskContainer" style="min-height: 100px;">
-					<div style="padding: 20px; color: var(--text-muted); text-align: center; width: 100%;">
-						プロジェクトカードを選択するとタスクが表示されます。
-					</div>
-				</div>
-			</div>
-
-			<!-- タスク追加 / 編集モーダル -->
-			<div class="modal-overlay" id="taskModal">
-				<div class="modal-content">
-					<h3 id="taskModalTitle" style="margin-top:0;">タスクの追加</h3>
+			
+			<!-- プロジェクト追加用モーダル -->
+			<div id="projectModal" class="modal-overlay">
+				<div class="modal-content" style="width: 450px;">
+					<h3>プロジェクトの追加</h3>
+					
 					<div class="modal-form-group">
-						<label>タスク名</label>
-						<input type="text" id="modalTaskName">
+						<label>プロジェクト名 <span style="color:red;">*</span></label>
+						<input type="text" id="modalProjectName" placeholder="例：新システム開発プロジェクト">
 					</div>
-					<div class="modal-form-group">
-						<label>ステータス</label>
-						<select id="modalStatus">
-							<option value="未着手">未着手</option>
-							<option value="進行中">進行中</option>
-							<option value="完了">完了</option>
-						</select>
-					</div>
-					<div class="modal-form-group">
-						<label>優先度</label>
-						<select id="modalPriority">
-							<option value="高">高</option>
-							<option value="中" selected>中</option>
-							<option value="低">低</option>
-						</select>
-					</div>
-					<div class="modal-form-group">
-						<label>開始日</label>
-						<input type="date" id="modalStartDate">
-					</div>
-					<div class="modal-form-group">
-						<label>期日</label>
-						<input type="date" id="modalDueDate">
-					</div>
-					<div class="modal-form-group">
-						<label>担当者ID</label>
-						<input type="text" id="modalUserId">
-					</div>
-					<div class="modal-form-group">
-						<label>詳細・メモ</label>
-						<textarea id="modalDescription" rows="3"></textarea>
-					</div>
+					
 					<div class="modal-actions">
-						<button class="btn" style="background-color: var(--text-muted);" onclick="closeTaskModal()">キャンセル</button>
-						<button class="btn" onclick="submitTaskModal()">保存</button>
+						<button class="btn-cancel" onclick="closeProjectModal()">キャンセル</button>
+						<button class="btn-save" onclick="submitNewProject()">保存</button>
 					</div>
 				</div>
 			</div>
 
-			<!-- タスク削除確認モーダル -->
-			<div class="modal-overlay" id="deleteModal">
+			<!-- タスク追加・編集用モーダル -->
+			<div id="taskModal" class="modal-overlay">
 				<div class="modal-content">
+					<h3 id="taskModalTitle">タスクの追加</h3>
+					
+					<div class="modal-form-group">
+						<label>タスク名 <span style="color:red;">*</span></label>
+						<input type="text" id="modalTaskName" placeholder="例：要件定義書の作成">
+					</div>
+					
+					<div class="modal-row">
+						<div class="modal-form-group">
+							<label>状態</label>
+							<select id="modalStatus">
+								<option value="未着手">未着手</option>
+								<option value="進行中">進行中</option>
+								<option value="完了">完了</option>
+							</select>
+						</div>
+						<div class="modal-form-group">
+							<label>優先度</label>
+							<select id="modalPriority">
+								<option value="低">低</option>
+								<option value="中" selected>中</option>
+								<option value="高">高</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="modal-row">
+						<div class="modal-form-group">
+							<label>開始日</label>
+							<input type="date" id="modalStartDate">
+						</div>
+						<div class="modal-form-group">
+							<label>期限</label>
+							<input type="date" id="modalDueDate">
+						</div>
+					</div>
+					
+					<div class="modal-form-group">
+						<label>担当者</label>
+						<select id="modalUserId">
+							<option value="">未設定</option>
+							<%
+							try {
+								Class.forName("org.postgresql.Driver");
+								Connection userConn = DriverManager.getConnection(url, dbUser, dbPassword);
+								Statement userStmt = userConn.createStatement();
+								ResultSet userRs = userStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id");
+								while(userRs.next()) {
+							%>
+								<option value="<%= userRs.getInt("user_id") %>"><%= userRs.getString("user_name") %></option>
+							<%
+								}
+								userRs.close(); userStmt.close(); userConn.close();
+							} catch(Exception e) {}
+							%>
+						</select>
+					</div>
+					
+					<div class="modal-form-group">
+						<label>説明</label>
+						<textarea id="modalDescription" rows="4" placeholder="タスクの詳細や備考を入力..."></textarea>
+					</div>
+					
+					<div class="modal-actions">
+						<button class="btn-cancel" onclick="closeTaskModal()">キャンセル</button>
+						<button class="btn-save" onclick="submitTaskModal()">保存</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- タスク削除確認用モーダル -->
+			<div id="deleteModal" class="modal-overlay">
+				<div class="modal-content delete-modal-content">
 					<h3>タスクの削除</h3>
-					<p id="deleteMessage">本当に削除しますか？</p>
-					<div class="modal-actions">
-						<button class="btn" style="background-color: var(--text-muted);" onclick="closeDeleteModal()">キャンセル</button>
-						<button class="btn btn-danger" onclick="executeDeleteTask()">削除</button>
+					<p id="deleteMessage" style="margin: 15px 0 25px 0; color: #555;"></p>
+					<div class="modal-actions" style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
+						<button class="btn-cancel" onclick="closeDeleteModal()">キャンセル</button>
+						<button class="btn-delete-confirm" onclick="executeDeleteTask()">削除する</button>
 					</div>
 				</div>
 			</div>
 
-			<!-- プロジェクト削除確認モーダル -->
-			<div class="modal-overlay" id="projectDeleteModal">
-				<div class="modal-content">
+			<!-- プロジェクト削除確認用モーダル -->
+			<div id="projectDeleteModal" class="modal-overlay">
+				<div class="modal-content delete-modal-content">
 					<h3>プロジェクトの削除</h3>
-					<p id="projectDeleteMessage">本当に関連タスク含め削除しますか？</p>
-					<div class="modal-actions">
-						<button class="btn" style="background-color: var(--text-muted);" onclick="closeProjectDeleteModal()">キャンセル</button>
-						<button class="btn btn-danger" onclick="executeDeleteProject()">削除</button>
+					<p id="projectDeleteMessage" style="margin: 15px 0 25px 0; color: #555;"></p>
+					<div class="modal-actions" style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
+						<button class="btn-cancel" onclick="closeProjectDeleteModal()">キャンセル</button>
+						<button class="btn-delete-confirm" onclick="executeDeleteProject()">削除する</button>
 					</div>
 				</div>
 			</div>
-
-			<!-- ==========================================================
-			   JavaScript 処理領域
-			   ========================================================== -->
+			
 			<script>
-				// グローバル変数
-				let currentRawProjectId = null;
 				let currentProjectCard = null;
-				let taskModalMode = 'add';
-				let targetTaskIdForEdit = null;
+				let currentRawProjectId = null;
 				let targetTaskIdForDelete = null;
 				let targetProjectIdForDelete = null;
+				let taskModalMode = 'add'; // 'add' または 'edit'
+				let targetTaskIdForEdit = null;
 
-				/* --------------------------------------------------
-				   テーマ切り替え機能 (LocalStorage保存機能付き)
-				   -------------------------------------------------- */
-				function initTheme() {
-					const savedTheme = localStorage.getItem('app-theme') || 'light';
-					document.documentElement.setAttribute('data-theme', savedTheme);
-					updateThemeButtonText(savedTheme);
-				}
+				// 上下リサイズ機能
+				const splitter = document.getElementById('splitter');
+				const topSection = document.getElementById('topSection');
+				const splitContainer = document.getElementById('splitContainer');
+				let isDragging = false;
 
-				function toggleTheme() {
-					const currentTheme = document.documentElement.getAttribute('data-theme');
-					const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+				splitter.addEventListener('mousedown', (e) => {
+					isDragging = true;
+					splitter.classList.add('dragging');
+					document.body.style.cursor = 'row-resize';
+					e.preventDefault();
+				});
+
+				window.addEventListener('mousemove', (e) => {
+					if (!isDragging) return;
+					const containerRect = splitContainer.getBoundingClientRect();
+					const newHeight = e.clientY - containerRect.top;
+					const totalHeight = containerRect.height;
 					
-					document.documentElement.setAttribute('data-theme', newTheme);
-					localStorage.setItem('app-theme', newTheme);
-					updateThemeButtonText(newTheme);
-				}
-
-				function updateThemeButtonText(theme) {
-					const btn = document.getElementById('themeToggleBtn');
-					if (btn) {
-						btn.innerText = (theme === 'dark') ? '☀️ ライトモード' : '🌙 ダークモード';
+					if (newHeight > 100 && newHeight < totalHeight - 100) {
+						const percentage = (newHeight / totalHeight) * 100;
+						topSection.style.height = percentage + '%';
 					}
+				});
+
+				window.addEventListener('mouseup', () => {
+					if (isDragging) {
+						isDragging = false;
+						splitter.classList.remove('dragging');
+						document.body.style.cursor = 'default';
+					}
+				});
+
+				window.addEventListener('DOMContentLoaded', () => {
+					const firstCard = document.querySelector('.project-card');
+					if (firstCard) {
+						const rawId = firstCard.getAttribute('data-raw-id');
+						const title = firstCard.getAttribute('data-name');
+						selectProject(rawId, title, firstCard);
+					}
+					
+					document.querySelectorAll('.project-card').forEach(card => {
+						if (card.getAttribute("data-progress") === "100") {
+							card.classList.add("completed-project");
+							const listContainer = document.getElementById("projectList");
+							if (!card.hasAttribute("data-original-index")) {
+								const cards = Array.from(listContainer.children);
+								card.setAttribute("data-original-index", cards.indexOf(card));
+							}
+							listContainer.appendChild(card);
+						}
+					});
+				});
+
+				function openProjectModal() {
+					document.getElementById("modalProjectName").value = "";
+					document.getElementById("projectModal").style.display = "flex";
 				}
 
-				// 初期化実行
-				document.addEventListener('DOMContentLoaded', initTheme);
+				function closeProjectModal() {
+					document.getElementById("projectModal").style.display = "none";
+				}
 
-				/* --------------------------------------------------
-				   プロジェクト作成機能
-				   -------------------------------------------------- */
-				function createProject() {
-					const nameInput = document.getElementById("newProjectName");
-					if (nameInput && nameInput.value.trim() !== "") {
+				function submitNewProject() {
+					const projectName = document.getElementById("modalProjectName").value;
+					if (projectName && projectName.trim() !== "") {
 						const form = document.createElement("form");
 						form.method = "POST";
 						form.action = "projects.jsp";
-
-						const inputAction = document.createElement("input");
-						inputAction.type = "hidden";
-						inputAction.name = "action";
-						inputAction.value = "addProject";
-						form.appendChild(inputAction);
-
-						const inputName = document.createElement("input");
-						inputName.type = "hidden";
-						inputName.name = "projectName";
-						inputName.value = nameInput.value.trim();
-						form.appendChild(inputName);
-
+						const input = document.createElement("input");
+						input.type = "hidden";
+						input.name = "newProjectName";
+						input.value = projectName;
+						form.appendChild(input);
 						document.body.appendChild(form);
 						form.submit();
 					} else {
@@ -560,9 +1103,6 @@
 					}
 				}
 
-				/* --------------------------------------------------
-				   プロジェクトソート・選択機能
-				   -------------------------------------------------- */
 				function sortProjects() {
 					const sortType = document.getElementById("sortSelect").value;
 					const listContainer = document.getElementById("projectList");
@@ -596,8 +1136,8 @@
 					}
 					
 					currentRawProjectId = rawProjectId;
-					document.getElementById("bottomProjectTitle").innerText = projectName + " のタスク";
-					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: var(--text-muted); text-align: center; width: 100%;">読み込み中...</div>';
+					document.getElementById("bottomProjectTitle").innerText = projectName + "のタスク";
+					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center; width: 100%;">読み込み中...</div>';
 					
 					loadTasksFromDB();
 				}
@@ -613,9 +1153,6 @@
 						});
 				}
 
-				/* --------------------------------------------------
-				   タスク CRUD 機能
-				   -------------------------------------------------- */
 				function addNewTask() {
 					if (!currentRawProjectId) {
 						alert("プロジェクトが選択されていません。");
@@ -745,7 +1282,7 @@
 						location.reload();
 					});
 				}
-
+				
 				function toggleTask(taskId, isChecked, projectId) {
 					const params = new URLSearchParams();
 					params.append('action', 'toggleTask');
@@ -760,9 +1297,6 @@
 					});
 				}
 
-				/* --------------------------------------------------
-				   メニュー表示制御
-				   -------------------------------------------------- */
 				function toggleTaskMenu(buttonElement) {
 					const menu = buttonElement.nextElementSibling;
 					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
@@ -795,11 +1329,8 @@
 					}, 0);
 				}
 
-				/* --------------------------------------------------
-				   動的進捗計算機能
-				   -------------------------------------------------- */
 				function calculateProgressLocal() {
-					if (!currentProjectCard) return;
+					if(!currentProjectCard) return;
 					
 					const domId = currentProjectCard.getAttribute("data-id");
 					const taskContainer = document.getElementById("taskContainer");
@@ -871,11 +1402,10 @@
 					return null;
 				}
 			</script>
-
-			<!-- フッター -->
-			<footer class="footer">
+			
+			<footer class="footer" style="flex-shrink: 0;">
 				<div class="footer-member">
-					<a href="#" onclick="toggleMemberMenu(); return false;"> 開発メンバー ▼ </a>
+					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
 					<ul class="member-submenu" id="memberSubmenu">
 						<li><a href="member/sakata/Sakata.jsp">Samata</a></li>
 						<li><a href="member/Shimizu.jsp">清水</a></li>
@@ -892,6 +1422,5 @@
 			</footer>
 		</main>
 	</div>
-
 </body>
 </html>
