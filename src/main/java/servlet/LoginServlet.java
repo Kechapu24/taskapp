@@ -13,8 +13,8 @@ import javax.servlet.http.HttpSession;
 
 import dao.OrgDAO;
 import dao.UserDAO;
-import model.Organization;
- 
+import model.Organization; 
+
 /**
  * ログイン処理。
  *
