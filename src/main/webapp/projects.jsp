@@ -772,17 +772,16 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 		</aside>
 
 		<main class="main-content">
-			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd;">
-				<div class="title-with-btn">
-					<h1 class="page-title" style="margin: 0; font-size: 1.3rem;">プロジェクト一覧</h1>
+			<!-- ヘッダーをログのHTML構造に統一 -->
+			<header class="content-header">
+				<div style="display: flex; align-items: center; gap: 10px;">
+					<h1 class="page-title">プロジェクト一覧</h1>
 					<button class="add-project-btn" onclick="openProjectModal()" title="プロジェクトを追加">＋</button>
 				</div>
-				<div style="display: flex; align-items: center; gap: 15px;">
-					<div class="main-search-box" style="margin: 0;">
-						<input type="text" class="search-input" placeholder="タスクを検索...">
-					</div>
-					<a href="account.jsp" class="account-button">アカウント情報</a>
+				<div class="main-search-box">
+					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
+				<a href="account.jsp" class="account-button">アカウント情報</a>
 			</header>
 
 			<!-- 画面上下分割コンテナ -->
@@ -905,15 +904,17 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				<div class="modal-content" style="width: 450px;">
 					<h3>プロジェクトの追加</h3>
 					
-					<div class="modal-form-group">
-						<label>プロジェクト名 <span style="color:red;">*</span></label>
-						<input type="text" id="modalProjectName" placeholder="例：新システム開発プロジェクト">
-					</div>
-					
-					<div class="modal-actions">
-						<button class="btn-cancel" onclick="closeProjectModal()">キャンセル</button>
-						<button class="btn-save" onclick="submitNewProject()">保存</button>
-					</div>
+					<form method="POST" action="projects.jsp">
+						<div class="modal-form-group">
+							<label>プロジェクト名 <span style="color:red;">*</span></label>
+							<input type="text" name="newProjectName" id="modalProjectName" placeholder="例：新システム開発プロジェクト" required>
+						</div>
+						
+						<div class="modal-actions">
+							<button type="button" class="btn-cancel" onclick="closeProjectModal()">キャンセル</button>
+							<button type="submit" class="btn-save">保存</button>
+						</div>
+					</form>
 				</div>
 			</div>
 
@@ -1062,19 +1063,29 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						const title = firstCard.getAttribute('data-name');
 						selectProject(rawId, title, firstCard);
 					}
-					
-					document.querySelectorAll('.project-card').forEach(card => {
-						if (card.getAttribute("data-progress") === "100") {
-							card.classList.add("completed-project");
-							const listContainer = document.getElementById("projectList");
-							if (!card.hasAttribute("data-original-index")) {
-								const cards = Array.from(listContainer.children);
-								card.setAttribute("data-original-index", cards.indexOf(card));
-							}
-							listContainer.appendChild(card);
-						}
-					});
 				});
+
+				// 残りのJavaScript関数（プロジェクト選択やモーダル関連など、前回のコードのまま）
+				function selectProject(rawId, title, cardElement) {
+					currentRawProjectId = rawId;
+					
+					const cards = document.querySelectorAll('.project-card');
+					cards.forEach(c => c.classList.remove('active-project'));
+					if (cardElement) {
+						cardElement.classList.add('active-project');
+					}
+					
+					document.getElementById('bottomProjectTitle').innerText = title + " - タスク一覧";
+					loadTasks(rawId);
+				}
+
+				function loadTasks(rawId) {
+					fetch('projects.jsp?action=getTasks&projectId=' + rawId)
+						.then(response => response.text())
+						.then(html => {
+							document.getElementById("taskContainer").innerHTML = html;
+						});
+				}
 
 				function openProjectModal() {
 					document.getElementById("modalProjectName").value = "";
@@ -1085,77 +1096,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					document.getElementById("projectModal").style.display = "none";
 				}
 
-				function submitNewProject() {
-					const projectName = document.getElementById("modalProjectName").value;
-					if (projectName && projectName.trim() !== "") {
-						const form = document.createElement("form");
-						form.method = "POST";
-						form.action = "projects.jsp";
-						const input = document.createElement("input");
-						input.type = "hidden";
-						input.name = "newProjectName";
-						input.value = projectName;
-						form.appendChild(input);
-						document.body.appendChild(form);
-						form.submit();
-					} else {
-						alert("プロジェクト名を入力してください。");
-					}
-				}
-
-				function sortProjects() {
-					const sortType = document.getElementById("sortSelect").value;
-					const listContainer = document.getElementById("projectList");
-					const cards = Array.from(listContainer.getElementsByClassName("project-card"));
-
-					const activeCards = cards.filter(c => c.getAttribute("data-progress") !== "100");
-					const completedCards = cards.filter(c => c.getAttribute("data-progress") === "100");
-
-					activeCards.sort((a, b) => {
-						if (sortType === "newest") {
-							return parseInt(b.getAttribute("data-raw-id")) - parseInt(a.getAttribute("data-raw-id"));
-						} else if (sortType === "name") {
-							const nameA = a.getAttribute("data-name");
-							const nameB = b.getAttribute("data-name");
-							return nameA.localeCompare(nameB, 'ja');
-						} else if (sortType === "progressDesc") {
-							return parseInt(b.getAttribute("data-progress")) - parseInt(a.getAttribute("data-progress"));
-						}
-						return 0;
-					});
-
-					activeCards.forEach(card => listContainer.appendChild(card));
-					completedCards.forEach(card => listContainer.appendChild(card));
-				}
-
-				function selectProject(rawProjectId, projectName, cardElement) {
-					document.querySelectorAll('.project-card').forEach(c => c.classList.remove('active-project'));
-					if (cardElement) {
-						cardElement.classList.add('active-project');
-						currentProjectCard = cardElement;
-					}
-					
-					currentRawProjectId = rawProjectId;
-					document.getElementById("bottomProjectTitle").innerText = projectName + "のタスク";
-					document.getElementById("taskContainer").innerHTML = '<div style="padding: 20px; color: #777; text-align: center; width: 100%;">読み込み中...</div>';
-					
-					loadTasksFromDB();
-				}
-
-				function loadTasksFromDB() {
-					if (!currentRawProjectId) return;
-					
-					fetch('projects.jsp?action=getTasks&projectId=' + currentRawProjectId)
-						.then(response => response.text())
-						.then(html => {
-							document.getElementById("taskContainer").innerHTML = html;
-							calculateProgressLocal();
-						});
-				}
-
 				function addNewTask() {
 					if (!currentRawProjectId) {
-						alert("プロジェクトが選択されていません。");
+						alert("プロジェクトを選択してください。");
 						return;
 					}
 					taskModalMode = 'add';
@@ -1166,8 +1109,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					document.getElementById("modalPriority").value = "中";
 					document.getElementById("modalStartDate").value = "";
 					document.getElementById("modalDueDate").value = "";
-					document.getElementById("modalUserId").value = "";
 					document.getElementById("modalDescription").value = "";
+					document.getElementById("modalUserId").value = "";
 					
 					document.getElementById("taskModal").style.display = "flex";
 				}
@@ -1176,13 +1119,16 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					taskModalMode = 'edit';
 					targetTaskIdForEdit = taskId;
 					document.getElementById("taskModalTitle").innerText = "タスクの編集";
+					
 					document.getElementById("modalTaskName").value = taskName;
 					document.getElementById("modalStatus").value = status;
 					document.getElementById("modalPriority").value = priority;
 					document.getElementById("modalStartDate").value = startDate;
 					document.getElementById("modalDueDate").value = dueDate;
-					document.getElementById("modalUserId").value = (userId === "0" || userId === "null") ? "" : userId;
-					document.getElementById("modalDescription").value = description;
+					document.getElementById("modalUserId").value = (userId === "0" ? "" : userId);
+					
+					const decodedDesc = description.replace(/\\n/g, "\n");
+					document.getElementById("modalDescription").value = decodedDesc;
 					
 					document.getElementById("taskModal").style.display = "flex";
 				}
@@ -1192,7 +1138,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 				}
 
 				function submitTaskModal() {
-					const taskName = document.getElementById("modalTaskName").value;
+					const tName = document.getElementById("modalTaskName").value;
+					if (!tName || tName.trim() === "") {
+						alert("タスク名を入力してください。");
+						return;
+					}
+					
 					const status = document.getElementById("modalStatus").value;
 					const priority = document.getElementById("modalPriority").value;
 					const startDate = document.getElementById("modalStartDate").value;
@@ -1200,11 +1151,6 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					const userId = document.getElementById("modalUserId").value;
 					const description = document.getElementById("modalDescription").value;
 					
-					if (!taskName || taskName.trim() === "") {
-						alert("タスク名を入力してください。");
-						return;
-					}
-
 					const params = new URLSearchParams();
 					if (taskModalMode === 'add') {
 						params.append('action', 'addTask');
@@ -1213,7 +1159,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						params.append('action', 'editTask');
 						params.append('taskId', targetTaskIdForEdit);
 					}
-					params.append('taskName', taskName);
+					
+					params.append('taskName', tName);
 					params.append('status', status);
 					params.append('priority', priority);
 					params.append('startDate', startDate);
@@ -1226,10 +1173,47 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						body: params
 					}).then(() => {
 						closeTaskModal();
-						loadTasksFromDB();
+						if (currentRawProjectId) {
+							loadTasks(currentRawProjectId);
+							updateProjectProgressUI();
+						} else {
+							location.reload();
+						}
 					});
 				}
-				
+
+				function toggleTask(taskId, isChecked, projectId) {
+					const params = new URLSearchParams();
+					params.append('action', 'toggleTask');
+					params.append('taskId', taskId);
+					params.append('isChecked', isChecked);
+					
+					fetch('projects.jsp', {
+						method: 'POST',
+						body: params
+					}).then(() => {
+						loadTasks(projectId);
+						updateProjectProgressUI();
+					});
+				}
+
+				function toggleTaskMenu(buttonElement) {
+					const menu = buttonElement.nextElementSibling;
+					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
+						if (m !== menu) m.classList.remove('open');
+					});
+					menu.classList.toggle('open');
+					
+					setTimeout(() => {
+						window.addEventListener('click', function closeMenu(e) {
+							if (!menu.contains(e.target) && e.target !== buttonElement) {
+								menu.classList.remove('open');
+								window.removeEventListener('click', closeMenu);
+							}
+						});
+					}, 0);
+				}
+
 				function openDeleteModal(taskId, taskName) {
 					targetTaskIdForDelete = taskId;
 					document.getElementById("deleteMessage").innerText = "「" + taskName + "」を本当に削除しますか？";
@@ -1253,13 +1237,33 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						body: params
 					}).then(() => {
 						closeDeleteModal();
-						loadTasksFromDB();
+						if (currentRawProjectId) {
+							loadTasks(currentRawProjectId);
+							updateProjectProgressUI();
+						}
 					});
+				}
+
+				function toggleProjectMenu(buttonElement) {
+					const menu = buttonElement.nextElementSibling;
+					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
+						if (m !== menu) m.classList.remove('open');
+					});
+					menu.classList.toggle('open');
+					
+					setTimeout(() => {
+						window.addEventListener('click', function closeMenu(e) {
+							if (!menu.contains(e.target) && e.target !== buttonElement) {
+								menu.classList.remove('open');
+								window.removeEventListener('click', closeMenu);
+							}
+						});
+					}, 0);
 				}
 
 				function openProjectDeleteModal(projectId, projectName) {
 					targetProjectIdForDelete = projectId;
-					document.getElementById("projectDeleteMessage").innerText = "プロジェクト「" + projectName + "」および含まれるすべてのタスクを本当に削除しますか？";
+					document.getElementById("projectDeleteMessage").innerText = "プロジェクト「" + projectName + "」と、それに含まれるすべてのタスクを本当に削除しますか？\n（この操作は取り消せません）";
 					document.getElementById("projectDeleteModal").style.display = "flex";
 				}
 
@@ -1270,11 +1274,11 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 				function executeDeleteProject() {
 					if (!targetProjectIdForDelete) return;
-
+					
 					const params = new URLSearchParams();
 					params.append('action', 'deleteProject');
 					params.append('projectId', targetProjectIdForDelete);
-
+					
 					fetch('projects.jsp', {
 						method: 'POST',
 						body: params
@@ -1282,144 +1286,39 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						location.reload();
 					});
 				}
-				
-				function toggleTask(taskId, isChecked, projectId) {
-					const params = new URLSearchParams();
-					params.append('action', 'toggleTask');
-					params.append('taskId', taskId);
-					params.append('isChecked', isChecked);
-					
-					fetch('projects.jsp', {
-						method: 'POST',
-						body: params
-					}).then(() => {
-						loadTasksFromDB();
-					});
+
+				function updateProjectProgressUI() {
+					// ページリロードなしで進捗状況を更新する場合はここに実装
+					// 現在はリロードする方針とする
+					location.reload();
 				}
 
-				function toggleTaskMenu(buttonElement) {
-					const menu = buttonElement.nextElementSibling;
-					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
-						if (m !== menu) m.classList.remove('open');
-					});
-					menu.classList.toggle('open');
-					setTimeout(() => {
-						window.addEventListener('click', function closeMenu(e) {
-							if (!menu.contains(e.target) && e.target !== buttonElement) {
-								menu.classList.remove('open');
-								window.removeEventListener('click', closeMenu);
-							}
-						});
-					}, 0);
-				}
+				function sortProjects() {
+					const sortBy = document.getElementById("sortSelect").value;
+					const projectList = document.getElementById("projectList");
+					const cards = Array.from(projectList.getElementsByClassName("project-card"));
 
-				function toggleProjectMenu(buttonElement) {
-					const menu = buttonElement.nextElementSibling;
-					document.querySelectorAll('.task-dropdown-menu, .project-dropdown-menu').forEach(m => {
-						if (m !== menu) m.classList.remove('open');
-					});
-					menu.classList.toggle('open');
-					setTimeout(() => {
-						window.addEventListener('click', function closeMenu(e) {
-							if (!menu.contains(e.target) && e.target !== buttonElement) {
-								menu.classList.remove('open');
-								window.removeEventListener('click', closeMenu);
-							}
-						});
-					}, 0);
-				}
-
-				function calculateProgressLocal() {
-					if(!currentProjectCard) return;
-					
-					const domId = currentProjectCard.getAttribute("data-id");
-					const taskContainer = document.getElementById("taskContainer");
-					const checkboxes = taskContainer.querySelectorAll(".task-check");
-					const totalTasks = checkboxes.length;
-					
-					let checkedTasks = 0;
-					checkboxes.forEach(box => {
-						if (box.checked) checkedTasks++;
-					});
-					
-					const percent = totalTasks > 0 ? Math.round((checkedTasks / totalTasks) * 100) : 0;
-					const barFill = document.getElementById('fill_' + domId);
-					const badgeText = document.getElementById('badge_' + domId);
-					const statusBadge = document.getElementById('badge_status_' + domId);
-					
-					if (barFill) {
-						barFill.style.width = percent + '%'; 
-						if (badgeText) {
-							badgeText.innerText = percent + '%';
-						}
-						currentProjectCard.setAttribute("data-progress", percent);
-
-						if (statusBadge) {
-							statusBadge.className = "status-badge";
-							if (percent === 100) {
-								statusBadge.innerText = "完了";
-								statusBadge.classList.add("completed");
-							} else if (percent > 0) {
-								statusBadge.innerText = "進行中";
-								statusBadge.classList.add("in-progress");
-							} else {
-								statusBadge.innerText = "未着手";
-								statusBadge.classList.add("not-started");
-							}
-						}
-
-						const listContainer = document.getElementById("projectList");
-						if (percent === 100) {
-							currentProjectCard.classList.add("completed-project");
-							if (!currentProjectCard.hasAttribute("data-original-index")) {
-								const cards = Array.from(listContainer.children);
-								currentProjectCard.setAttribute("data-original-index", cards.indexOf(currentProjectCard));
-							}
-							listContainer.appendChild(currentProjectCard);
+					cards.sort((a, b) => {
+						if (sortBy === "name") {
+							const nameA = a.getAttribute("data-name").toLowerCase();
+							const nameB = b.getAttribute("data-name").toLowerCase();
+							return nameA.localeCompare(nameB, 'ja');
+						} else if (sortBy === "progressDesc") {
+							const progA = parseInt(a.getAttribute("data-progress"));
+							const progB = parseInt(b.getAttribute("data-progress"));
+							return progB - progA;
 						} else {
-							currentProjectCard.classList.remove("completed-project");
-							if (currentProjectCard.hasAttribute("data-original-index")) {
-								const originalIndex = parseInt(currentProjectCard.getAttribute("data-original-index"));
-								const cards = Array.from(listContainer.children);
-								let targetNode = dataOriginalIndexSearch(cards, originalIndex);
-								if (targetNode) {
-									listContainer.insertBefore(currentProjectCard, targetNode);
-								} else {
-									listContainer.appendChild(currentProjectCard);
-								}
-							}
+							// newest (デフォルト) - raw-idの降順
+							const idA = parseInt(a.getAttribute("data-raw-id"));
+							const idB = parseInt(b.getAttribute("data-raw-id"));
+							return idB - idA;
 						}
-					}
-				}
+					});
 
-				function dataOriginalIndexSearch(cards, originalIndex) {
-					for (let i = 0; i < cards.length; i++) {
-						let idx = parseInt(cards[i].getAttribute("data-original-index"));
-						if (!isNaN(idx) && idx > originalIndex) {
-							return cards[i];
-						}
-					}
-					return null;
+					projectList.innerHTML = "";
+					cards.forEach(card => projectList.appendChild(card));
 				}
 			</script>
-			
-			<footer class="footer" style="flex-shrink: 0;">
-				<div class="footer-member">
-					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
-					<ul class="member-submenu" id="memberSubmenu">
-						<li><a href="member/sakata/Sakata.jsp">Samata</a></li>
-						<li><a href="member/Shimizu.jsp">清水</a></li>
-						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
-						<li><a href="member/Miyazaki.jsp">宮崎</a></li>
-					</ul>
-				</div>
-				<script>
-					function toggleMemberMenu() {
-						const menu = document.getElementById("memberSubmenu");
-						menu.style.display = (menu.style.display === "block") ? "none" : "block";
-					}
-				</script>
-			</footer>
 		</main>
 	</div>
 </body>
