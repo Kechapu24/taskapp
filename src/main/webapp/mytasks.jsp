@@ -2,7 +2,7 @@
 <%@ page import="java.sql.*" %>
 
 <%
-// ★【追加】セッションからテーマ・フォントサイズ・色の設定を取得
+// ★ セッションからテーマ・フォントサイズ・色の設定を取得
 String currentTheme = (String) session.getAttribute("currentTheme");
 String currentBgColor = (String) session.getAttribute("currentBgColor");
 String currentTextColor = (String) session.getAttribute("currentTextColor");
@@ -24,7 +24,7 @@ String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 String dbUser = "taskuser";
 String dbPassword = "taskpass";
 
-// 仮のユーザーID（ログイン機能実装までの固定値）
+// 仮のユーザーID
 int currentUserId = 1;
 
 // ==========================================
@@ -158,7 +158,7 @@ if (action != null) {
 <title>マイタスク - タスク管理アプリ</title>
 <link rel="stylesheet" href="css/style.css">
 
-<!-- ★【追加】カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
+<!-- カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
 <style>
 	:root {
 		--custom-bg-color: <%= currentBgColor %>;
@@ -445,6 +445,74 @@ if (action != null) {
 	.btn-delete-confirm:hover {
 		background-color: #c9302c;
 	}
+
+	/* ==========================================
+	   ★ テーマスタイル適用（ダーク＆カスタム）
+	   ========================================== */
+	/* 1. ダークテーマ (.dark-theme) */
+	body.dark-theme .mytasks-container {
+		background-color: #1e1e1e !important;
+	}
+	body.dark-theme .left-column,
+	body.dark-theme .right-column,
+	body.dark-theme .personal-task-item {
+		background-color: #2a2a2a !important;
+		border-color: #3a3a3a !important;
+		color: #e0e0e0 !important;
+	}
+	body.dark-theme .column-title,
+	body.dark-theme .pti-name {
+		color: #ffffff !important;
+	}
+	body.dark-theme .pti-info,
+	body.dark-theme .task-menu-trigger {
+		color: #aaa !important;
+	}
+	body.dark-theme .task-dropdown-menu {
+		background-color: #333 !important;
+		border-color: #444 !important;
+	}
+	body.dark-theme .dropdown-edit-item {
+		color: #eee !important;
+		border-bottom-color: #444 !important;
+	}
+	body.dark-theme .dropdown-edit-item:hover {
+		background-color: #444 !important;
+	}
+	body.dark-theme .modal-content {
+		background-color: #2a2a2a !important;
+		color: #fff !important;
+	}
+	body.dark-theme .modal-form-group label {
+		color: #ddd !important;
+	}
+	body.dark-theme .modal-form-group input {
+		background-color: #333 !important;
+		color: #fff !important;
+		border-color: #555 !important;
+	}
+
+	/* 2. カスタムテーマ (.custom-theme) */
+	body.custom-theme .mytasks-container,
+	body.custom-theme .left-column,
+	body.custom-theme .right-column,
+	body.custom-theme .personal-task-item {
+		background-color: var(--custom-bg-color) !important;
+		color: var(--custom-text-color) !important;
+		border-color: rgba(0, 0, 0, 0.15) !important;
+	}
+	body.custom-theme .column-title,
+	body.custom-theme .pti-name {
+		color: var(--custom-text-color) !important;
+	}
+
+	/* 3. フォントサイズ変更 (.font-small, .font-medium, .font-large) */
+	body.font-small { font-size: 12px; }
+	body.font-small .pti-name { font-size: 12px; }
+	body.font-medium { font-size: 14px; }
+	body.font-medium .pti-name { font-size: 14px; }
+	body.font-large { font-size: 16px; }
+	body.font-large .pti-name { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -466,7 +534,6 @@ if (action != null) {
 		</aside>
 
 		<main class="main-content">
-			<!-- ログと同じHTML構造に変更 -->
 			<header class="content-header">
 				<h1 class="page-title">マイタスク</h1>
 				<div class="main-search-box">
@@ -479,7 +546,7 @@ if (action != null) {
 			<div class="mytasks-container">
 				<!-- 左側：担当で絞り込みスペース -->
 				<div class="left-column">
-					<h3 class="column-title" style="color: #6c757d;">担当で絞り込み (準備中)</h3>
+					<h3 class="column-title" style="opacity: 0.8;">担当で絞り込み (準備中)</h3>
 					<p>将来的にログイン機能と連動して担当タスクがここに表示されます。</p>
 				</div>
 
