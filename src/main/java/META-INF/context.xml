@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+ 
+    <Resource
+        name="jdbc/mydb"
+        auth="Container"
+        type="javax.sql.DataSource"
+        driverClassName="org.postgresql.Driver"
+        url="jdbc:postgresql://localhost:5432/taskapp"
+        username="taskuser"
+        password="ここにtaskuserの実際のパスワード"
+        maxTotal="20"
+        maxIdle="10"
+        minIdle="5"
+        maxWaitMillis="10000"
+    />
+ 
+</Context>
+ 
