@@ -2,40 +2,54 @@
 <%@ page import="java.sql.*" %>
 <%
     // ==========================================
-    // ① DBから現在の設定を読み込む処理
+    // ① セッションから設定を読み込む（ラグ解消処理）
     // ==========================================
-    String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
-    String dbUser = "taskuser";
-    String dbPass = "taskpass";
-    
-    // デフォルト値
-    String currentTheme = "light";
-    String currentBgColor = "#ffffff";
-    String currentTextColor = "#333333";
-    String currentFontSize = "medium";
-    
-    // ※ログイン機能が完成するまでは仮のID(例: 1)を使用します
-    int currentUserId = 1; 
+    String currentTheme = (String) session.getAttribute("currentTheme");
+    String currentBgColor = (String) session.getAttribute("currentBgColor");
+    String currentTextColor = (String) session.getAttribute("currentTextColor");
+    String currentFontSize = (String) session.getAttribute("currentFontSize");
 
-    try {
-        Class.forName("org.postgresql.Driver");
-        try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
-             PreparedStatement pstmt = conn.prepareStatement("SELECT theme, bg_color, text_color, font_size FROM user_settings WHERE user_id = ?")) {
-            
-            pstmt.setInt(1, currentUserId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    // DBにデータがあれば上書き
-                    currentTheme = rs.getString("theme");
-                    currentBgColor = rs.getString("bg_color");
-                    currentTextColor = rs.getString("text_color");
-                    currentFontSize = rs.getString("font_size");
+    // セッションにデータがない場合（ログイン直後や初回アクセス時）のみDBにアクセスする
+    if (currentTheme == null) {
+        String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+        String dbUser = "taskuser";
+        String dbPass = "taskpass";
+        
+        // デフォルト値
+        currentTheme = "light";
+        currentBgColor = "#ffffff";
+        currentTextColor = "#333333";
+        currentFontSize = "medium";
+        
+        // ※ログイン機能が完成するまでは仮のID(例: 1)を使用します
+        int currentUserId = 1; 
+
+        try {
+            Class.forName("org.postgresql.Driver");
+            try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
+                 PreparedStatement pstmt = conn.prepareStatement("SELECT theme, bg_color, text_color, font_size FROM user_settings WHERE user_id = ?")) {
+                
+                pstmt.setInt(1, currentUserId);
+                
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        // DBにデータがあれば上書き
+                        currentTheme = rs.getString("theme");
+                        currentBgColor = rs.getString("bg_color");
+                        currentTextColor = rs.getString("text_color");
+                        currentFontSize = rs.getString("font_size");
+                    }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+
+        // 取得した値をセッションに保存（次回以降のDBアクセスをスキップ）
+        session.setAttribute("currentTheme", currentTheme);
+        session.setAttribute("currentBgColor", currentBgColor);
+        session.setAttribute("currentTextColor", currentTextColor);
+        session.setAttribute("currentFontSize", currentFontSize);
     }
 %>
 <!DOCTYPE html>
@@ -216,10 +230,9 @@
 
     <script>
         // ==========================================
-        // 読み込み時の設定反映 (DBからの値を使用)
+        // 読み込み時の設定反映 (セッション/DBからの値を使用)
         // ==========================================
         document.addEventListener("DOMContentLoaded", function() {
-            // JSPで取得したDBの値をJavaScriptの変数に渡す
             const savedTheme = '<%= currentTheme %>';
             const savedBgColor = '<%= currentBgColor %>';
             const savedTextColor = '<%= currentTextColor %>';
@@ -242,7 +255,7 @@
         });
 
         // ==========================================
-        // サーバー(DB)へ設定を保存する共通関数
+        // サーバー(DB & セッション)へ設定を保存する共通関数
         // ==========================================
         function saveSettingsToDB() {
             const theme = document.querySelector('input[name="theme"]:checked').value;
@@ -250,7 +263,6 @@
             const bgColor = document.getElementById('bgColor').value;
             const textColor = document.getElementById('textColor').value;
 
-            // データをURLエンコードして送信する準備
             const params = new URLSearchParams();
             params.append('theme', theme);
             params.append('fontSize', fontSize);
@@ -264,7 +276,7 @@
                 body: params
             }).then(response => {
                 if(response.ok) {
-                    console.log("データベースに設定を保存しました！");
+                    console.log("データベースおよびセッションに設定を保存しました！");
                 }
             }).catch(error => console.error("保存エラー:", error));
         }
@@ -282,8 +294,7 @@
         }
 
         function changeTheme(theme) {
-            document.body.classList.remove('dark-theme', 'custom-theme');
-            document.body.classList.remove('light-theme'); // ライトテーマも一旦リセット
+            document.body.classList.remove('dark-theme', 'custom-theme', 'light-theme');
             document.getElementById('custom-color-picker').style.display = 'none';
             document.documentElement.style.removeProperty('--custom-bg-color');
             document.documentElement.style.removeProperty('--custom-text-color');
@@ -293,12 +304,12 @@
             } else if (theme === 'custom') {
                 document.body.classList.add('custom-theme');
                 document.getElementById('custom-color-picker').style.display = 'block';
-                applyCustomColors(); // 色を適用
+                applyCustomColors();
             } else {
                 document.body.classList.add('light-theme');
             }
             
-            saveSettingsToDB(); // ★変更時にDBへ保存
+            saveSettingsToDB();
         }
 
         function applyCustomColors() {
@@ -309,7 +320,7 @@
                 document.documentElement.style.setProperty('--custom-bg-color', bgColor);
                 document.documentElement.style.setProperty('--custom-text-color', textColor);
                 
-                saveSettingsToDB(); // ★変更時にDBへ保存
+                saveSettingsToDB();
             }
         }
 
@@ -317,7 +328,7 @@
             document.body.classList.remove('font-small', 'font-medium', 'font-large');
             document.body.classList.add('font-' + size);
             
-            saveSettingsToDB(); // ★変更時にDBへ保存
+            saveSettingsToDB();
         }
 
         function toggleMemberMenu() {
