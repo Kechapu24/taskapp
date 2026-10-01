@@ -437,14 +437,13 @@ if (action != null) {
 		</aside>
 
 		<main class="main-content">
+			<!-- ログと同じHTML構造に変更 -->
 			<header class="content-header">
 				<h1 class="page-title">マイタスク</h1>
-				<div style="display: flex; align-items: center; gap: 10px;">
-					<div class="main-search-box">
-						<input type="text" class="search-input" placeholder="タスクを検索...">
-					</div>
-					<a href="account.jsp" class="account-button">アカウント情報</a>
+				<div class="main-search-box">
+					<input type="text" class="search-input" placeholder="タスクを検索...">
 				</div>
+				<a href="account.jsp" class="account-button">アカウント情報</a>
 			</header>
 
 			<!-- メインコンテンツエリア（2カラム） -->
