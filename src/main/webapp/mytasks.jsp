@@ -2,6 +2,20 @@
 <%@ page import="java.sql.*" %>
 
 <%
+// ★【追加】セッションからテーマ・フォントサイズ・色の設定を取得
+String currentTheme = (String) session.getAttribute("currentTheme");
+String currentBgColor = (String) session.getAttribute("currentBgColor");
+String currentTextColor = (String) session.getAttribute("currentTextColor");
+String currentFontSize = (String) session.getAttribute("currentFontSize");
+
+// セッションに値がない場合の初期値設定
+if (currentTheme == null) {
+    currentTheme = "light";
+    currentBgColor = "#ffffff";
+    currentTextColor = "#333333";
+    currentFontSize = "medium";
+}
+
 // 文字化け防止
 request.setCharacterEncoding("UTF-8");
 
@@ -143,6 +157,21 @@ if (action != null) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マイタスク - タスク管理アプリ</title>
 <link rel="stylesheet" href="css/style.css">
+
+<!-- ★【追加】カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
+<style>
+	:root {
+		--custom-bg-color: <%= currentBgColor %>;
+		--custom-text-color: <%= currentTextColor %>;
+	}
+</style>
+<script>
+	document.addEventListener("DOMContentLoaded", function() {
+		document.body.classList.add('<%= currentTheme %>-theme');
+		document.body.classList.add('font-<%= currentFontSize %>');
+	});
+</script>
+
 <style>
 	.main-content { position: relative; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
 	.content-header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
