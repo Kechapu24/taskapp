@@ -413,7 +413,7 @@ if (action != null) {
 		cursor: pointer;
 		border: none;
 		border-radius: 6px;
-		font-size: 14px;
+		font-size: 16px;
 		font-weight: bold;
 	}
 	.btn-cancel {
