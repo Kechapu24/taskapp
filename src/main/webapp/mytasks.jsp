@@ -196,7 +196,7 @@ if (action != null) {
 		display: flex;
 		flex-direction: column;
 		color: #888;
-		font-size: 14px;
+		font-size: 16px;
 	}
 	
 	.right-column {
@@ -255,7 +255,7 @@ if (action != null) {
 	}
 	
 	.pti-name {
-		font-size: 14px;
+		font-size: 16px;
 		color: #333;
 		font-weight: 500;
 		white-space: nowrap;
@@ -344,7 +344,7 @@ if (action != null) {
 		border: none;
 		border-radius: 8px;
 		font-weight: bold;
-		font-size: 14px;
+		font-size: 16px;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -377,7 +377,7 @@ if (action != null) {
 	.modal-content h3 {
 		margin-top: 0;
 		margin-bottom: 20px;
-		font-size: 1.2rem;
+		font-size: 1.3rem;
 		border-bottom: 2px solid #f0f2f5;
 		padding-bottom: 10px;
 	}
@@ -387,7 +387,7 @@ if (action != null) {
 	.modal-form-group label {
 		display: block;
 		margin-bottom: 6px;
-		font-size: 14px;
+		font-size: 16px;
 		font-weight: bold;
 		color: #333;
 	}
@@ -399,7 +399,7 @@ if (action != null) {
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 6px;
-		font-size: 14px;
+		font-size: 16px;
 	}
 	.modal-actions {
 		text-align: right;
