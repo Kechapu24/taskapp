@@ -507,12 +507,12 @@ if (action != null) {
 	}
 
 	/* 3. フォントサイズ変更 (.font-small, .font-medium, .font-large) */
-	body.font-small { font-size: 12px; }
-	body.font-small .pti-name { font-size: 12px; }
-	body.font-medium { font-size: 14px; }
-	body.font-medium .pti-name { font-size: 14px; }
-	body.font-large { font-size: 16px; }
-	body.font-large .pti-name { font-size: 16px; }
+	body.font-small { font-size: 1④px; }
+	body.font-small .pti-name { font-size: 1４px; }
+	body.font-medium { font-size: 16px; }
+	body.font-medium .pti-name { font-size: 16px; }
+	body.font-large { font-size: 18px; }
+	body.font-large .pti-name { font-size: 18px; }
 </style>
 </head>
 <body>
