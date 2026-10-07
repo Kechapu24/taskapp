@@ -101,10 +101,6 @@
 									未着手（<%=todoCount%>）
 								</h2>
 
-								<div class="toolbar">
-									<button id="filterBtn">⚙️</button>
-								</div>
-
 								<button class="add-task-btn-small"
 									onclick="openAddTaskModal('未着手')">＋</button>
 							</div>
@@ -221,7 +217,8 @@
 									}
 							%>
 
-							<div class="task-card <%=deadlineClass%>">
+							<div class="task-card <%=deadlineClass%>"
+								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
 
 								<div class="task-card-header">
 									<h3><%=rs.getString("task_name")%></h3>
@@ -253,11 +250,11 @@
 
 									<div class="task-card-actions">
 										<button class="icon-button"
-											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
 											💬</button>
 
 										<button class="icon-button"
-											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
 											📎</button>
 									</div>
 								</div>
@@ -494,7 +491,8 @@
 									}
 							%>
 
-							<div class="task-card <%=deadlineClass%>">
+							<div class="task-card <%=deadlineClass%>"
+								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
 
 								<div class="task-card-header">
 									<h3><%=rs.getString("task_name")%></h3>
@@ -526,11 +524,11 @@
 
 									<div class="task-card-actions">
 										<button class="icon-button"
-											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
 											💬</button>
 
 										<button class="icon-button"
-											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
 											📎</button>
 									</div>
 								</div>
@@ -725,7 +723,7 @@
 
 								int param = 1;
 
-								stmt.setString(param++, "未着手");
+								stmt.setString(param++, "完了");
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									stmt.setString(param++, "%" + keyword.trim() + "%");
@@ -767,7 +765,8 @@
 									}
 							%>
 
-							<div class="task-card <%=deadlineClass%>">
+							<div class="task-card <%=deadlineClass%>"
+								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
 
 								<div class="task-card-header">
 									<h3><%=rs.getString("task_name")%></h3>
@@ -799,11 +798,11 @@
 
 									<div class="task-card-actions">
 										<button class="icon-button"
-											onclick="openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
 											💬</button>
 
 										<button class="icon-button"
-											onclick="openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
+											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
 											📎</button>
 									</div>
 								</div>
@@ -934,7 +933,7 @@
 							<button type="button" class="sidepanel-tab active"
 								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
-							<button type="button" class="sidepanel-tab"
+							<button type="button" class="sidepanel-tab" id="detailTab"
 								onclick="switchSideTab('detail', this)">詳細</button>
 						</div>
 
@@ -1057,8 +1056,6 @@
 
 						<!-- 詳細 -->
 						<div class="sidepanel-content" id="detailPanel">
-
-							<h3>タスク詳細</h3>
 
 							<div id="panelContent">タスクを選択してください</div>
 
@@ -1200,6 +1197,59 @@
 						}
 
 						button.classList.add("active");
+					}
+				</script>
+
+				<script>
+					function showTaskDetail(detailId, card) {
+
+						// カード内にある隠し詳細データを取得
+						const detail = document.getElementById(detailId);
+
+						// 右パネルの表示場所
+						const panelContent = document
+								.getElementById("panelContent");
+
+						if (!detail || !panelContent) {
+							return;
+						}
+
+						// 隠しdivの内容を右パネルへコピー
+						panelContent.innerHTML = detail.innerHTML;
+
+						// 選択中カードの見た目を変更
+						document.querySelectorAll(".task-card").forEach(
+								function(taskCard) {
+									taskCard.classList.remove("selected");
+								});
+
+						card.classList.add("selected");
+
+						// 詳細タブへ自動切り替え
+						const detailPanel = document
+								.getElementById("detailPanel");
+
+						if (detailPanel) {
+
+							document.querySelectorAll(".sidepanel-content")
+									.forEach(function(content) {
+										content.classList.remove("active");
+									});
+
+							document.querySelectorAll(".sidepanel-tab")
+									.forEach(function(tab) {
+										tab.classList.remove("active");
+									});
+
+							detailPanel.classList.add("active");
+
+							const detailTab = document
+									.getElementById("detailTab");
+
+							if (detailTab) {
+								detailTab.classList.add("active");
+							}
+						}
 					}
 				</script>
 

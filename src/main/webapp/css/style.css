@@ -318,6 +318,15 @@
 	color: #1abc9c;
 }
 
+/* 選択 */
+.task-card {
+    cursor: pointer;
+}
+
+.task-card.selected {
+    background: #f8fbff;
+}
+
 /* 三点リーダーメニュー */
 .task-menu {
 	position: relative;
