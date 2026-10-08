@@ -15,28 +15,14 @@
 
 	<div class="app-container">
 
-		<aside class="sidebar">
-			<div class="sidebar-brand">タスク管理</div>
-
-			<ul class="sidebar-menu">
-				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
-				<li class="menu-item"><a href="projects.jsp">プロジェクト一覧</a></li>
-				<li class="menu-item active"><a href="taskboard.jsp">タスクボード</a></li>
-				<li class="menu-item"><a href="settings.jsp">設定</a></li>
-				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
-				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
-				<li class="menu-item"><a href="logs.jsp">ログ</a></li>
-			</ul>
-		</aside>
+		<%@ include file="common/sidebar.jsp"%>
 
 		<main class="main-content">
-			<header class="content-header">
-				<h1 class="page-title">タスクボード</h1>
-				<div class="main-search-box">
-					<input type="text" class="search-input" placeholder="タスクを検索...">
-				</div>
-				<a href="account.jsp" class="account-button">アカウント情報</a>
-			</header>
+			<%
+			request.setAttribute("pageTitle", "タスクボード");
+			%>
+
+			<%@ include file="common/header.jsp"%>
 
 			<div class="content-body">
 
@@ -1066,194 +1052,162 @@
 
 			</div>
 
+			<%@ include file="common/footer.jsp"%>
 
-			<footer class="footer">
+			<script>
+				function openModalFromElement(title, elementId) {
+					const source = document.getElementById(elementId);
+					const modalOverlay = document
+							.getElementById("modalOverlay");
+					const modalTitle = document.getElementById("modalTitle");
+					const modalBody = document.getElementById("modalBody");
 
-				<div class="footer-member">
-					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
+					modalTitle.textContent = title;
+					modalBody.innerHTML = source.innerHTML;
+					modalOverlay.style.display = "flex";
 
-					<ul class="member-submenu" id="memberSubmenu">
-						<li><a href="member/sakata/Sakata.jsp">坂田</a></li>
-						<li><a href="member/Shimizu.jsp">清水</a></li>
-						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
-						<li><a href="member/Miyazaki/Miyazaki.jsp">宮崎</a></li>
-					</ul>
-				</div>
+					closeAllTaskMenus();
+				}
 
-				<script>
-					function toggleMemberMenu() {
-						const menu = document.getElementById("memberSubmenu");
+				function closeModal() {
+					document.getElementById("modalOverlay").style.display = "none";
+				}
 
-						if (menu.style.display === "block") {
-							menu.style.display = "none";
-						} else {
-							menu.style.display = "block";
-						}
-					}
-				</script>
+				function toggleTaskMenu(event, menuId) {
+					event.stopPropagation();
 
-				<script>
-					function openModalFromElement(title, elementId) {
-						const source = document.getElementById(elementId);
-						const modalOverlay = document
-								.getElementById("modalOverlay");
-						const modalTitle = document
-								.getElementById("modalTitle");
-						const modalBody = document.getElementById("modalBody");
+					closeAllTaskMenus();
 
-						modalTitle.textContent = title;
-						modalBody.innerHTML = source.innerHTML;
-						modalOverlay.style.display = "flex";
+					const menu = document.getElementById(menuId);
+					menu.style.display = "block";
+				}
 
-						closeAllTaskMenus();
-					}
+				function closeAllTaskMenus() {
+					const menus = document.querySelectorAll(".menu-dropdown");
 
-					function closeModal() {
-						document.getElementById("modalOverlay").style.display = "none";
-					}
-
-					function toggleTaskMenu(event, menuId) {
-						event.stopPropagation();
-
-						closeAllTaskMenus();
-
-						const menu = document.getElementById(menuId);
-						menu.style.display = "block";
-					}
-
-					function closeAllTaskMenus() {
-						const menus = document
-								.querySelectorAll(".menu-dropdown");
-
-						menus.forEach(function(menu) {
-							menu.style.display = "none";
-						});
-					}
-
-					window.addEventListener("click", function(event) {
-						closeAllTaskMenus();
-
-						const modalOverlay = document
-								.getElementById("modalOverlay");
-
-						if (event.target === modalOverlay) {
-							closeModal();
-						}
+					menus.forEach(function(menu) {
+						menu.style.display = "none";
 					});
-				</script>
+				}
 
-				<script>
-					function openAddTaskModal(status) {
-						const source = document.getElementById("task-add-form");
-						const modalOverlay = document
-								.getElementById("modalOverlay");
-						const modalTitle = document
-								.getElementById("modalTitle");
-						const modalBody = document.getElementById("modalBody");
+				window.addEventListener("click", function(event) {
+					closeAllTaskMenus();
 
-						modalTitle.textContent = "タスク追加";
-						modalBody.innerHTML = source.innerHTML;
-						modalOverlay.style.display = "flex";
+					const modalOverlay = document
+							.getElementById("modalOverlay");
 
-						const statusInput = modalBody
-								.querySelector("#addTaskStatus");
-						statusInput.value = status;
-
-						closeAllTaskMenus();
+					if (event.target === modalOverlay) {
+						closeModal();
 					}
-				</script>
+				});
+			</script>
 
-				<script>
-					function switchSideTab(tabName, button) {
+			<script>
+				function openAddTaskModal(status) {
+					const source = document.getElementById("task-add-form");
+					const modalOverlay = document
+							.getElementById("modalOverlay");
+					const modalTitle = document.getElementById("modalTitle");
+					const modalBody = document.getElementById("modalBody");
 
-						// 全パネルを非表示
-						const contents = document
-								.querySelectorAll(".sidepanel-content");
+					modalTitle.textContent = "タスク追加";
+					modalBody.innerHTML = source.innerHTML;
+					modalOverlay.style.display = "flex";
 
-						contents.forEach(function(content) {
-							content.classList.remove("active");
-						});
+					const statusInput = modalBody
+							.querySelector("#addTaskStatus");
+					statusInput.value = status;
 
-						// 全タブのactiveを外す
-						const tabs = document
-								.querySelectorAll(".sidepanel-tab");
+					closeAllTaskMenus();
+				}
+			</script>
 
-						tabs.forEach(function(tab) {
-							tab.classList.remove("active");
-						});
+			<script>
+				function switchSideTab(tabName, button) {
 
-						// 選択したパネルを表示
-						if (tabName === "filter") {
-							document.getElementById("filterPanel").classList
-									.add("active");
+					// 全パネルを非表示
+					const contents = document
+							.querySelectorAll(".sidepanel-content");
 
-						} else if (tabName === "sort") {
-							document.getElementById("sortPanel").classList
-									.add("active");
+					contents.forEach(function(content) {
+						content.classList.remove("active");
+					});
 
-						} else if (tabName === "detail") {
-							document.getElementById("detailPanel").classList
-									.add("active");
-						}
+					// 全タブのactiveを外す
+					const tabs = document.querySelectorAll(".sidepanel-tab");
 
-						button.classList.add("active");
+					tabs.forEach(function(tab) {
+						tab.classList.remove("active");
+					});
+
+					// 選択したパネルを表示
+					if (tabName === "filter") {
+						document.getElementById("filterPanel").classList
+								.add("active");
+
+					} else if (tabName === "sort") {
+						document.getElementById("sortPanel").classList
+								.add("active");
+
+					} else if (tabName === "detail") {
+						document.getElementById("detailPanel").classList
+								.add("active");
 					}
-				</script>
 
-				<script>
-					function showTaskDetail(detailId, card) {
+					button.classList.add("active");
+				}
+			</script>
 
-						// カード内にある隠し詳細データを取得
-						const detail = document.getElementById(detailId);
+			<script>
+				function showTaskDetail(detailId, card) {
 
-						// 右パネルの表示場所
-						const panelContent = document
-								.getElementById("panelContent");
+					// カード内にある隠し詳細データを取得
+					const detail = document.getElementById(detailId);
 
-						if (!detail || !panelContent) {
-							return;
-						}
+					// 右パネルの表示場所
+					const panelContent = document
+							.getElementById("panelContent");
 
-						// 隠しdivの内容を右パネルへコピー
-						panelContent.innerHTML = detail.innerHTML;
+					if (!detail || !panelContent) {
+						return;
+					}
 
-						// 選択中カードの見た目を変更
-						document.querySelectorAll(".task-card").forEach(
-								function(taskCard) {
-									taskCard.classList.remove("selected");
+					// 隠しdivの内容を右パネルへコピー
+					panelContent.innerHTML = detail.innerHTML;
+
+					// 選択中カードの見た目を変更
+					document.querySelectorAll(".task-card").forEach(
+							function(taskCard) {
+								taskCard.classList.remove("selected");
+							});
+
+					card.classList.add("selected");
+
+					// 詳細タブへ自動切り替え
+					const detailPanel = document.getElementById("detailPanel");
+
+					if (detailPanel) {
+
+						document.querySelectorAll(".sidepanel-content")
+								.forEach(function(content) {
+									content.classList.remove("active");
 								});
 
-						card.classList.add("selected");
+						document.querySelectorAll(".sidepanel-tab").forEach(
+								function(tab) {
+									tab.classList.remove("active");
+								});
 
-						// 詳細タブへ自動切り替え
-						const detailPanel = document
-								.getElementById("detailPanel");
+						detailPanel.classList.add("active");
 
-						if (detailPanel) {
+						const detailTab = document.getElementById("detailTab");
 
-							document.querySelectorAll(".sidepanel-content")
-									.forEach(function(content) {
-										content.classList.remove("active");
-									});
-
-							document.querySelectorAll(".sidepanel-tab")
-									.forEach(function(tab) {
-										tab.classList.remove("active");
-									});
-
-							detailPanel.classList.add("active");
-
-							const detailTab = document
-									.getElementById("detailTab");
-
-							if (detailTab) {
-								detailTab.classList.add("active");
-							}
+						if (detailTab) {
+							detailTab.classList.add("active");
 						}
 					}
-				</script>
-
-			</footer>
+				}
+			</script>
 		</main>
 
 	</div>

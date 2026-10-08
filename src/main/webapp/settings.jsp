@@ -12,7 +12,7 @@
         String bgColor = request.getParameter("bgColor");
         String textColor = request.getParameter("textColor");
 
-        String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+        String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
         String dbUser = "taskuser";
         String dbPass = "taskpass";
         int currentUserId = 1;
@@ -75,7 +75,7 @@
 
     // セッションにデータがない場合のみDBから取得
     if (currentTheme == null) {
-        String url = "jdbc:postgresql://172.16.1.94:5432/taskapp";
+        String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
         String dbUser = "taskuser";
         String dbPass = "taskpass";
         
