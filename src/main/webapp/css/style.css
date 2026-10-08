@@ -49,13 +49,15 @@
 /* レイアウト全体（サイドバー＋メイン） */
 .app-container {
 	display: flex;
-	height: calc(100vh);
+	min-height: 100vh;
 	/* main-header の高さ */
 }
 
 /* サイドバー */
 .sidebar {
 	width: 220px;
+	min-width: 220px;
+	flex: 0 0 220px;
 	background-color: #34495e;
 	color: white;
 	padding: 20px 0;
@@ -96,7 +98,6 @@
 .content-body {
 	flex: 1;
 	padding: 20px;
-	overflow-y: auto;
 }
 
 /* フッター */
@@ -316,6 +317,15 @@
 
 .icon-button:hover {
 	color: #1abc9c;
+}
+
+/* 選択 */
+.task-card {
+    cursor: pointer;
+}
+
+.task-card.selected {
+    background: #f8fbff;
 }
 
 /* 三点リーダーメニュー */
@@ -893,7 +903,7 @@
 /* レイアウト全体（サイドバー＋メイン） */
 .app-container {
 	display: flex;
-	height: calc(100vh);
+	min-height: 100vh;
 	/* main-header の高さ */
 }
 
@@ -940,7 +950,6 @@
 .content-body {
 	flex: 1;
 	padding: 20px;
-	overflow-y: auto;
 }
 
 /* フッター */
