@@ -15,8 +15,23 @@
 	<div class="login-card">
 		<h2>ログイン</h2>
 		<p>アカウントにサインインしてください</p>
+		<%
+		String errorMessage = (String) request.getAttribute("errorMessage");
 
-		<form action="LoginServlet" method="post" id="loginForm" novalidate>
+		if (errorMessage != null) {
+		%>
+
+		<p style="color: red;">
+			<%=errorMessage%>
+		</p>
+
+		<%
+}
+%>
+
+		<form action="${pageContext.request.contextPath}/login" method="post"
+			id="loginForm" novalidate>
+
 
 			<!-- メールアドレス -->
 			<label for="email">メールアドレス</label> <input type="email" id="email"

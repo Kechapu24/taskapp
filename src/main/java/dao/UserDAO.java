@@ -5,14 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import model.User;
+import model.User; // ←追加
 import util.DBConnection;
+
 
 public class UserDAO {
 
     public User findByEmail(String email) {
-        String sql = "SELECT user_id, user_name, email, role FROM users WHERE email = ?";
-
+    	String sql =
+    		    "SELECT user_id, user_name, email, password, role "
+    		  + "FROM users WHERE email = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -24,6 +26,7 @@ public class UserDAO {
                         rs.getInt("user_id"),
                         rs.getString("user_name"),
                         rs.getString("email"),
+                        rs.getString("password"),
                         rs.getString("role")
                     );
                 }

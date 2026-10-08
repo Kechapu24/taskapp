@@ -1,36 +1,35 @@
-
 package util;
- 
+
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
- 
-/**
- * Tomcat側(context.xml)に登録された "jdbc/mydb" という名前の
- * コネクションプールから、接続を1つ借りてくるクラス。
- *
- * DAOはこのクラスのgetConnection()を呼ぶだけでよく、
- * JNDIの詳しい仕組み(lookupなど)を意識しなくて済む。
- */
 public class DBConnection {
-    private static DataSource dataSource;
- 
-    static {
+
+    private static final String URL =
+        "jdbc:postgresql://172.16.1.119:5432/taskapp";
+
+    private static final String USER =
+        "taskuser";
+
+    private static final String PASS =
+        "taskpass";
+
+    public static Connection getConnection()
+            throws SQLException {
+
         try {
-            Context ctx = new InitialContext();
-            // context.xml の <Resource name="jdbc/mydb" .../> と対応
-            dataSource = (DataSource) ctx.lookup("java:comp/env/jdbc/mydb");
-        } catch (NamingException e) {
-            throw new RuntimeException("DataSource取得失敗。context.xmlの設定を確認してください", e);
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(
+                "PostgreSQLドライバが見つかりません",
+                e);
         }
-    }
- 
-    public static Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
+
+        return DriverManager.getConnection(
+            URL,
+            USER,
+            PASS
+        );
     }
 }
- 
