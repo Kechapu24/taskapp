@@ -17,15 +17,44 @@
 
 <body>
 
+<<<<<<< HEAD
 <div class="app-container">
+=======
+	<%
+	request.setAttribute("pageTitle", "通知センター");
+	request.setAttribute("currentPage", "notifications");
+	%>
 
+	<div class="app-container">
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
+
+<<<<<<< HEAD
     <!-- サイドバー -->
     <aside class="sidebar">
 
         <div class="sidebar-brand">
             タスク管理
         </div>
+=======
+		<%@ include file="common/sidebar.jsp"%>
 
+		<main class="main-content">
+
+			<%@ include file="common/header.jsp"%>
+
+			<div class="content-body">
+
+				<div class="notification-item unread">
+					<!-- 期限が近い通知 -->
+					<div class="notification-item unread">
+						<span class="notification-dot"></span>
+
+						<div class="notification-content">
+
+							<div class="notification-title">期限が近づいています</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
+
+<<<<<<< HEAD
         <ul class="sidebar-menu">
 
             <li class="menu-item">
@@ -304,11 +333,23 @@ try {
             </div>
 
         </div>
+=======
+							<div class="notification-task">タスク：ログイン機能実装</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
 <%
+=======
+							<div class="notification-project">プロジェクト：タスク管理アプリ</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
     }
+=======
+							<div class="notification-detail">期限まであと1日です。早めに対応してください。</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
 
     rs.close();
     stmt.close();
@@ -335,7 +376,11 @@ try {
             </div>
 
         </div>
+=======
+							<div class="notification-date">2026/06/17 09:00</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
     </div>
 
 <%
@@ -397,15 +442,46 @@ try {
     </main>
 
 </div>
+=======
+						</div>
+					</div>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
 
+<<<<<<< HEAD
 <!-- トースト通知 -->
 <div id="toastNotification"
      class="toast">
+=======
+					<!-- 期限切れ通知 -->
+					<div class="notification-item unread">
+						<span class="notification-dot"></span>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
     新しい通知があります
+=======
+						<div class="notification-content">
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
+<<<<<<< HEAD
 </div>
+=======
+							<div class="notification-title">期限を過ぎています</div>
+
+							<div class="notification-task">タスク：データベース設計</div>
+
+							<div class="notification-project">プロジェクト：タスク管理アプリ</div>
+
+							<div class="notification-detail">
+								このタスクは期限を過ぎています。対応状況を確認してください。</div>
+
+							<div class="notification-date">2026/06/17 08:30</div>
+
+						</div>
+					</div>
+					<span class="notification-dot"></span>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
 
 <script>
@@ -419,6 +495,7 @@ function toggleMemberMenu() {
 
         menu.style.display = "none";
 
+<<<<<<< HEAD
     } else {
 
         menu.style.display = "block";
@@ -427,6 +504,11 @@ function toggleMemberMenu() {
 
 }
 
+=======
+			<%@ include file="common/footer.jsp"%>
+			
+			<script>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
 function showNotification(message) {
 
@@ -446,6 +528,11 @@ function showNotification(message) {
 }
 
 </script>
+<<<<<<< HEAD
+=======
+
+		</main>
+>>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
 
 
 </body>
