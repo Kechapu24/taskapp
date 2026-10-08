@@ -260,7 +260,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>タスク管理アプリ - プロジェクト一覧</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/project.css">
+<link rel="stylesheet" href="css/common.css">
 <style>
 .main-content {
 	position: relative;
