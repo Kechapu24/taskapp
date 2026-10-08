@@ -13,14 +13,16 @@
 </head>
 <body>
 
+	<%
+	request.setAttribute("pageTitle", "タスクボード");
+	request.setAttribute("currentPage", "taskboard");
+	%>
+
 	<div class="app-container">
 
 		<%@ include file="common/sidebar.jsp"%>
 
 		<main class="main-content">
-			<%
-			request.setAttribute("pageTitle", "タスクボード");
-			%>
 
 			<%@ include file="common/header.jsp"%>
 

@@ -1,117 +1,119 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*"%>
 <%
-    request.setCharacterEncoding("UTF-8");
+request.setCharacterEncoding("UTF-8");
 
-    // ==========================================
-    // ① 保存処理（POST送信されてきた場合）
-    // ==========================================
-    if ("POST".equalsIgnoreCase(request.getMethod())) {
-        String theme = request.getParameter("theme");
-        String fontSize = request.getParameter("fontSize");
-        String bgColor = request.getParameter("bgColor");
-        String textColor = request.getParameter("textColor");
+// ==========================================
+// ① 保存処理（POST送信されてきた場合）
+// ==========================================
+if ("POST".equalsIgnoreCase(request.getMethod())) {
+	String theme = request.getParameter("theme");
+	String fontSize = request.getParameter("fontSize");
+	String bgColor = request.getParameter("bgColor");
+	String textColor = request.getParameter("textColor");
 
-        String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-        String dbUser = "taskuser";
-        String dbPass = "taskpass";
-        int currentUserId = 1;
+	String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+	String dbUser = "taskuser";
+	String dbPass = "taskpass";
+	int currentUserId = 1;
 
-        if (theme != null && fontSize != null) {
-            try {
-                Class.forName("org.postgresql.Driver");
-                
-                // DB更新処理 (UPDATE)
-                String sql = "UPDATE user_settings SET theme = ?, font_size = ?, bg_color = ?, text_color = ? WHERE user_id = ?";
-                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
-                     PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                    
-                    pstmt.setString(1, theme);
-                    pstmt.setString(2, fontSize);
-                    pstmt.setString(3, bgColor);
-                    pstmt.setString(4, textColor);
-                    pstmt.setInt(5, currentUserId);
-                    
-                    int updatedRows = pstmt.executeUpdate();
-                    
-                    // レコードがなければ新規挿入 (INSERT)
-                    if (updatedRows == 0) {
-                        String insertSql = "INSERT INTO user_settings (user_id, theme, font_size, bg_color, text_color) VALUES (?, ?, ?, ?, ?)";
-                        try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
-                            insertPstmt.setInt(1, currentUserId);
-                            insertPstmt.setString(2, theme);
-                            insertPstmt.setString(3, fontSize);
-                            insertPstmt.setString(4, bgColor);
-                            insertPstmt.setString(5, textColor);
-                            insertPstmt.executeUpdate();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+	if (theme != null && fontSize != null) {
+		try {
+	Class.forName("org.postgresql.Driver");
 
-            // セッションも同期更新
-            session.setAttribute("currentTheme", theme);
-            session.setAttribute("currentFontSize", fontSize);
-            session.setAttribute("currentBgColor", bgColor);
-            session.setAttribute("currentTextColor", textColor);
-        }
+	// DB更新処理 (UPDATE)
+	String sql = "UPDATE user_settings SET theme = ?, font_size = ?, bg_color = ?, text_color = ? WHERE user_id = ?";
+	try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
+			PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        // JavaScriptからの非同期通信(Ajax)の場合はレスポンスを返して処理を終了
-        if ("1".equals(request.getParameter("ajax"))) {
-            out.print("SUCCESS");
-            return; // ここで処理を止め、下のHTMLは出力しない
-        }
-    }
+		pstmt.setString(1, theme);
+		pstmt.setString(2, fontSize);
+		pstmt.setString(3, bgColor);
+		pstmt.setString(4, textColor);
+		pstmt.setInt(5, currentUserId);
 
-    // ==========================================
-    // ② 設定読み込み処理（初回表示・画面描画用）
-    // ==========================================
-    String currentTheme = (String) session.getAttribute("currentTheme");
-    String currentBgColor = (String) session.getAttribute("currentBgColor");
-    String currentTextColor = (String) session.getAttribute("currentTextColor");
-    String currentFontSize = (String) session.getAttribute("currentFontSize");
+		int updatedRows = pstmt.executeUpdate();
 
-    // セッションにデータがない場合のみDBから取得
-    if (currentTheme == null) {
-        String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-        String dbUser = "taskuser";
-        String dbPass = "taskpass";
-        
-        currentTheme = "light";
-        currentBgColor = "#ffffff";
-        currentTextColor = "#333333";
-        currentFontSize = "medium";
-        
-        int currentUserId = 1;
+		// レコードがなければ新規挿入 (INSERT)
+		if (updatedRows == 0) {
+			String insertSql = "INSERT INTO user_settings (user_id, theme, font_size, bg_color, text_color) VALUES (?, ?, ?, ?, ?)";
+			try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
+				insertPstmt.setInt(1, currentUserId);
+				insertPstmt.setString(2, theme);
+				insertPstmt.setString(3, fontSize);
+				insertPstmt.setString(4, bgColor);
+				insertPstmt.setString(5, textColor);
+				insertPstmt.executeUpdate();
+			}
+		}
+	}
+		} catch (Exception e) {
+	e.printStackTrace();
+		}
 
-        try {
-            Class.forName("org.postgresql.Driver");
-            try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
-                 PreparedStatement pstmt = conn.prepareStatement("SELECT theme, bg_color, text_color, font_size FROM user_settings WHERE user_id = ?")) {
-                
-                pstmt.setInt(1, currentUserId);
-                
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        currentTheme = rs.getString("theme");
-                        currentBgColor = rs.getString("bg_color");
-                        currentTextColor = rs.getString("text_color");
-                        currentFontSize = rs.getString("font_size");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+		// セッションも同期更新
+		session.setAttribute("currentTheme", theme);
+		session.setAttribute("currentFontSize", fontSize);
+		session.setAttribute("currentBgColor", bgColor);
+		session.setAttribute("currentTextColor", textColor);
+	}
 
-        // 取得した値をセッションに保存
-        session.setAttribute("currentTheme", currentTheme);
-        session.setAttribute("currentBgColor", currentBgColor);
-        session.setAttribute("currentTextColor", currentTextColor);
-        session.setAttribute("currentFontSize", currentFontSize);
-    }
+	// JavaScriptからの非同期通信(Ajax)の場合はレスポンスを返して処理を終了
+	if ("1".equals(request.getParameter("ajax"))) {
+		out.print("SUCCESS");
+		return; // ここで処理を止め、下のHTMLは出力しない
+	}
+}
+
+// ==========================================
+// ② 設定読み込み処理（初回表示・画面描画用）
+// ==========================================
+String currentTheme = (String) session.getAttribute("currentTheme");
+String currentBgColor = (String) session.getAttribute("currentBgColor");
+String currentTextColor = (String) session.getAttribute("currentTextColor");
+String currentFontSize = (String) session.getAttribute("currentFontSize");
+
+// セッションにデータがない場合のみDBから取得
+if (currentTheme == null) {
+	String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+	String dbUser = "taskuser";
+	String dbPass = "taskpass";
+
+	currentTheme = "light";
+	currentBgColor = "#ffffff";
+	currentTextColor = "#333333";
+	currentFontSize = "medium";
+
+	int currentUserId = 1;
+
+	try {
+		Class.forName("org.postgresql.Driver");
+		try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass);
+		PreparedStatement pstmt = conn.prepareStatement(
+				"SELECT theme, bg_color, text_color, font_size FROM user_settings WHERE user_id = ?")) {
+
+	pstmt.setInt(1, currentUserId);
+
+	try (ResultSet rs = pstmt.executeQuery()) {
+		if (rs.next()) {
+			currentTheme = rs.getString("theme");
+			currentBgColor = rs.getString("bg_color");
+			currentTextColor = rs.getString("text_color");
+			currentFontSize = rs.getString("font_size");
+		}
+	}
+		}
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+
+	// 取得した値をセッションに保存
+	session.setAttribute("currentTheme", currentTheme);
+	session.setAttribute("currentBgColor", currentBgColor);
+	session.setAttribute("currentTextColor", currentTextColor);
+	session.setAttribute("currentFontSize", currentFontSize);
+}
 %>
 <!DOCTYPE html>
 <html lang="ja">
@@ -122,182 +124,167 @@
 <link rel="stylesheet" href="css/style.css">
 
 <style>
-    :root {
-        --custom-bg-color: <%= currentBgColor %>;
-        --custom-text-color: <%= currentTextColor %>;
-    }
+:root {
+	--custom-bg-color: <%=currentBgColor%>;
+	--custom-text-color: <%=currentTextColor%>;
+}
 </style>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // bodyにテーマとフォントサイズのクラスを付与
-        document.body.classList.add('<%= currentTheme %>-theme');
-        document.body.classList.add('font-<%= currentFontSize %>');
+        document.body.classList.add('<%=currentTheme%>-theme');
+        document.body.classList.add('font-<%=currentFontSize%>');
     });
 </script>
 
 </head>
 <body>
 
+	<%
+	request.setAttribute("pageTitle", "設定");
+	request.setAttribute("currentPage", "settings");
+	%>
+
 	<div class="app-container">
 
-		<aside class="sidebar">
-			<div class="sidebar-brand">タスク管理</div>
-			<ul class="sidebar-menu">
-				<li class="menu-item"><a href="index.jsp">ダッシュボード</a></li>
-				<li class="menu-item"><a href="projects.jsp">プロジェクト一覧</a></li>
-				<li class="menu-item"><a href="taskboard.jsp">タスクボード</a></li>
-				<li class="menu-item active"><a href="settings.jsp">設定</a></li>
-				<li class="menu-item"><a href="mytasks.jsp">マイタスク</a></li>
-				<li class="menu-item"><a href="notifications.jsp">通知センター</a></li>
-				<li class="menu-item"><a href="logs.jsp">ログ</a></li>
-			</ul>
-		</aside>
+		<%@ include file="common/sidebar.jsp"%>
 
 		<main class="main-content">
-			<header class="content-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-				<h1 class="page-title" style="margin: 0;">設定</h1>
-				
-				<div style="display: flex; align-items: center; gap: 15px;">
-					<div class="main-search-box" style="margin: 0;">
-						<input type="text" class="search-input" placeholder="タスクを検索...">
-					</div>
-					<a href="account.jsp" class="account-button">アカウント情報</a>
-				</div>
-			</header>
+			<%@ include file="common/header.jsp"%>
 
 			<div class="content-body settings-container">
-                
-                <aside class="settings-sidebar">
-                    <ul class="settings-menu">
-                        <li class="settings-item active" id="tab-general">
-                            <a href="#" onclick="switchTab('general')">一般</a>
-                        </li>
-                        <li class="settings-item" id="tab-account">
-                            <a href="#" onclick="switchTab('account')">アカウント</a>
-                        </li>
-                        <li class="settings-item" id="tab-notifications">
-                            <a href="#" onclick="switchTab('notifications')">通知</a>
-                        </li>
-                    </ul>
-                </aside>
 
-                <section class="settings-panel">
-                    
-                    <div id="content-general" class="setting-section active">
-                        <h2>一般設定</h2>
-                        <br>
-                        
-                        <div class="setting-group">
-                            <h3>外観</h3>
-                            <p>アプリのテーマカラーを選択します。</p>
-                            <div class="setting-options">
-                                <label class="radio-label"><input type="radio" name="theme" value="light" onchange="changeTheme('light')"> ライト</label>
-                                <label class="radio-label"><input type="radio" name="theme" value="dark" onchange="changeTheme('dark')"> ダーク</label>
-                                <label class="radio-label"><input type="radio" name="theme" value="custom" onchange="changeTheme('custom')"> カスタムカラー</label>
-                            </div>
-                            
-                            <div id="custom-color-picker" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
-                                <div style="margin-bottom: 10px;">
-                                    <label style="display: flex; align-items: center; gap: 10px;">
-                                        背景色を選択: 
-                                        <input type="color" id="bgColor" value="#ffffff" onchange="applyCustomColors()">
-                                    </label>
-                                </div>
-                                <div>
-                                    <label style="display: flex; align-items: center; gap: 10px;">
-                                        テキスト色を選択: 
-                                        <input type="color" id="textColor" value="#333333" onchange="applyCustomColors()">
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="setting-group">
-                            <h3>フォントサイズ</h3>
-                            <p>画面のテキストサイズを調整します。</p>
-                            <div class="setting-options-column">
-                                <label class="radio-label">
-                                    <input type="radio" name="fontsize" value="small" onchange="changeFontSize(this.value)"> 小
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="fontsize" value="medium" onchange="changeFontSize(this.value)"> 中（標準）
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="fontsize" value="large" onchange="changeFontSize(this.value)"> 大
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="content-account" class="setting-section">
-                        <h2>アカウント設定</h2>
-                        <br>
-                        
-                        <div class="setting-group">
-                            <h3>アカウントメール</h3>
-                            <input type="email" class="setting-input" value="user@example.com" readonly>
-                            <p style="font-size: 0.85em; color: #666; margin-top: 5px;">※メールアドレスの変更は管理者にお問い合わせください。</p>
-                        </div>
-
-                        <div class="setting-group">
-                            <h3>権限</h3>
-                            <div class="role-badge">プロジェクト管理者</div>
-                        </div>
-
-                        <div class="setting-group">
-                            <h3>パスワードを変更</h3>
-                            <input type="password" class="setting-input" placeholder="現在のパスワード"><br>
-                            <input type="password" class="setting-input" placeholder="新しいパスワード" style="margin-top: 10px;"><br>
-                            <button class="setting-btn" style="margin-top: 15px;">変更を保存</button>
-                        </div>
-                    </div>
-
-                    <div id="content-notifications" class="setting-section">
-                        <h2>通知設定</h2>
-                        <br>
-                        
-                        <div class="setting-group">
-                            <label class="checkbox-label main-checkbox">
-                                <input type="checkbox" id="allowAllNotifications" checked> 通知許可
-                            </label>
-                            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-                            
-                            <div class="checkbox-list">
-                                <label class="checkbox-label"><input type="checkbox" checked> メンション強制</label>
-                                <label class="checkbox-label"><input type="checkbox" checked> プロジェクトの更新</label>
-                                <label class="checkbox-label"><input type="checkbox" checked> タスクの追加・変更</label>
-                                <label class="checkbox-label"><input type="checkbox" checked> コメントの追加</label>
-                                <label class="checkbox-label"><input type="checkbox" checked> 担当者の割り当て</label>
-                            </div>
-                        </div>
-                    </div>
-
-                </section>
-			</div>
-			
-			<footer class="footer">
-				<div class="footer-member">
-					<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
-					<ul class="member-submenu" id="memberSubmenu">
-						<li><a href="member/sakata/Sakata.jsp">坂田</a></li>
-						<li><a href="member/Shimizu.jsp">清水</a></li>
-						<li><a href="member/Higashi/Higashi.jsp">東</a></li>
-						<li><a href="member/Miyazaki/Miyazaki.jsp">宮崎</a></li>
+				<aside class="settings-sidebar">
+					<ul class="settings-menu">
+						<li class="settings-item active" id="tab-general"><a href="#"
+							onclick="switchTab('general')">一般</a></li>
+						<li class="settings-item" id="tab-account"><a href="#"
+							onclick="switchTab('account')">アカウント</a></li>
+						<li class="settings-item" id="tab-notifications"><a href="#"
+							onclick="switchTab('notifications')">通知</a></li>
 					</ul>
-				</div>
-			</footer>
+				</aside>
+
+				<section class="settings-panel">
+
+					<div id="content-general" class="setting-section active">
+						<h2>一般設定</h2>
+						<br>
+
+						<div class="setting-group">
+							<h3>外観</h3>
+							<p>アプリのテーマカラーを選択します。</p>
+							<div class="setting-options">
+								<label class="radio-label"><input type="radio"
+									name="theme" value="light" onchange="changeTheme('light')">
+									ライト</label> <label class="radio-label"><input type="radio"
+									name="theme" value="dark" onchange="changeTheme('dark')">
+									ダーク</label> <label class="radio-label"><input type="radio"
+									name="theme" value="custom" onchange="changeTheme('custom')">
+									カスタムカラー</label>
+							</div>
+
+							<div id="custom-color-picker"
+								style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
+								<div style="margin-bottom: 10px;">
+									<label style="display: flex; align-items: center; gap: 10px;">
+										背景色を選択: <input type="color" id="bgColor" value="#ffffff"
+										onchange="applyCustomColors()">
+									</label>
+								</div>
+								<div>
+									<label style="display: flex; align-items: center; gap: 10px;">
+										テキスト色を選択: <input type="color" id="textColor" value="#333333"
+										onchange="applyCustomColors()">
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="setting-group">
+							<h3>フォントサイズ</h3>
+							<p>画面のテキストサイズを調整します。</p>
+							<div class="setting-options-column">
+								<label class="radio-label"> <input type="radio"
+									name="fontsize" value="small"
+									onchange="changeFontSize(this.value)"> 小
+								</label> <label class="radio-label"> <input type="radio"
+									name="fontsize" value="medium"
+									onchange="changeFontSize(this.value)"> 中（標準）
+								</label> <label class="radio-label"> <input type="radio"
+									name="fontsize" value="large"
+									onchange="changeFontSize(this.value)"> 大
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div id="content-account" class="setting-section">
+						<h2>アカウント設定</h2>
+						<br>
+
+						<div class="setting-group">
+							<h3>アカウントメール</h3>
+							<input type="email" class="setting-input"
+								value="user@example.com" readonly>
+							<p style="font-size: 0.85em; color: #666; margin-top: 5px;">※メールアドレスの変更は管理者にお問い合わせください。</p>
+						</div>
+
+						<div class="setting-group">
+							<h3>権限</h3>
+							<div class="role-badge">プロジェクト管理者</div>
+						</div>
+
+						<div class="setting-group">
+							<h3>パスワードを変更</h3>
+							<input type="password" class="setting-input"
+								placeholder="現在のパスワード"><br> <input type="password"
+								class="setting-input" placeholder="新しいパスワード"
+								style="margin-top: 10px;"><br>
+							<button class="setting-btn" style="margin-top: 15px;">変更を保存</button>
+						</div>
+					</div>
+
+					<div id="content-notifications" class="setting-section">
+						<h2>通知設定</h2>
+						<br>
+
+						<div class="setting-group">
+							<label class="checkbox-label main-checkbox"> <input
+								type="checkbox" id="allowAllNotifications" checked> 通知許可
+							</label>
+							<hr
+								style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+							<div class="checkbox-list">
+								<label class="checkbox-label"><input type="checkbox"
+									checked> メンション強制</label> <label class="checkbox-label"><input
+									type="checkbox" checked> プロジェクトの更新</label> <label
+									class="checkbox-label"><input type="checkbox" checked>
+									タスクの追加・変更</label> <label class="checkbox-label"><input
+									type="checkbox" checked> コメントの追加</label> <label
+									class="checkbox-label"><input type="checkbox" checked>
+									担当者の割り当て</label>
+							</div>
+						</div>
+					</div>
+
+				</section>
+			</div>
+
+			<%@ include file="common/footer.jsp"%>
 		</main>
 	</div>
 
-    <script>
+	<script>
         // ==========================================
         // 読み込み時の設定反映 (セッション/DBからの値を使用)
         // ==========================================
         document.addEventListener("DOMContentLoaded", function() {
-            const savedTheme = '<%= currentTheme %>';
-            const savedBgColor = '<%= currentBgColor %>';
-            const savedTextColor = '<%= currentTextColor %>';
-            const savedFontSize = '<%= currentFontSize %>';
+            const savedTheme = '<%=currentTheme%>';
+            const savedBgColor = '<%=currentBgColor%>';
+            const savedTextColor = '<%=currentTextColor%>';
+            const savedFontSize = '<%=currentFontSize%>';
 
             // ① UI（ラジオボタン・カラーピッカー）の状態を合わせる
             document.querySelectorAll('input[name="theme"]').forEach(radio => {
