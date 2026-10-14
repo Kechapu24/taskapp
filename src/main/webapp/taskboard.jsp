@@ -3,6 +3,7 @@
 <%@ page import="java.sql.*"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
+<jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -12,7 +13,9 @@
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/taskboard.css">
 </head>
-<body>
+<body class="${themeValue}-theme font-${themeFontSize}"
+      style="--custom-bg-color: ${themeBgColor};
+             --custom-text-color: ${themeTextColor};">
 
 	<%
 	request.setAttribute("pageTitle", "タスクボード");

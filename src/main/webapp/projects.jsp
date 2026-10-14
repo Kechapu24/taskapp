@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
+<jsp:include page="common/theme.jsp" />
+
 
 <%
 // 文字化け防止
@@ -833,7 +835,9 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 }
 </style>
 </head>
-<body>
+<body class="${themeValue}-theme font-${themeFontSize}"
+      style="--custom-bg-color: ${themeBgColor};
+             --custom-text-color: ${themeTextColor};">
 
 	<%
 	request.setAttribute("pageTitle", "プロジェクト一覧");

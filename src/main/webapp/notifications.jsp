@@ -2,6 +2,8 @@
     pageEncoding="UTF-8"%>
 
 <%@ page import="java.sql.*" %>
+<jsp:include page="common/theme.jsp" />
+
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -15,7 +17,9 @@
 <link rel="stylesheet" href="css/notifications.css">
 </head>
 
-<body>
+<body class="${themeValue}-theme font-${themeFontSize}"
+      style="--custom-bg-color: ${themeBgColor};
+             --custom-text-color: ${themeTextColor};">
 
 <<<<<<< HEAD
 <div class="app-container">
