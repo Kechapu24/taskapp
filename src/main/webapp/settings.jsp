@@ -121,8 +121,8 @@ if (currentTheme == null) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>タスク管理アプリ - 設定</title>
-<link rel="stylesheet" href="css/setting.css">
 <link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/setting.css">
 
 <style>
 :root {
