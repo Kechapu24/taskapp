@@ -1,0 +1,67 @@
+@charset "UTF-8";
+
+/*清水くんのjspファイルだけで完結してるから一応残してるけど意味ないcssファイル*/
+
+.task-content-text {
+	margin-left: 12px;
+}
+
+/* 📅 追加した日付のデザイン */
+.task-date {
+	display: block;
+	font-size: 11px;
+	color: #888888;
+	margin-top: 3px;
+}
+
+/* 🛑 三点リーダーボタン（⋮）の設定 */
+.task-menu-trigger {
+	background: none;
+	border: none;
+	font-size: 18px;
+	color: #666;
+	cursor: pointer;
+	padding: 5px 10px;
+	margin-left: auto;
+	/* 一番右端に寄せる */
+	border-radius: 4px;
+}
+
+.task-menu-trigger:hover {
+	background-color: #e9ecef;
+}
+
+/* 浮き出るドロップダウンメニュー */
+.task-dropdown-menu {
+	display: none;
+	position: absolute;
+	right: 15px;
+	top: 45px;
+	background: white;
+	border: 1px solid #ddd;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	border-radius: 6px;
+	z-index: 1100;
+	overflow: hidden;
+}
+
+.task-dropdown-menu.open {
+	display: block;
+}
+
+.dropdown-delete-item {
+	background: none;
+	border: none;
+	width: 100%;
+	padding: 10px 20px;
+	text-align: left;
+	font-size: 14px;
+	color: #dc3545;
+	/* 削除は赤色 */
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.dropdown-delete-item:hover {
+	background-color: #fff5f5;
+}

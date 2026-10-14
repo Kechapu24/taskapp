@@ -12,7 +12,7 @@
 
 <title>タスク管理アプリ</title>
 
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/notifications.css">
 <link rel="stylesheet" href="css/common.css">
 </head>
 
