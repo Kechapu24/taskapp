@@ -163,7 +163,6 @@ if (action != null) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マイタスク - タスク管理アプリ</title>
-<link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/common.css">
 
 <!-- カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
