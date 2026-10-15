@@ -1,10 +1,104 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
+<%@ page import="java.time.LocalDate"%>
+<%@ page import="java.time.temporal.ChronoUnit"%>
+<%@ page import="java.util.*"%>
 <%
     request.setCharacterEncoding("UTF-8");
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
+
+    // セッションからログインユーザー情報を取得（※プロジェクトのログイン仕様に合わせてキー名を調整してください）
+    String loginUserName = (String) session.getAttribute("userName");
+    if (loginUserName == null) {
+        loginUserName = ""; // 未ログイン時のフォールバック
+    }
+
+    // データベース接続情報（タスクボード画面と共通）
+    String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
+    String dbUser = "taskuser";
+    String dbPassword = "taskpass";
+
+    StringBuilder projectsJson = new StringBuilder("[");
+    StringBuilder tasksJson = new StringBuilder("[");
+    StringBuilder usersJson = new StringBuilder("[");
+
+    try {
+        Class.forName("org.postgresql.Driver");
+        Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
+
+        // 1. プロジェクト情報の取得
+        Statement pStmt = conn.createStatement();
+        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project");
+        boolean firstP = true;
+        String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
+        int colorIdx = 0;
+        while (pRs.next()) {
+            if (!firstP) projectsJson.append(",");
+            String color = colors[colorIdx % colors.length];
+            projectsJson.append("{id: 'proj-").append(pRs.getInt("project_id"))
+                        .append("', name: '").append(pRs.getString("project_name").replace("'", "\\'"))
+                        .append("', color: '").append(color).append("'}");
+            firstP = false;
+            colorIdx++;
+        }
+        pRs.close();
+        pStmt.close();
+        projectsJson.append("]");
+
+        // 2. ユーザー情報の取得（担当者フィルター用）
+        Statement uStmt = conn.createStatement();
+        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id");
+        boolean firstU = true;
+        while (uRs.next()) {
+            if (!firstU) usersJson.append(",");
+            usersJson.append("{id: ").append(uRs.getInt("user_id"))
+                     .append(", name: '").append(uRs.getString("user_name").replace("'", "\\'"))
+                     .append("'}");
+            firstU = false;
+        }
+        uRs.close();
+        uStmt.close();
+        usersJson.append("]");
+
+        // 3. タスク情報の取得（担当者名も含む）
+        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date, " +
+                         "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
+                         "FROM task t " +
+                         "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
+                         "LEFT JOIN users u ON ta.user_id = u.user_id " +
+                         "GROUP BY t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date";
+        Statement tStmt = conn.createStatement();
+        ResultSet tRs = tStmt.executeQuery(taskSql);
+        boolean firstT = true;
+        while (tRs.next()) {
+            if (!firstT) tasksJson.append(",");
+            boolean isCompleted = "完了".equals(tRs.getString("status"));
+            java.sql.Date start = tRs.getDate("start_date");
+            java.sql.Date due = tRs.getDate("due_date");
+            String startStr = (start != null) ? start.toString() : "";
+            String dueStr = (due != null) ? due.toString() : "";
+
+            tasksJson.append("{")
+                     .append("id: ").append(tRs.getInt("task_id")).append(",")
+                     .append("projectId: 'proj-").append(tRs.getInt("project_id")).append("',")
+                     .append("name: '").append(tRs.getString("task_name").replace("'", "\\'")).append("',")
+                     .append("assignee: '").append(tRs.getString("assignee").replace("'", "\\'")).append("',")
+                     .append("startDate: '").append(startStr).append("',")
+                     .append("dueDate: '").append(dueStr).append("',")
+                     .append("isCompleted: ").append(isCompleted)
+                     .append("}");
+            firstT = false;
+        }
+        tRs.close();
+        tStmt.close();
+        conn.close();
+
+    } catch (Exception e) {
+        // エラー時の処理
+    }
+    tasksJson.append("]");
 %>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
@@ -15,10 +109,9 @@
 <title>タスク管理アプリ - タスクカレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
-    /* ==================== カレンダー固有のスタイル ==================== */
     :root {
-        --saturday-bg: #c0d9ff; /* 土曜日：しっかりした青 */
-        --sunday-bg: #fbc4c4;   /* 日曜日：しっかりした赤 */
+        --saturday-bg: #c0d9ff;
+        --sunday-bg: #fbc4c4;
     }
 
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
@@ -38,6 +131,14 @@
     .legend-item.active, .assignee-item.active { background-color: #e8f0fe; border-color: #1b6ef3; font-weight: bold; color: #1b6ef3; }
     .legend-item.inactive, .assignee-item.inactive { opacity: 0.4; background-color: #f9f9f9; }
 
+    /* マイタスク切替ボタン用スタイル */
+    .my-task-btn {
+        background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 4px 12px;
+        font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #333; transition: all 0.2s;
+    }
+    .my-task-btn:hover { background-color: #f0f4f8; }
+    .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
+
     /* コントロール周り */
     .calendar-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
     
@@ -54,158 +155,78 @@
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
 
-    /* ==================== ステータスカラー ==================== */
+    /* ステータスカラー */
     .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     
     .status-warning { border-color: #dc2626; background-color: #fef2f2; color: #991b1b; }     
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
-    /* ==================== 月ビュー ==================== */
+    /* 月ビュー */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
-
-    .grid-header { 
-        display: grid; 
-        grid-template-columns: repeat(7, 1fr); 
-        background: #f8f9fa; 
-        border-bottom: 2px solid #64748b; 
-        position: sticky; 
-        top: 0; 
-        z-index: 20; 
-    }
+    .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
     .day-name:last-child { border-right: none; }
     .day-name.saturday { color: #1d4ed8; background-color: #a5c7fe; } 
     .day-name.sunday { color: #b91c1c; background-color: #f8a5a5; }   
     
-    .week-row { 
-        position: relative; 
-        display: grid; 
-        grid-template-columns: repeat(7, 1fr); 
-        min-height: 120px; 
-        border-bottom: 1px solid #64748b; 
-    }
+    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
 
     .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; }
     .day-cell:last-child { border-right: none; }
     .day-cell:nth-child(6) { background-color: var(--saturday-bg); } 
     .day-cell:nth-child(7) { background-color: var(--sunday-bg); }   
-
     .day-cell.other-month { opacity: 0.45; }
 
     .date-number { font-size: 0.85rem; color: #333; display: inline-block; padding: 2px 6px; font-weight: bold; }
     .date-number.today-mark { background: #1b6ef3; color: #fff; border-radius: 12px; }
 
     .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; }
-    
     .task-bar {
-        position: absolute; 
-        height: 22px; 
-        border: 2px solid; 
-        border-radius: 3px;
-        padding: 0 5px; 
-        box-sizing: border-box; 
-        font-size: 0.75rem; 
-        background-color: #fff;
-        display: flex; 
-        align-items: center; 
-        cursor: pointer; 
-        pointer-events: auto;
-        top: calc(var(--slot) * 24px); 
-        z-index: 5;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-        transition: box-shadow 0.2s;
+        position: absolute; height: 22px; border: 2px solid; border-radius: 3px; padding: 0 5px; 
+        box-sizing: border-box; font-size: 0.75rem; background-color: #fff; display: flex; 
+        align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 24px); 
+        z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s;
     }
     .task-bar:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 10; }
-
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
 
-    /* クリック時のポップアップカード */
     .task-bar.active { 
-        z-index: 1000 !important; 
-        height: auto !important; 
-        min-width: 190px; 
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; 
-        background: #ffffff !important; 
-        padding: 10px 12px;
-        flex-direction: column;
-        align-items: flex-start;
-        border-radius: 6px;
+        z-index: 1000 !important; height: auto !important; min-width: 190px; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; background: #ffffff !important; 
+        padding: 10px 12px; flex-direction: column; align-items: flex-start; border-radius: 6px;
     }
-    .task-bar.active .task-name { 
-        white-space: normal; 
-        line-height: 1.4; 
-        font-size: 0.88rem; 
-        font-weight: bold;
-        color: #1e293b;
-        margin-bottom: 4px;
-    }
-    .task-details { 
-        display: none; 
-        margin-top: 6px; 
-        padding-top: 6px; 
-        border-top: 1px solid #cbd5e1; 
-        font-size: 0.78rem; 
-        line-height: 1.6; 
-        color: #334155; 
-        width: 100%; 
-        pointer-events: none; 
-    }
+    .task-bar.active .task-name { white-space: normal; line-height: 1.4; font-size: 0.88rem; font-weight: bold; color: #1e293b; margin-bottom: 4px; }
+    .task-details { display: none; margin-top: 6px; padding-top: 6px; border-top: 1px solid #cbd5e1; font-size: 0.78rem; line-height: 1.6; color: #334155; width: 100%; pointer-events: none; }
     .task-bar.active .task-details { display: block; }
     .task-detail-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
     .task-detail-row:last-child { margin-bottom: 0; }
     .task-detail-label { color: #64748b; font-weight: 600; min-width: 45px; }
 
-    /* ==================== 週ビュー ==================== */
+    /* 週ビュー・今日ビュー */
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
     .week-grid-body { flex: 1; overflow-y: auto; position: relative; min-height: 400px; display: flex; flex-direction: column; background: #fff; }
-    
-    .week-grid-header { 
-        display: grid; 
-        grid-template-columns: repeat(7, 1fr); 
-        background: #f8f9fa; 
-        border-bottom: 2px solid #64748b; 
-        position: sticky; 
-        top: 0; 
-        z-index: 20; 
-        flex-shrink: 0; 
-    }
-
+    .week-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; flex-shrink: 0; }
     .week-bg-grid-wrapper { position: relative; flex: 1; min-height: 400px; display: flex; flex-direction: column; }
     .week-bg-grid { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(7, 1fr); pointer-events: none; z-index: 1; }
     .week-bg-col { border-right: 1px solid #64748b; box-sizing: border-box; }
     .week-bg-col:last-child { border-right: none; }
     .week-bg-col:nth-child(6) { background-color: var(--saturday-bg); }
     .week-bg-col:nth-child(7) { background-color: var(--sunday-bg); }
-
     .week-task-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
-    
     .week-task-bar {
-        position: absolute;
-        height: 44px;
-        border: 2px solid;
-        border-radius: 4px;
-        padding: 4px 8px;
-        box-sizing: border-box;
-        font-size: 0.78rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 2px;
-        cursor: pointer;
-        pointer-events: auto;
+        position: absolute; height: 44px; border: 2px solid; border-radius: 4px; padding: 4px 8px;
+        box-sizing: border-box; font-size: 0.78rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex; flex-direction: column; justify-content: center; gap: 2px; cursor: pointer; pointer-events: auto;
     }
     .week-task-bar:hover { z-index: 10; box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
     .week-task-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; color: #333; }
     .week-task-info { font-size: 0.7rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
 
-    /* ==================== 今日ビュー ==================== */
     .today-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; height: 100%; align-content: flex-start; background: #fafbfc; }
     .no-task-msg { padding: 30px; text-align: center; color: #888; font-size: 1.1rem; grid-column: 1 / -1; }
-    
     .today-card { background: #fff; border: 1px solid #64748b; border-radius: 6px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left-width: 5px; border-left-style: solid; }
     .today-card .proj-label { font-size: 0.75rem; color: #666; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; font-weight: bold; }
     .today-card .card-title { font-size: 0.95rem; font-weight: bold; margin: 0 0 8px 0; color: #222; line-height: 1.3; }
@@ -213,120 +234,114 @@
 </style>
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
-      style="--custom-bg-color: ${themeBgColor};
-             --custom-text-color: ${themeTextColor};">
+      style="--custom-bg-color: ${themeBgColor}; --custom-text-color:${themeTextColor};">
 
-    <div class="app-container">
+	<div class="app-container">
+		<%@ include file="common/sidebar.jsp" %>
 
-        <%@ include file="common/sidebar.jsp" %>
+		<main class="main-content">
+			<%@ include file="common/header.jsp" %>
 
-        <main class="main-content">
-        
-            <%@ include file="common/header.jsp" %>
+			<div class="content-body">
+				<div class="calendar-container">
+					<div class="calendar-header">
+						<div>
+							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
+							<div class="filter-section">
+								<div class="filter-group">
+									<span class="filter-label">案件:</span>
+									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+								</div>
+								<div class="filter-group">
+									<span class="filter-label">担当者:</span>
+									<!-- マイタスク切り替えボタン -->
+									<button type="button" id="myTaskBtn" class="my-task-btn" onclick="toggleMyTask()">自分のタスク</button>
+									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="calendar-controls">
+							<div class="view-switch">
+								<button id="btn-today" type="button" onclick="changeView('today')">今日</button>
+								<button id="btn-week" type="button" onclick="changeView('week')">週</button>
+								<button id="btn-month" type="button" class="active" onclick="changeView('month')">月</button>
+							</div>
+							<div class="date-nav-wrapper">
+								<button type="button" onclick="changeDate(-1)">&lt;</button>
+								<div class="month-nav" id="displayDateText">2026年10月</div>
+								<button type="button" onclick="changeDate(1)">&gt;</button>
+							</div>
+						</div>
+					</div>
 
-            <div class="content-body">
-                <!-- カレンダー本体エリア -->
-                <div class="calendar-container">
-                    <div class="calendar-header">
-                        <div>
-                            <h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
-                            <div class="filter-section">
-                                <div class="filter-group">
-                                    <span class="filter-label">案件:</span>
-                                    <div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-                                </div>
-                                <div class="filter-group">
-                                    <span class="filter-label">担当者:</span>
-                                    <div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="calendar-controls">
-                            <div class="view-switch">
-                                <button id="btn-today" onclick="changeView('today')">今日</button>
-                                <button id="btn-week" onclick="changeView('week')">週</button>
-                                <button id="btn-month" class="active" onclick="changeView('month')">月</button>
-                            </div>
-                            <div class="date-nav-wrapper">
-                                <button onclick="changeDate(-1)">&lt;</button>
-                                <div class="month-nav" id="displayDateText">2026年10月</div>
-                                <button onclick="changeDate(1)">&gt;</button>
-                            </div>
-                        </div>
-                    </div>
+					<!-- 月ビュー -->
+					<div id="view-month" class="view-wrapper active">
+						<div id="calendarBody" class="grid-body-scroll">
+							<div class="grid-header">
+								<div class="day-name">月</div><div class="day-name">火</div><div class="day-name">水</div><div class="day-name">木</div>
+								<div class="day-name">金</div><div class="day-name saturday">土</div><div class="day-name sunday">日</div>
+							</div>
+						</div>
+					</div>
 
-                    <!-- 月ビュー -->
-                    <div id="view-month" class="view-wrapper active">
-                        <div id="calendarBody" class="grid-body-scroll">
-                            <div class="grid-header">
-                                <div class="day-name">月</div><div class="day-name">火</div><div class="day-name">水</div><div class="day-name">木</div>
-                                <div class="day-name">金</div><div class="day-name saturday">土</div><div class="day-name sunday">日</div>
-                            </div>
-                        </div>
-                    </div>
+					<!-- 週ビュー -->
+					<div id="view-week" class="view-wrapper">
+						<div class="week-container">
+							<div class="week-grid-body">
+								<div id="weekHeaderGrid" class="week-grid-header"></div>
+								<div class="week-bg-grid-wrapper">
+									<div id="weekBgGrid" class="week-bg-grid">
+										<div class="week-bg-col"></div><div class="week-bg-col"></div><div class="week-bg-col"></div>
+										<div class="week-bg-col"></div><div class="week-bg-col"></div><div class="week-bg-col"></div>
+										<div class="week-bg-col"></div>
+									</div>
+									<div id="weekTaskContainer" class="week-task-container"></div>
+								</div>
+							</div>
+						</div>
+					</div>
 
-                    <!-- 週ビュー -->
-                    <div id="view-week" class="view-wrapper">
-                        <div class="week-container">
-                            <div class="week-grid-body">
-                                <div id="weekHeaderGrid" class="week-grid-header"></div>
-                                <div class="week-bg-grid-wrapper">
-                                    <div id="weekBgGrid" class="week-bg-grid">
-                                        <div class="week-bg-col"></div><div class="week-bg-col"></div><div class="week-bg-col"></div>
-                                        <div class="week-bg-col"></div><div class="week-bg-col"></div><div class="week-bg-col"></div>
-                                        <div class="week-bg-col"></div>
-                                    </div>
-                                    <div id="weekTaskContainer" class="week-task-container"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+					<!-- 今日ビュー -->
+					<div id="view-today" class="view-wrapper">
+						<div id="todayBody" class="today-grid"></div>
+					</div>
+				</div>
+			</div>
 
-                    <!-- 今日ビュー -->
-                    <div id="view-today" class="view-wrapper">
-                        <div id="todayBody" class="today-grid"></div>
-                    </div>
-                </div>
-            </div>
-
-            <%@ include file="common/footer.jsp" %>
-            
-        </main>
-
-    </div>
+			<%@ include file="common/footer.jsp" %>
+		</main>
+	</div>
 
 <script>
-    const actualToday = new Date(2026, 9, 8); // 2026年10月8日
+    // データベースから取得したデータ
+    const projects = <%= projectsJson.toString() %>;
+    const tasks = <%= tasksJson.toString() %>;
+    const users = <%= usersJson.toString() %>;
+    
+    // ログインユーザー名（JSPから受け渡し）
+    const loginUserName = "<%= loginUserName %>";
+
+    const actualToday = new Date(2026, 9, 8); // または new Date()
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
     let activeProjectId = null; 
-    let activeAssignee = null;  
+    let activeAssignee = null;  // nullの場合は全員表示
 
-    const projects = [
-        { id: 'proj-portal', name: '社内ポータル', color: '#1b6ef3' },
-        { id: 'proj-inventory', name: '在庫管理', color: '#20c997' },
-        { id: 'proj-attendance', name: '勤怠管理', color: '#fd7e14' },
-        { id: 'proj-customer', name: '顧客管理', color: '#6f42c1' }
-    ];
-
-    const tasks = [
-        { id: 1, projectId: 'proj-portal', name: "要件定義書の作成（完了）", assignee: "山田", startDate: "2026-10-01", dueDate: "2026-10-04", isCompleted: true },
-        { id: 2, projectId: 'proj-inventory', name: "DB設計の修正", assignee: "佐藤", startDate: "2026-10-04", dueDate: "2026-10-06", isCompleted: false },
-        { id: 3, projectId: 'proj-portal', name: "トップ画面レイアウト実装", assignee: "高橋", startDate: "2026-10-06", dueDate: "2026-10-08", isCompleted: false },
-        { id: 4, projectId: 'proj-inventory', name: "在庫一覧画面のテスト", assignee: "伊藤", startDate: "2026-10-06", dueDate: "2026-10-09", isCompleted: false },
-        { id: 5, projectId: 'proj-attendance', name: "勤怠データ連携API作成", assignee: "加藤", startDate: "2026-10-07", dueDate: "2026-10-12", isCompleted: false },
-        { id: 6, projectId: 'proj-customer', name: "顧客情報移行スクリプト", assignee: "中村", startDate: "2026-10-09", dueDate: "2026-10-15", isCompleted: false },
-        { id: 7, projectId: 'proj-portal', name: "デザインレビュー会議", assignee: "山田", startDate: "2026-10-08", dueDate: "2026-10-08", isCompleted: false },
-        { id: 8, projectId: 'proj-inventory', name: "倉庫マスターメンテナンス", assignee: "佐藤", startDate: "2026-10-11", dueDate: "2026-10-14", isCompleted: false },
-        { id: 9, projectId: 'proj-attendance', name: "打刻ウィジェット修正", assignee: "渡辺", startDate: "2026-10-13", dueDate: "2026-10-16", isCompleted: false },
-        { id: 10, projectId: 'proj-portal', name: "ユーザー権限管理機能", assignee: "高橋", startDate: "2026-10-14", dueDate: "2026-10-20", isCompleted: false },
-        { id: 11, projectId: 'proj-customer', name: "顧客検索クエリ最適化", assignee: "中村", startDate: "2026-10-16", dueDate: "2026-10-19", isCompleted: false },
-        { id: 12, projectId: 'proj-inventory', name: "棚卸しレポート出力機能", assignee: "伊藤", startDate: "2026-10-19", dueDate: "2026-10-23", isCompleted: false },
-        { id: 13, projectId: 'proj-attendance', name: "有給申請フロー承認テスト", assignee: "加藤", startDate: "2026-10-21", dueDate: "2026-10-26", isCompleted: false },
-        { id: 14, projectId: 'proj-portal', name: "総合結合テスト実施", assignee: "山田", startDate: "2026-10-26", dueDate: "2026-10-30", isCompleted: false }
-    ];
+    // 「自分のタスク」ボタンのトグル処理
+    function toggleMyTask() {
+        if (!loginUserName) {
+            alert("ログインユーザー情報が見つかりません。");
+            return;
+        }
+        if (activeAssignee === loginUserName) {
+            activeAssignee = null; // すでに自分の場合は解除（全員表示に戻す）
+        } else {
+            activeAssignee = loginUserName; // 自分の名前に絞り込む
+        }
+        renderAll();
+    }
 
     function getDateDiffInDays(dateA, dateB) {
         const a = new Date(dateA.getFullYear(), dateA.getMonth(), dateA.getDate());
@@ -338,9 +353,11 @@
         currentView = view;
         if (view === 'today') baseDate = new Date(actualToday);
         document.querySelectorAll('.view-switch button').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${view}`).classList.add('active');
+        const btn = document.getElementById(`btn-${view}`);
+        if (btn) btn.classList.add('active');
         document.querySelectorAll('.view-wrapper').forEach(el => el.classList.remove('active'));
-        document.getElementById(`view-${view}`).classList.add('active');
+        const viewEl = document.getElementById(`view-${view}`);
+        if (viewEl) viewEl.classList.add('active');
         renderAll();
     }
 
@@ -362,35 +379,55 @@
     }
 
     function renderAll() {
-        renderFilters();
-        updateHeaderDateText();
-        if (currentView === 'month') renderMonthView();
-        if (currentView === 'week') renderWeekView();
-        if (currentView === 'today') renderTodayView();
+        try {
+            renderFilters();
+            updateHeaderDateText();
+            if (currentView === 'month') renderMonthView();
+            if (currentView === 'week') renderWeekView();
+            if (currentView === 'today') renderTodayView();
+        } catch (e) {
+            console.error("renderAll Error:", e);
+        }
     }
 
     function renderFilters() {
+        // プロジェクトフィルター
         const projContainer = document.getElementById('projectLegends');
-        projContainer.innerHTML = projects.map(p => {
-            const stateClass = activeProjectId ? (activeProjectId === p.id ? 'active' : 'inactive') : '';
-            return `<div class="legend-item ${stateClass}" onclick="toggleProjectFilter('${p.id}')">
-                        <span style="color: ${p.color}; font-size: 1.1rem; line-height: 1;">■</span>
-                        <span>${p.name}</span>
-                    </div>`;
-        }).join('');
+        if (projContainer) {
+            projContainer.innerHTML = projects.map(p => {
+                const stateClass = activeProjectId ? (activeProjectId === p.id ? 'active' : 'inactive') : '';
+                return `<div class="legend-item ${stateClass}" onclick="toggleProjectFilter('${p.id}')">
+                            <span style="color: ${p.color}; font-size: 1.1rem; line-height: 1;">■</span>
+                            <span>${p.name}</span>
+                        </div>`;
+            }).join('');
+        }
 
-        const assignees = [...new Set(tasks.map(t => t.assignee))];
+        // マイタスクボタンのハイライト状態更新
+        const myTaskBtn = document.getElementById('myTaskBtn');
+        if (myTaskBtn) {
+            if (loginUserName && activeAssignee === loginUserName) {
+                myTaskBtn.classList.add('active');
+            } else {
+                myTaskBtn.classList.remove('active');
+            }
+        }
+
+        // 担当者フィルター（DBのusersマスタベース）
         const assigneeContainer = document.getElementById('assigneeLegends');
-        assigneeContainer.innerHTML = assignees.map(name => {
-            const stateClass = activeAssignee ? (activeAssignee === name ? 'active' : 'inactive') : '';
-            return `<div class="assignee-item ${stateClass}" onclick="toggleAssigneeFilter('${name}')">
-                        <span>[担当] ${name}</span>
-                    </div>`;
-        }).join('');
+        if (assigneeContainer) {
+            assigneeContainer.innerHTML = users.map(u => {
+                const stateClass = activeAssignee ? (activeAssignee === u.name ? 'active' : 'inactive') : '';
+                return `<div class="assignee-item ${stateClass}" onclick="toggleAssigneeFilter('${u.name}')">
+                            <span>[担当] ${u.name}</span>
+                        </div>`;
+            }).join('');
+        }
     }
 
     function updateHeaderDateText() {
         const textEl = document.getElementById('displayDateText');
+        if (!textEl) return;
         const y = baseDate.getFullYear(), m = baseDate.getMonth() + 1, d = baseDate.getDate();
 
         if (currentView === 'month') {
@@ -408,7 +445,8 @@
     function getFilteredTasks() {
         return tasks.filter(task => {
             const matchProj = activeProjectId ? task.projectId === activeProjectId : true;
-            const matchAssignee = activeAssignee ? task.assignee === activeAssignee : true;
+            // 担当者フィルター（複数担当者がカンマ区切りで入っている場合にも対応）
+            const matchAssignee = activeAssignee ? task.assignee.includes(activeAssignee) : true;
             return matchProj && matchAssignee;
         });
     }
@@ -417,6 +455,7 @@
         const filtered = getFilteredTasks();
         const targetTime = new Date(targetDate).setHours(0,0,0,0);
         return filtered.filter(task => {
+            if (!task.startDate || !task.dueDate) return false;
             const st = new Date(task.startDate).setHours(0,0,0,0);
             const en = new Date(task.dueDate).setHours(0,0,0,0);
             return targetTime >= st && targetTime <= en;
@@ -425,6 +464,7 @@
 
     function getTaskStatusClass(task) {
         if (task.isCompleted) return "status-completed";
+        if (!task.dueDate) return "status-normal";
         if (new Date(task.dueDate).setHours(0,0,0,0) < actualToday.setHours(0,0,0,0)) return "status-overdue";
         if (new Date(task.dueDate).setHours(0,0,0,0) - actualToday.setHours(0,0,0,0) <= 86400000) return "status-warning";
         return "status-normal";
@@ -441,9 +481,10 @@
 
     function renderMonthView() {
         const gridBody = document.getElementById('calendarBody');
+        if (!gridBody) return;
         const headerEl = gridBody.querySelector('.grid-header');
         gridBody.innerHTML = '';
-        gridBody.appendChild(headerEl);
+        if (headerEl) gridBody.appendChild(headerEl);
 
         const filteredTasks = getFilteredTasks();
 
@@ -473,6 +514,7 @@
             const slots = Array(7).fill(0);
 
             filteredTasks.forEach(task => {
+                if (!task.startDate || !task.dueDate) return;
                 const tStart = new Date(task.startDate);
                 const tEnd = new Date(task.dueDate);
 
@@ -537,6 +579,7 @@
     function renderWeekView() {
         const weekHeaderGrid = document.getElementById('weekHeaderGrid');
         const weekTaskContainer = document.getElementById('weekTaskContainer');
+        if (!weekHeaderGrid || !weekTaskContainer) return;
         weekHeaderGrid.innerHTML = '';
         weekTaskContainer.innerHTML = '';
 
@@ -567,6 +610,7 @@
 
         const filteredTasks = getFilteredTasks();
         const visibleTasks = filteredTasks.filter(task => {
+            if (!task.startDate || !task.dueDate) return false;
             const tStart = new Date(task.startDate).setHours(0,0,0,0);
             const tEnd = new Date(task.dueDate).setHours(0,0,0,0);
             return tEnd >= weekStart.getTime() && tStart <= weekEnd.getTime();
@@ -615,6 +659,7 @@
 
     function renderTodayView() {
         const todayBody = document.getElementById('todayBody');
+        if (!todayBody) return;
         const dayTasks = getTasksForDate(baseDate);
         
         if (dayTasks.length === 0) {
@@ -640,6 +685,10 @@
         }).join('');
     }
 
+    window.addEventListener('DOMContentLoaded', () => {
+        renderAll();
+    });
+    
     renderAll();
 </script>
 </body>
