@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import dao.OrgDAO;
+import model.User;
  
 /**
  * ヘッダー/サイドバーの団体切り替えセレクトメニューから呼ばれるサーブレット。

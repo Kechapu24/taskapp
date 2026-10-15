@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
+<jsp:include page="common/theme.jsp" />
+
 
 <%
 // ★ セッションからテーマ・フォントサイズ・色の設定を取得
@@ -163,7 +165,7 @@ if (action != null) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マイタスク - タスク管理アプリ</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/common.css">
 
 <!-- カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
 <style>

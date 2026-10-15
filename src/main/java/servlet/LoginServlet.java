@@ -1,6 +1,5 @@
-
 package servlet;
- 
+
 import java.io.IOException;
 import java.util.List;
 
@@ -13,7 +12,8 @@ import javax.servlet.http.HttpSession;
 
 import dao.OrgDAO;
 import dao.UserDAO;
-import model.Organization; 
+import model.Organization;
+import model.User;
 
 /**
  * ログイン処理。
@@ -26,41 +26,42 @@ import model.Organization;
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
- 
+
     private final UserDAO userDAO = new UserDAO();
     private final OrgDAO orgDAO = new OrgDAO();
- 
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
- 
+
         String email = request.getParameter("email");
         String inputPassword = request.getParameter("password");
- 
+
         User user = userDAO.findByEmail(email);
- 
+
         // emailが存在しない、またはパスワードが一致しない場合は認証失敗
         if (user == null || !user.getPassword().equals(inputPassword)) {
             request.setAttribute("errorMessage", "メールアドレスまたはパスワードが違います");
+            request.setAttribute("email", email); // login.jspで入力欄に戻すため
             request.getRequestDispatcher("/login.jsp").forward(request, response);
             return;
         }
- 
+
         // 認証成功: セッションにユーザー情報を保存
         HttpSession session = request.getSession();
         session.setAttribute("loginUser", user);
- 
+
         // このユーザーが所属する団体一覧を取得してセッションに保存
         List<Organization> orgList = orgDAO.getOrganizationsForUser(user.getUserId());
         session.setAttribute("orgList", orgList);
- 
+
         // 初期状態: 所属団体があれば先頭を選択、無ければ個人モード(null)
         if (!orgList.isEmpty()) {
             session.setAttribute("activeOrgId", orgList.get(0).getOrgId());
         } else {
             session.setAttribute("activeOrgId", null);
         }
- 
+
         // role に応じて遷移先を分岐
         if (user.isAdmin()) {
             response.sendRedirect(request.getContextPath() + "/admin.jsp");
@@ -68,7 +69,7 @@ public class LoginServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
         }
     }
- 
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -76,4 +77,3 @@ public class LoginServlet extends HttpServlet {
         request.getRequestDispatcher("/login.jsp").forward(request, response);
     }
 }
- 
