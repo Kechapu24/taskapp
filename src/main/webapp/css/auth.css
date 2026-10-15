@@ -1,42 +1,69 @@
+
 /* 全体リセット */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
-/* 画面全体 */
+ 
+/* 画面全体
+   ・日本語フォントを指定(Arialだけだと日本語は環境任せになる)
+   ・height ではなく min-height にして、スマホのキーボード表示時に
+     カードが上下で切れないようにする */
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", Arial, sans-serif;
     background: #f5f5f5;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    padding: 16px;
 }
-
-/* カード */
+ 
+/* カード(幅は最大360px、画面が狭いときは縮む) */
 .login-card {
     background: white;
     padding: 30px;
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
-
+ 
 /* タイトル */
 .login-card h2 {
     margin-bottom: 10px;
     color: #333;
 }
-
+ 
 /* 説明文 */
 .login-card p {
     margin-bottom: 20px;
     color: #666;
     font-size: 14px;
 }
-
+ 
+/* エラー・完了メッセージ */
+.login-card .message-error {
+    color: #b00020;
+    background: #fdecea;
+    border: 1px solid #f5c2c0;
+    border-radius: 5px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+ 
+.login-card .message-success {
+    color: #1b5e20;
+    background: #e8f5e9;
+    border: 1px solid #b7dfb9;
+    border-radius: 5px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+ 
 /* ラベル */
 label {
     display: block;
@@ -45,71 +72,120 @@ label {
     font-size: 14px;
     color: #333;
 }
-
-/* 入力欄 */
+ 
+/* 入力欄
+   font-size を16pxにするのは、iPhoneで入力欄をタップしたときに
+   画面が勝手に拡大されるのを防ぐため */
 input {
     width: 100%;
     padding: 12px;
+    font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
-
-    background-color: #f9fbff; /* 淡い青で視認性UP */
+    background-color: #f9fbff;
     transition: 0.2s;
 }
-
-/* 入力欄フォーカス時 */
+ 
+/* 入力欄フォーカス時(ボタンの緑にそろえる) */
 input:focus {
-    border-color: #007bff;
-    background-color: #eef5ff;
+    border-color: #3a9d5d;
+    background-color: #f3fbf5;
+    box-shadow: 0 0 0 3px rgba(58, 157, 93, 0.25);
     outline: none;
 }
-
-/* ボタンエリア（ログイン画面は横並び） */
+ 
+/* ボタンエリア */
 .button-area {
-    display: flex;
-    justify-content: space-between;
     margin-top: 20px;
 }
-
-/* ログインボタン */
-.login-btn {
-    width: 48%;
-    padding: 12px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.login-btn:hover {
-    background: #1e7e34;
-}
-
-/* 新規登録ボタン（ログイン画面用） */
+ 
+/* 主ボタン: ログイン画面の「ログイン」と、登録画面の「登録」の両方
+   薄い緑(背景) + 濃い緑(文字)。横幅いっぱいにして押しやすくする */
+.login-btn,
 .register-btn {
-    width: 48%;
+    width: 100%;
     padding: 12px;
-    background: #3498db;
-    color: white;
-    border: none;
+    background: #d9f2df;
+    color: #1e5b2e;
+    border: 1px solid #a9d9b4;
     border-radius: 5px;
     font-size: 15px;
+    font-weight: bold;
     cursor: pointer;
     transition: 0.2s;
 }
-
+ 
+.login-btn:hover,
 .register-btn:hover {
-    background: #005fcc;
+    background: #c3e8cc;
 }
-
-/* 新規登録画面の登録ボタンだけ中央寄せ */
-#registerForm .button-area {
+ 
+/* キーボード操作(Tabキー)でボタンにフォーカスが当たったときの目印 */
+button:focus-visible {
+    outline: 3px solid rgba(58, 157, 93, 0.5);
+    outline-offset: 2px;
+}
+ 
+/* 押せない状態(二重送信を防ぐときなどに使う) */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+ 
+/* パスワード欄 + 目のアイコンボタン
+   入力欄の右端の内側に、アイコンを重ねて置く */
+.password-field {
+    position: relative;
+}
+ 
+/* アイコンと文字が重ならないよう、右側に余白を確保 */
+.password-field input {
+    padding-right: 46px;
+}
+ 
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    color: #6b7280;
+    cursor: pointer;
 }
-
-#registerForm .register-btn {
-    width: 70%;
+ 
+.password-toggle:hover {
+    color: #1e5b2e;
+    background: rgba(58, 157, 93, 0.1);
 }
+ 
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+ 
+/* ボタンの下のリンク行(「新規登録はこちら」「ログインはこちら」) */
+.login-card .auth-link {
+    margin-top: 20px;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+ 
+.auth-link a {
+    color: #1e5b2e;
+    font-weight: bold;
+    text-decoration: underline;
+}
+ 
+.auth-link a:hover {
+    color: #14401f;
+}
+ 
