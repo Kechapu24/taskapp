@@ -23,7 +23,7 @@
 
         // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
+        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
@@ -37,6 +37,7 @@
 
             Map<String, String> m = new HashMap<>();
             m.put("id", "proj-" + id);
+            m.put("rawId", String.valueOf(id));
             m.put("name", name.replace("\"", "\\\"").replace("'", "\\'"));
             m.put("color", colors[cIdx % colors.length]);
             projList.add(m);
@@ -47,7 +48,7 @@
 
         // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users");
+        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
             int id = 0;
             try { id = uRs.getInt("user_id"); } catch (Exception e) { id = uRs.getInt("id"); }
@@ -65,9 +66,9 @@
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得（説明、優先度、タグなどの拡張カラムにも対応）
+        // 3. タスク情報の取得
         Statement tStmt = conn.createStatement();
-        ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id");
+        ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id ORDER BY t.task_id ASC");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
         while (tRs.next()) {
             int tid = 0;
@@ -104,12 +105,16 @@
             try { sDate = tRs.getDate("start_date"); } catch (Exception e) {}
             java.sql.Date dDate = null;
             try { dDate = tRs.getDate("due_date"); } catch (Exception e) {}
+            
             String uName = "";
             try { uName = tRs.getString("u_name"); } catch (Exception e) {}
+            int uId = 0;
+            try { uId = tRs.getInt("u_id"); } catch (Exception e) {}
 
             if (!tMapGroup.containsKey(tid)) {
                 Map<String, Object> tm = new HashMap<>();
                 tm.put("id", tid);
+                tm.put("rawProjectId", pid);
                 tm.put("projectId", "proj-" + pid);
                 tm.put("name", tName.replace("\"", "\\\"").replace("'", "\\'"));
                 tm.put("description", description.replace("\"", "\\\"").replace("'", "\\'").replace("\r", "").replace("\n", "\\n"));
@@ -118,15 +123,26 @@
                 tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
+                
                 List<String> assignees = new ArrayList<>();
-                if (uName != null && !uName.isEmpty()) assignees.add(uName);
+                List<Integer> assigneeIds = new ArrayList<>();
+                if (uName != null && !uName.isEmpty()) {
+                    assignees.add(uName);
+                    assigneeIds.add(uId);
+                }
                 tm.put("assignees", assignees);
+                tm.put("assigneeIds", assigneeIds);
                 tMapGroup.put(tid, tm);
             } else {
                 if (uName != null && !uName.isEmpty()) {
                     @SuppressWarnings("unchecked")
                     List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
-                    if (!assignees.contains(uName)) assignees.add(uName);
+                    @SuppressWarnings("unchecked")
+                    List<Integer> assigneeIds = (List<Integer>) tMapGroup.get(tid).get("assigneeIds");
+                    if (!assignees.contains(uName)) {
+                        assignees.add(uName);
+                        assigneeIds.add(uId);
+                    }
                 }
             }
         }
@@ -136,10 +152,14 @@
         for (Map<String, Object> tm : tMapGroup.values()) {
             @SuppressWarnings("unchecked")
             List<String> assignees = (List<String>) tm.get("assignees");
+            @SuppressWarnings("unchecked")
+            List<Integer> assigneeIds = (List<Integer>) tm.get("assigneeIds");
+            
             String assigneeStr = assignees.isEmpty() ? "未設定" : String.join(", ", assignees);
 
             Map<String, String> fm = new HashMap<>();
             fm.put("id", String.valueOf(tm.get("id")));
+            fm.put("rawProjectId", String.valueOf(tm.get("rawProjectId")));
             fm.put("projectId", (String) tm.get("projectId"));
             fm.put("name", (String) tm.get("name"));
             fm.put("description", (String) tm.get("description"));
@@ -149,6 +169,14 @@
             fm.put("startDate", (String) tm.get("startDate"));
             fm.put("dueDate", (String) tm.get("dueDate"));
             fm.put("assignee", assigneeStr.replace("\"", "\\\"").replace("'", "\\'"));
+            
+            StringBuilder idsSb = new StringBuilder();
+            for (int i = 0; i < assigneeIds.size(); i++) {
+                if (i > 0) idsSb.append(",");
+                idsSb.append(assigneeIds.get(i));
+            }
+            fm.put("assigneeIds", idsSb.toString());
+
             taskList.add(fm);
         }
 
@@ -241,24 +269,48 @@
         z-index: 9999;
     }
     .modal-content {
-        background: #fff; width: 480px; max-width: 90%; border-radius: 8px;
+        background: #fff; width: 520px; max-width: 92%; border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column;
     }
     .modal-header {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+        padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
     }
-    .modal-header h3 { margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: bold; }
+    .modal-tabs { display: flex; gap: 8px; }
+    .modal-tab-btn {
+        background: transparent; border: none; font-size: 1rem; font-weight: bold;
+        color: #64748b; padding: 6px 16px; cursor: pointer; border-radius: 4px; transition: all 0.2s;
+    }
+    .modal-tab-btn.active { background: #1b6ef3; color: #fff; }
     .modal-close {
         background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1;
     }
     .modal-close:hover { color: #0f172a; }
+    
     .modal-body {
-        padding: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; color: #334155; max-height: 70vh; overflow-y: auto;
+        padding: 20px; font-size: 0.9rem; color: #334155; max-height: 70vh; overflow-y: auto;
     }
+    .tab-pane { display: none; flex-direction: column; gap: 12px; }
+    .tab-pane.active { display: flex; }
+
     .modal-row { display: flex; gap: 12px; line-height: 1.5; }
     .modal-row strong { min-width: 95px; color: #64748b; text-align: right; flex-shrink: 0; }
     .modal-row span { word-break: break-all; flex: 1; color: #1e293b; }
+
+    /* 編集フォーム用スタイル */
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-weight: bold; color: #475569; font-size: 0.85rem; }
+    .form-control {
+        width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px;
+        font-size: 0.9rem; box-sizing: border-box; color: #1e293b;
+    }
+    .form-control:focus { outline: none; border-color: #1b6ef3; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-footer {
+        padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;
+    }
+    .btn-save { background: #1b6ef3; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .btn-save:hover { background: #1557b0; }
 
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
     .week-grid-body { flex: 1; overflow-y: auto; position: relative; min-height: 400px; display: flex; flex-direction: column; background: #fff; }
@@ -361,32 +413,101 @@
 		</main>
 	</div>
 
-    <!-- タスク詳細モーダル -->
+    <!-- タスク詳細・編集モーダル -->
     <div id="taskModal" class="modal-overlay" style="display: none;" onclick="closeModalOnBackdrop(event)">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>詳細</h3>
+                <div class="modal-tabs">
+                    <button type="button" id="tabBtnDetail" class="modal-tab-btn active" onclick="switchModalTab('detail')">詳細</button>
+                    <button type="button" id="tabBtnEdit" class="modal-tab-btn" onclick="switchModalTab('edit')">編集</button>
+                </div>
                 <button type="button" class="modal-close" onclick="closeModal()">×</button>
             </div>
+            
             <div class="modal-body">
-                <div class="modal-row"><strong>タスク名：</strong><span id="modalTaskName"></span></div>
-                <div class="modal-row"><strong>プロジェクト：</strong><span id="modalProjName"></span></div>
-                <div class="modal-row"><strong>説明：</strong><span id="modalDesc"></span></div>
-                <div class="modal-row"><strong>担当者：</strong><span id="modalAssignee"></span></div>
-                <div class="modal-row"><strong>タグ：</strong><span id="modalTag"></span></div>
-                <div class="modal-row"><strong>状態：</strong><span id="modalStatus"></span></div>
-                <div class="modal-row"><strong>優先度：</strong><span id="modalPriority"></span></div>
-                <div class="modal-row"><strong>開始日：</strong><span id="modalStartDate"></span></div>
-                <div class="modal-row"><strong>期限：</strong><span id="modalDueDate"></span></div>
+                <!-- 1. 詳細タブ -->
+                <div id="tabPaneDetail" class="tab-pane active">
+                    <div class="modal-row"><strong>タスク名：</strong><span id="modalTaskName"></span></div>
+                    <div class="modal-row"><strong>プロジェクト：</strong><span id="modalProjName"></span></div>
+                    <div class="modal-row"><strong>説明：</strong><span id="modalDesc"></span></div>
+                    <div class="modal-row"><strong>担当者：</strong><span id="modalAssignee"></span></div>
+                    <div class="modal-row"><strong>タグ：</strong><span id="modalTag"></span></div>
+                    <div class="modal-row"><strong>状態：</strong><span id="modalStatus"></span></div>
+                    <div class="modal-row"><strong>優先度：</strong><span id="modalPriority"></span></div>
+                    <div class="modal-row"><strong>開始日：</strong><span id="modalStartDate"></span></div>
+                    <div class="modal-row"><strong>期限：</strong><span id="modalDueDate"></span></div>
+                </div>
+
+                <!-- 2. 編集タブ -->
+                <div id="tabPaneEdit" class="tab-pane">
+                    <form id="editTaskForm" action="TaskUpdateServlet" method="post">
+                        <input type="hidden" id="editTaskId" name="taskId">
+                        <div class="form-group">
+                            <label>タスク名</label>
+                            <input type="text" id="editTaskName" name="taskName" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>プロジェクト</label>
+                            <select id="editProjectId" name="projectId" class="form-control">
+                                <% for (Map<String, String> p : projList) { %>
+                                    <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>説明</label>
+                            <textarea id="editDescription" name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-row-2" style="margin-top: 10px;">
+                            <div class="form-group">
+                                <label>状態</label>
+                                <select id="editStatus" name="status" class="form-control">
+                                    <option value="未着手">未着手</option>
+                                    <option value="進行中">進行中</option>
+                                    <option value="完了">完了</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>優先度</label>
+                                <select id="editPriority" name="priority" class="form-control">
+                                    <option value="高">高</option>
+                                    <option value="中">中</option>
+                                    <option value="低">低</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row-2" style="margin-top: 10px;">
+                            <div class="form-group">
+                                <label>開始日</label>
+                                <input type="date" id="editStartDate" name="startDate" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>期限</label>
+                                <input type="date" id="editDueDate" name="dueDate" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>タグ</label>
+                            <input type="text" id="editTag" name="tag" class="form-control">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="modalFooter" class="modal-footer" style="display: none;">
+                <button type="button" class="btn-save" onclick="saveTask()">保存する</button>
             </div>
         </div>
     </div>
 
 <script>
+    // タイトルを「カレンダー」に強制上書き設定
+    document.title = "カレンダー";
+
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
             Map<String, String> p = projList.get(i); %>
-            { id: "<%= p.get("id") %>", name: "<%= p.get("name") %>", color: "<%= p.get("color") %>" }<%= (i < projList.size() - 1) ? "," : "" %>
+            { id: "<%= p.get("id") %>", rawId: "<%= p.get("rawId") %>", name: "<%= p.get("name") %>", color: "<%= p.get("color") %>" }<%= (i < projList.size() - 1) ? "," : "" %>
         <% } %>
     ];
 
@@ -402,6 +523,7 @@
             Map<String, String> t = taskList.get(i); %>
             {
                 id: "<%= t.get("id") %>",
+                rawProjectId: "<%= t.get("rawProjectId") %>",
                 projectId: "<%= t.get("projectId") %>",
                 name: "<%= t.get("name") %>",
                 description: "<%= t.get("description") %>",
@@ -576,6 +698,22 @@
         return d;
     }
 
+    // モーダル・タブ切替
+    function switchModalTab(tabName) {
+        document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        if (tabName === 'detail') {
+            document.getElementById('tabBtnDetail').classList.add('active');
+            document.getElementById('tabPaneDetail').classList.add('active');
+            document.getElementById('modalFooter').style.display = 'none';
+        } else {
+            document.getElementById('tabBtnEdit').classList.add('active');
+            document.getElementById('tabPaneEdit').classList.add('active');
+            document.getElementById('modalFooter').style.display = 'flex';
+        }
+    }
+
     // モーダルを開く関数
     function openTaskModal(taskId, event) {
         if (event) event.stopPropagation();
@@ -584,6 +722,7 @@
 
         const project = projects.find(p => p.id === task.projectId);
 
+        // 詳細タブにセット
         document.getElementById('modalTaskName').innerText = task.name || '（未設定）';
         document.getElementById('modalProjName').innerText = project ? project.name : 'その他';
         document.getElementById('modalDesc').innerText = task.description || '（なし）';
@@ -594,18 +733,37 @@
         document.getElementById('modalStartDate').innerText = task.startDate || '未設定';
         document.getElementById('modalDueDate').innerText = task.dueDate || '未設定';
 
+        // 編集タブにセット
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskName').value = task.name || '';
+        document.getElementById('editProjectId').value = task.rawProjectId || '';
+        document.getElementById('editDescription').value = task.description || '';
+        document.getElementById('editStatus').value = task.status || '未着手';
+        document.getElementById('editPriority').value = task.priority || '中';
+        document.getElementById('editStartDate').value = task.startDate || '';
+        document.getElementById('editDueDate').value = task.dueDate || '';
+        document.getElementById('editTag').value = task.tag || '';
+
+        switchModalTab('detail');
         document.getElementById('taskModal').style.display = 'flex';
     }
 
-    // モーダルを閉じる関数
     function closeModal() {
         document.getElementById('taskModal').style.display = 'none';
     }
 
-    // 背景クリックで閉じる
     function closeModalOnBackdrop(event) {
         if (event.target.id === 'taskModal') {
             closeModal();
+        }
+    }
+
+    function saveTask() {
+        const form = document.getElementById('editTaskForm');
+        if (form.checkValidity()) {
+            form.submit();
+        } else {
+            form.reportValidity();
         }
     }
 
