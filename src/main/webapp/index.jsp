@@ -16,14 +16,11 @@
     List<Map<String, String>> projList = new ArrayList<>();
     List<Map<String, String>> userList = new ArrayList<>();
     List<Map<String, String>> taskList = new ArrayList<>();
-    
-    StringBuilder debugLog = new StringBuilder();
 
     Connection conn = null;
     try {
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
-        debugLog.append("【成功】DB接続OK / ");
 
         // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
@@ -48,7 +45,6 @@
         }
         pRs.close();
         pStmt.close();
-        debugLog.append("プロジェクト: ").append(projList.size()).append("件 / ");
 
         // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
@@ -69,7 +65,6 @@
         }
         uRs.close();
         uStmt.close();
-        debugLog.append("ユーザー: ").append(userList.size()).append("件 / ");
 
         // 3. タスク情報の取得
         Statement tStmt = conn.createStatement();
@@ -127,10 +122,8 @@
             fm.put("assignee", assigneeStr.replace("\"", "\\\"").replace("'", "\\'"));
             taskList.add(fm);
         }
-        debugLog.append("タスク: ").append(taskList.size()).append("件");
 
     } catch (Exception e) {
-        debugLog.append("エラー: ").append(e.toString());
         e.printStackTrace();
     } finally {
         if (conn != null) { try { conn.close(); } catch (SQLException ex) {} }
@@ -149,7 +142,6 @@
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    .debug-banner { background: #1e293b; color: #38bdf8; padding: 10px 15px; margin: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; }
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
     .calendar-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
@@ -180,10 +172,12 @@
     .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 180px; text-align: center; color: #333; }
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
-    .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     
-    .status-warning { border-color: #dc2626; background-color: #fef2f2; color: #991b1b; }     
-    .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
-    .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
+    
+    /* ステータス別の枠線色 */
+    .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     /* 青（デフォルト・期限内未完了） */
+    .status-overdue { border-color: #0f172a; background-color: #f8fafc; color: #0f172a; }    /* 黒（期限切れ未完了） */
+    .status-completed { border-color: #94a3b8; background-color: #f1f5f9; color: #64748b; opacity: 0.75; } /* 薄い表示（完了済み） */
+
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
@@ -257,10 +251,6 @@
 			<%@ include file="common/header.jsp" %>
 
 			<div class="content-body">
-                <div class="debug-banner">
-                    <b>🔍 [デバッグ情報]</b> <%= debugLog.toString() %>
-                </div>
-
 				<div class="calendar-container">
 					<div class="calendar-header">
 						<div>
@@ -352,6 +342,7 @@
                 assignee: "<%= t.get("assignee") %>",
                 startDate: "<%= t.get("startDate") %>",
                 dueDate: "<%= t.get("dueDate") %>",
+                status: "<%= t.get("status") %>",
                 isCompleted: <%= "完了".equals(t.get("status")) %>
             }<%= (i < taskList.size() - 1) ? "," : "" %>
         <% } %>
@@ -493,12 +484,19 @@
         });
     }
 
+    // ステータス判定（未完了かつ期限切れは黒枠、完了済みは薄く、デフォルトは青枠）
     function getTaskStatusClass(task) {
         if (task.isCompleted) return "status-completed";
-        if (!task.dueDate) return "status-normal";
-        if (new Date(task.dueDate).setHours(0,0,0,0) < actualToday.setHours(0,0,0,0)) return "status-overdue";
-        if (new Date(task.dueDate).setHours(0,0,0,0) - actualToday.setHours(0,0,0,0) <= 86400000) return "status-warning";
-        return "status-normal";
+        if (task.dueDate) {
+            const dueDateObj = new Date(task.dueDate);
+            dueDateObj.setHours(0,0,0,0);
+            const todayObj = new Date(actualToday);
+            todayObj.setHours(0,0,0,0);
+            if (dueDateObj < todayObj) {
+                return "status-overdue"; // 期限切れ・未完了（黒枠）
+            }
+        }
+        return "status-normal"; // 期限内・未完了（デフォルト青枠）
     }
 
     function getWeekStart(date) {
