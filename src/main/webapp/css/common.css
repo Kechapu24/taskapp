@@ -146,11 +146,6 @@ body.dark-theme .main-content{
 	color: #fff;
 }
 
-body.custom-theme .main-content{
-	background-color: var(--custom-bg-color);
-	color: var(--custom-text-color);
-}
-
 body.custom-theme .content-header {
 	background-color: var(--custom-bg-color);
 	color: var(--custom-text-color);
@@ -168,3 +163,169 @@ body.font-large {
 	font-size: 18px;
 }
 
+/* =========================================
+   全ページ共通のテーマカラー
+   ========================================= */
+
+/* ライトモード（標準） */
+body {
+    --ui-bg: #ecf0f1;
+    --ui-surface: #ffffff;
+    --ui-column: #f4f6f8;
+    --ui-text: #2c3e50;
+    --ui-muted: #555555;
+    --ui-border: #dddddd;
+    --ui-hover: #f0f0f0;
+    --ui-selected: #f8fbff;
+    --ui-input: #ffffff;
+
+    --ui-sidebar: #34495e;
+    --ui-sidebar-hover: #2c3e50;
+    --ui-sidebar-text: #ffffff;
+}
+
+/* ダークモード */
+body.dark-theme {
+    --ui-bg: #202631;
+    --ui-surface: #303b4d;
+    --ui-column: #273140;
+    --ui-text: #eff4fa;
+    --ui-muted: #bac8d7;
+    --ui-border: #4c5c70;
+    --ui-hover: #3b485a;
+    --ui-selected: #344f6c;
+    --ui-input: #263142;
+
+    --ui-sidebar: #171d27;
+    --ui-sidebar-hover: #344355;
+    --ui-sidebar-text: #eff4fa;
+}
+
+/* カスタムテーマ */
+body.custom-theme {
+    --ui-bg: var(--custom-bg-color, #ffffff);
+    --ui-text: var(--custom-text-color, #333333);
+
+    --ui-surface: color-mix(
+        in srgb, var(--ui-bg) 93%, var(--ui-text) 7%
+    );
+
+    --ui-column: color-mix(
+        in srgb, var(--ui-bg) 87%, var(--ui-text) 13%
+    );
+
+    --ui-muted: color-mix(
+        in srgb, var(--ui-text) 75%, var(--ui-bg) 25%
+    );
+
+    --ui-border: color-mix(
+        in srgb, var(--ui-text) 25%, var(--ui-bg) 75%
+    );
+
+    --ui-hover: color-mix(
+        in srgb, var(--ui-bg) 82%, var(--ui-text) 18%
+    );
+
+    --ui-selected: color-mix(
+        in srgb, var(--ui-bg) 78%, #3498db 22%
+    );
+
+    --ui-input: var(--ui-bg);
+
+    --ui-sidebar: var(--ui-column);
+    --ui-sidebar-hover: var(--ui-hover);
+    --ui-sidebar-text: var(--ui-text);
+}
+
+/* 共通レイアウトへ反映 */
+.main-content,
+body.dark-theme .main-content,
+body.custom-theme .main-content {
+    background-color: var(--ui-bg);
+    color: var(--ui-text);
+}
+
+.content-header,
+body.custom-theme .content-header {
+    background-color: var(--ui-bg);
+    color: var(--ui-text);
+    border-bottom-color: var(--ui-border);
+}
+
+.sidebar,
+.footer {
+    background-color: var(--ui-sidebar);
+    color: var(--ui-sidebar-text);
+}
+
+.sidebar-menu .menu-item a {
+    color: var(--ui-sidebar-text);
+}
+
+.sidebar-menu .menu-item.active a,
+.sidebar-menu .menu-item a:hover {
+    background-color: var(--ui-sidebar-hover);
+}
+
+.search-input {
+    background-color: var(--ui-input);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+}
+
+.search-input::placeholder {
+    color: var(--ui-muted);
+}
+
+
+/* =========================================
+   カスタムカラー：共通UIのみ変更
+   ========================================= */
+
+/* ヘッダー・サイドバー・フッター */
+body.custom-theme .content-header,
+body.custom-theme .sidebar,
+body.custom-theme .footer {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+
+/* サイドメニューの文字 */
+body.custom-theme .sidebar-menu .menu-item a,
+body.custom-theme .footer-member a {
+    color: var(--custom-text-color);
+}
+
+/* メニュー選択中・ホバー */
+body.custom-theme .sidebar-menu .menu-item.active a,
+body.custom-theme .sidebar-menu .menu-item a:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
+
+/* ヘッダー下部の境界線 */
+body.custom-theme .content-header {
+    border-bottom-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 75%,
+        var(--custom-text-color) 25%
+    );
+}
+
+/* 共通のアカウントボタン */
+body.custom-theme .account-button {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+    border: 1px solid var(--custom-text-color);
+}
+
+body.custom-theme .account-button:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
