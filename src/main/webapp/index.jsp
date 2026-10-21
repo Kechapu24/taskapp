@@ -23,6 +23,7 @@
     StringBuilder projectsJson = new StringBuilder("[");
     StringBuilder tasksJson = new StringBuilder("[");
     StringBuilder usersJson = new StringBuilder("[");
+    String errorMessage = null;
 
     try {
         Class.forName("org.postgresql.Driver");
@@ -96,9 +97,12 @@
         conn.close();
 
     } catch (Exception e) {
-        // Error handling
+        errorMessage = e.getMessage();
+        e.printStackTrace();
     }
     tasksJson.append("]");
+    usersJson.append("]");
+    projectsJson.append("]");
 %>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
@@ -238,6 +242,13 @@
 
 			<div class="content-body">
 				<div class="calendar-container">
+                    
+                    <% if (errorMessage != null) { %>
+                        <div style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                            <strong>DB取得エラー:</strong> <%= errorMessage %>
+                        </div>
+                    <% } %>
+
 					<div class="calendar-header">
 						<div>
 							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
