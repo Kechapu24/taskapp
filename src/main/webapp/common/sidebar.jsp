@@ -32,4 +32,15 @@
             <a href="logs.jsp">ログ</a>
         </li>
     </ul>
+
+    <%-- サイドバーの最下部に、常にユーザー表示を出す
+         ログイン中: アイコン付きのユーザーボタン(ホバーで、右側に情報カード)
+         未ログイン: これまでの「アカウント情報」ボタン --%>
+    <div class="sidebar-user">
+        <% if (session.getAttribute("loginUser") != null) { %>
+            <jsp:include page="/common/user_badge.jsp" />
+        <% } else { %>
+            <a href="account.jsp" class="account-button">アカウント情報</a>
+        <% } %>
+    </div>
 </aside>
