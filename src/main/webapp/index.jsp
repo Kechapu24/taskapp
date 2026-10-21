@@ -200,10 +200,13 @@
         --sunday-bg: #fce8e8;
     }
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
-    .calendar-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
-    .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+    
+    .filter-section { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
     .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .filter-group-row2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .filter-label { font-size: 0.8rem; font-weight: bold; color: #555; min-width: 55px; }
+    
     .legend-item, .assignee-item { 
         display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 4px 10px; 
         border-radius: 16px; background-color: #fff; border: 1px solid #64748b;
@@ -218,15 +221,18 @@
     }
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
-    .calendar-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    
+    /* 今日・週・月ボタン & 日付ナビゲーション */
     .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
     .view-switch button { border: none; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
     .view-switch button:hover { background: #94a3b8; }
     .view-switch button.active { background: #fff; color: #1b6ef3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .date-nav-wrapper { display: flex; align-items: center; gap: 15px; }
+    
+    .date-nav-wrapper { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
     .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
     .date-nav-wrapper button:hover { background: #f0f4f8; border-color: #94a3b8; }
-    .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 180px; text-align: center; color: #333; }
+    .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center; color: #333; }
+    
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
     
@@ -349,32 +355,36 @@
 			<div class="content-body">
 				<div class="calendar-container">
 					<div class="calendar-header">
-						<div>
-							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">カレンダー</h2>
-							<div class="filter-section">
-								<div class="filter-group">
-									<span class="filter-label">プロジェクト:</span>
-									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-								</div>
+						<h2 style="margin:0; font-size:1.3rem;">カレンダー</h2>
+						
+						<div class="filter-section">
+							<!-- 1行目: 案件フィルター -->
+							<div class="filter-group">
+								<span class="filter-label">案件:</span>
+								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+							</div>
+							
+							<!-- 2行目: 担当者フィルター（左側） と 今日/週/月ボタン（右側） -->
+							<div class="filter-group-row2">
 								<div class="filter-group">
 									<span class="filter-label">担当者:</span>
 									<button type="button" id="myTaskBtn" class="my-task-btn" onclick="toggleMyTask()">自分のタスク</button>
 									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
+								
+								<div class="view-switch">
+									<button id="btn-today" type="button" onclick="changeView('today')">今日</button>
+									<button id="btn-week" type="button" onclick="changeView('week')">週</button>
+									<button id="btn-month" type="button" class="active" onclick="changeView('month')">月</button>
+								</div>
 							</div>
 						</div>
-						
-						<div class="calendar-controls">
-							<div class="view-switch">
-								<button id="btn-today" type="button" onclick="changeView('today')">今日</button>
-								<button id="btn-week" type="button" onclick="changeView('week')">週</button>
-								<button id="btn-month" type="button" class="active" onclick="changeView('month')">月</button>
-							</div>
-							<div class="date-nav-wrapper">
-								<button type="button" onclick="changeDate(-1)">&lt;</button>
-								<div class="month-nav" id="displayDateText">2026年10月</div>
-								<button type="button" onclick="changeDate(1)">&gt;</button>
-							</div>
+
+						<!-- 日付ナビゲーション（< 2026年 10月 >） -->
+						<div class="date-nav-wrapper">
+							<button type="button" onclick="changeDate(-1)">&lt;</button>
+							<div class="month-nav" id="displayDateText">2026年10月</div>
+							<button type="button" onclick="changeDate(1)">&gt;</button>
 						</div>
 					</div>
 
@@ -501,9 +511,6 @@
     </div>
 
 <script>
-    // タイトルを「カレンダー」に強制上書き設定
-    document.title = "タスク管理-カレンダー";
-
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
             Map<String, String> p = projList.get(i); %>
