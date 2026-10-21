@@ -192,7 +192,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>カレンダー</title>
+<title>タスク管理-カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -360,7 +360,7 @@
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
-								<span class="filter-label">案件:</span>
+								<span class="filter-label">プロジェクト:</span>
 								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 							</div>
 							
