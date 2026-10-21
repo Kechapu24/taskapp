@@ -192,7 +192,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>カレンダー</title>
+<title>タスク管理-カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -360,7 +360,7 @@
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
-								<span class="filter-label">案件:</span>
+								<span class="filter-label">プロジェクト:</span>
 								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 							</div>
 							
@@ -639,7 +639,7 @@
             assigneeContainer.innerHTML = users.map(u => {
                 const stateClass = activeAssignee ? (activeAssignee === u.name ? 'active' : 'inactive') : '';
                 return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(\'' + u.name + '\')">' +
-                            '<span>[担当] ' + u.name + '</span>' +
+                            '<span>' + u.name + '</span>' +
                         '</div>';
             }).join('');
         }
@@ -917,7 +917,7 @@
                 'style="left: calc(' + ((drawStartIdx / 7) * 100) + '% + 2px); width: calc(' + ((spanDays / 7) * 100) + '% - 4px); top: ' + topPos + 'px;" ' +
                 'onclick="openTaskModal(\'' + task.id + '\', event)">' +
                 '<div class="week-task-title"><span style="color: ' + (project ? project.color : '#ccc') + ';">■</span> ' + task.name + '</div>' +
-                '<div class="week-task-info">[担当] ' + task.assignee + ' | [期間] ' + task.startDate.slice(5).replace('-','/') + '〜' + task.dueDate.slice(5).replace('-','/') + '</div>' +
+                '<div class="week-task-info">' + task.assignee + ' | [期間] ' + task.startDate.slice(5).replace('-','/') + '〜' + task.dueDate.slice(5).replace('-','/') + '</div>' +
                 '</div>';
         });
     }
