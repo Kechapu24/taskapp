@@ -341,6 +341,14 @@ body.custom-theme .custom-theme-accent:hover {
 
 /* アクティブカスタムテーマ：背景色と文字色をテーマに連動 */
 body.custom-theme .custom-theme-accent-active.active {
-    background-color: var(--custom-bg-color);
-    color: var(--custom-text-color);
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    	);
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+        );
 }
