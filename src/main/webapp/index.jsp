@@ -9,13 +9,13 @@
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
-    // セッションからログインユーザー情報を取得（※プロジェクトのログイン仕様に合わせてキー名を調整してください）
+    // セッションからログインユーザー情報を取得
     String loginUserName = (String) session.getAttribute("userName");
     if (loginUserName == null) {
-        loginUserName = ""; // 未ログイン時のフォールバック
+        loginUserName = ""; 
     }
 
-    // データベース接続情報（タスクボード画面と共通）
+    // データベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
@@ -62,7 +62,7 @@
         uStmt.close();
         usersJson.append("]");
 
-        // 3. タスク情報の取得（担当者名も含む）
+        // 3. タスク情報の取得
         String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date, " +
                          "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
                          "FROM task t " +
@@ -96,7 +96,7 @@
         conn.close();
 
     } catch (Exception e) {
-        // エラー時の処理
+        // Error handling
     }
     tasksJson.append("]");
 %>
@@ -117,7 +117,6 @@
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
     .calendar-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
     
-    /* フィルター領域 */
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .filter-label { font-size: 0.8rem; font-weight: bold; color: var(--custom-text-color, #555); min-width: 55px; }
@@ -131,7 +130,6 @@
     .legend-item.active, .assignee-item.active { background-color: #e8f0fe; border-color: #1b6ef3; font-weight: bold; color: #1b6ef3; }
     .legend-item.inactive, .assignee-item.inactive { opacity: 0.4; background-color: #f9f9f9; }
 
-    /* マイタスク切替ボタン用スタイル */
     .my-task-btn {
         background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 4px 12px;
         font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #333; transition: all 0.2s;
@@ -139,7 +137,6 @@
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
 
-    /* コントロール周り */
     .calendar-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
     
     .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
@@ -155,13 +152,11 @@
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
 
-    /* ステータスカラー */
     .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     
     .status-warning { border-color: #dc2626; background-color: #fef2f2; color: #991b1b; }     
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
-    /* 月ビュー */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
@@ -205,7 +200,6 @@
     .task-detail-row:last-child { margin-bottom: 0; }
     .task-detail-label { color: #64748b; font-weight: 600; min-width: 45px; }
 
-    /* 週ビュー・今日ビュー */
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
     .week-grid-body { flex: 1; overflow-y: auto; position: relative; min-height: 400px; display: flex; flex-direction: column; background: #fff; }
     .week-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; flex-shrink: 0; }
@@ -254,7 +248,6 @@
 								</div>
 								<div class="filter-group">
 									<span class="filter-label">担当者:</span>
-									<!-- マイタスク切り替えボタン -->
 									<button type="button" id="myTaskBtn" class="my-task-btn" onclick="toggleMyTask()">自分のタスク</button>
 									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
@@ -275,7 +268,6 @@
 						</div>
 					</div>
 
-					<!-- 月ビュー -->
 					<div id="view-month" class="view-wrapper active">
 						<div id="calendarBody" class="grid-body-scroll">
 							<div class="grid-header">
@@ -285,7 +277,6 @@
 						</div>
 					</div>
 
-					<!-- 週ビュー -->
 					<div id="view-week" class="view-wrapper">
 						<div class="week-container">
 							<div class="week-grid-body">
@@ -302,7 +293,6 @@
 						</div>
 					</div>
 
-					<!-- 今日ビュー -->
 					<div id="view-today" class="view-wrapper">
 						<div id="todayBody" class="today-grid"></div>
 					</div>
@@ -314,31 +304,27 @@
 	</div>
 
 <script>
-    // データベースから取得したデータ
     const projects = <%= projectsJson.toString() %>;
     const tasks = <%= tasksJson.toString() %>;
     const users = <%= usersJson.toString() %>;
     
-    // ログインユーザー名（JSPから受け渡し）
     const loginUserName = "<%= loginUserName %>";
-
-    const actualToday = new Date(2026, 9, 8); // または new Date()
+    const actualToday = new Date(2026, 9, 8);
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
     let activeProjectId = null; 
-    let activeAssignee = null;  // nullの場合は全員表示
+    let activeAssignee = null;  
 
-    // 「自分のタスク」ボタンのトグル処理
     function toggleMyTask() {
         if (!loginUserName) {
             alert("ログインユーザー情報が見つかりません。");
             return;
         }
         if (activeAssignee === loginUserName) {
-            activeAssignee = null; // すでに自分の場合は解除（全員表示に戻す）
+            activeAssignee = null; 
         } else {
-            activeAssignee = loginUserName; // 自分の名前に絞り込む
+            activeAssignee = loginUserName; 
         }
         renderAll();
     }
@@ -391,7 +377,6 @@
     }
 
     function renderFilters() {
-        // プロジェクトフィルター
         const projContainer = document.getElementById('projectLegends');
         if (projContainer) {
             projContainer.innerHTML = projects.map(p => {
@@ -403,7 +388,6 @@
             }).join('');
         }
 
-        // マイタスクボタンのハイライト状態更新
         const myTaskBtn = document.getElementById('myTaskBtn');
         if (myTaskBtn) {
             if (loginUserName && activeAssignee === loginUserName) {
@@ -413,7 +397,6 @@
             }
         }
 
-        // 担当者フィルター（DBのusersマスタベース）
         const assigneeContainer = document.getElementById('assigneeLegends');
         if (assigneeContainer) {
             assigneeContainer.innerHTML = users.map(u => {
@@ -445,7 +428,6 @@
     function getFilteredTasks() {
         return tasks.filter(task => {
             const matchProj = activeProjectId ? task.projectId === activeProjectId : true;
-            // 担当者フィルター（複数担当者がカンマ区切りで入っている場合にも対応）
             const matchAssignee = activeAssignee ? task.assignee.includes(activeAssignee) : true;
             return matchProj && matchAssignee;
         });
@@ -641,7 +623,7 @@
 
             const project = projects.find(p => p.id === task.projectId);
             const statClass = getTaskStatusClass(task);
-            const topPos = slotIndex * 50 + 8;
+            const topPos = (slotIndex * 50) + 8;
 
             weekTaskContainer.innerHTML += `
                 <div class="week-task-bar ${statClass}"
@@ -655,34 +637,6 @@
                 </div>
             `;
         });
-    }
-
-    function renderTodayView() {
-        const todayBody = document.getElementById('todayBody');
-        if (!todayBody) return;
-        const dayTasks = getTasksForDate(baseDate);
-        
-        if (dayTasks.length === 0) {
-            todayBody.innerHTML = `<div class="no-task-msg">条件に一致する進行中のタスクはありません</div>`;
-            return;
-        }
-
-        todayBody.innerHTML = dayTasks.map(task => {
-            const project = projects.find(p => p.id === task.projectId);
-            const projColor = project ? project.color : '#ccc';
-            return `
-                <div class="today-card" style="border-left-color: ${projColor};">
-                    <div class="proj-label">
-                        <span style="color: ${projColor};">■</span> ${project ? project.name : 'その他'}
-                    </div>
-                    <h4 class="card-title">${task.name}</h4>
-                    <div class="card-meta">
-                        <span>[担当] <b>${task.assignee}</b></span>
-                        <span>[期間] ${task.startDate.slice(5).replace('-','/')} ～ ${task.dueDate.slice(5).replace('-','/')}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
     }
 
     window.addEventListener('DOMContentLoaded', () => {
