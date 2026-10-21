@@ -1,9 +1,9 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="true"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="java.util.*"%>
 <%
     request.setCharacterEncoding("UTF-8");
-    request.setAttribute("pageTitle", "タスクカレンダー (デバッグモード)");
+    request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
     String loginUserName = (String) session.getAttribute("userName");
@@ -17,18 +17,15 @@
     List<Map<String, String>> userList = new ArrayList<>();
     List<Map<String, String>> taskList = new ArrayList<>();
     
-    // 不安因子（エラーや件数）を保持する変数
     StringBuilder debugLog = new StringBuilder();
-    boolean isDbConnected = false;
 
     Connection conn = null;
     try {
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
-        isDbConnected = true;
-        debugLog.append("【成功】データベース接続に成功しました。<br>");
+        debugLog.append("【成功】DB接続OK / ");
 
-        // 1. プロジェクト情報の取得確認
+        // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
         ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
@@ -40,7 +37,7 @@
             try { name = pRs.getString("project_name"); } catch (Exception e1) {
                 try { name = pRs.getString("name"); } catch (Exception e2) {}
             }
-            if (name == null) name = "無題(" + id + ")";
+            if (name == null) name = "プロジェクト " + id;
 
             Map<String, String> m = new HashMap<>();
             m.put("id", "proj-" + id);
@@ -51,9 +48,9 @@
         }
         pRs.close();
         pStmt.close();
-        debugLog.append("【確認】プロジェクト取得件数: ").append(projList.size()).append("件<br>");
+        debugLog.append("プロジェクト: ").append(projList.size()).append("件 / ");
 
-        // 2. ユーザー情報の取得確認
+        // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
         ResultSet uRs = uStmt.executeQuery("SELECT * FROM users");
         while (uRs.next()) {
@@ -63,7 +60,7 @@
             try { name = uRs.getString("user_name"); } catch (Exception e1) {
                 try { name = uRs.getString("name"); } catch (Exception e2) {}
             }
-            if (name == null) name = "ユーザー(" + id + ")";
+            if (name == null) name = "ユーザー " + id;
 
             Map<String, String> m = new HashMap<>();
             m.put("id", String.valueOf(id));
@@ -72,9 +69,9 @@
         }
         uRs.close();
         uStmt.close();
-        debugLog.append("【確認】ユーザー取得件数: ").append(userList.size()).append("件<br>");
+        debugLog.append("ユーザー: ").append(userList.size()).append("件 / ");
 
-        // 3. タスク情報の取得確認
+        // 3. タスク情報の取得
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
@@ -87,7 +84,7 @@
             try { tName = tRs.getString("task_name"); } catch (Exception e1) {
                 try { tName = tRs.getString("name"); } catch (Exception e2) {}
             }
-            if (tName == null) tName = "タスク(" + tid + ")";
+            if (tName == null) tName = "タスク " + tid;
 
             String status = "";
             try { status = tRs.getString("status"); } catch (Exception e) {}
@@ -130,10 +127,10 @@
             fm.put("assignee", assigneeStr.replace("\"", "\\\"").replace("'", "\\'"));
             taskList.add(fm);
         }
-        debugLog.append("【確認】タスク取得件数: ").append(taskList.size()).append("件<br>");
+        debugLog.append("タスク: ").append(taskList.size()).append("件");
 
     } catch (Exception e) {
-        debugLog.append("<b style='color:red;'>【エラー発生】: ").append(e.toString()).append("</b><br>");
+        debugLog.append("エラー: ").append(e.toString());
         e.printStackTrace();
     } finally {
         if (conn != null) { try { conn.close(); } catch (SQLException ex) {} }
@@ -145,14 +142,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理アプリ - カレンダー(デバッグ)</title>
+<title>タスク管理アプリ - タスクカレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    .debug-banner { background: #1e293b; color: #38bdf8; padding: 15px; margin: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; line-height: 1.5; z-index: 9999; position: relative; }
+    .debug-banner { background: #1e293b; color: #38bdf8; padding: 10px 15px; margin: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; }
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
     .calendar-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
@@ -260,11 +257,8 @@
 			<%@ include file="common/header.jsp" %>
 
 			<div class="content-body">
-                
-                <!-- 【デバッグ表示パネル】 -->
                 <div class="debug-banner">
-                    <b>🔍 [カレンダー・デバッグ情報パネル]</b><br>
-                    <%= debugLog.toString() %>
+                    <b>🔍 [デバッグ情報]</b> <%= debugLog.toString() %>
                 </div>
 
 				<div class="calendar-container">
@@ -363,10 +357,6 @@
         <% } %>
     ];
     
-    console.log("Projects loaded:", projects);
-    console.log("Users loaded:", users);
-    console.log("Tasks loaded:", tasks);
-
     const loginUserName = "<%= loginUserName %>";
     const actualToday = new Date(2026, 9, 21);
     
@@ -440,10 +430,10 @@
         if (projContainer) {
             projContainer.innerHTML = projects.map(p => {
                 const stateClass = activeProjectId ? (activeProjectId === p.id ? 'active' : 'inactive') : '';
-                return `<div class="legend-item ${stateClass}" onclick="toggleProjectFilter('${p.id}')">
-                            <span style="color: ${p.color}; font-size: 1.1rem; line-height: 1;">■</span>
-                            <span>${p.name}</span>
-                        </div>`;
+                return '<div class="legend-item ' + stateClass + '" onclick="toggleProjectFilter(\'' + p.id + '\')">' +
+                            '<span style="color: ' + p.color + '; font-size: 1.1rem; line-height: 1;">■</span>' +
+                            '<span>' + p.name + '</span>' +
+                        '</div>';
             }).join('');
         }
 
@@ -460,9 +450,9 @@
         if (assigneeContainer) {
             assigneeContainer.innerHTML = users.map(u => {
                 const stateClass = activeAssignee ? (activeAssignee === u.name ? 'active' : 'inactive') : '';
-                return `<div class="assignee-item ${stateClass}" onclick="toggleAssigneeFilter('${u.name}')">
-                            <span>[担当] ${u.name}</span>
-                        </div>`;
+                return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(\'' + u.name + '\')">' +
+                            '<span>[担当] ' + u.name + '</span>' +
+                        '</div>';
             }).join('');
         }
     }
@@ -473,14 +463,14 @@
         const y = baseDate.getFullYear(), m = baseDate.getMonth() + 1, d = baseDate.getDate();
 
         if (currentView === 'month') {
-            textEl.innerText = `${y}年 ${m}月`;
+            textEl.innerText = y + "年 " + m + "月";
         } else if (currentView === 'week') {
             const wStart = getWeekStart(baseDate);
             const wEnd = new Date(wStart);
             wEnd.setDate(wStart.getDate() + 6);
-            textEl.innerText = `${wStart.getMonth() + 1}月${wStart.getDate()}日 〜 ${wEnd.getMonth() + 1}月${wEnd.getDate()}日`;
+            textEl.innerText = (wStart.getMonth() + 1) + "月" + wStart.getDate() + "日 〜 " + (wEnd.getMonth() + 1) + "月" + wEnd.getDate() + "日";
         } else if (currentView === 'today') {
-            textEl.innerText = `${y}年 ${m}月 ${d}日`;
+            textEl.innerText = y + "年 " + m + "月 " + d + "日";
         }
     }
 
@@ -540,7 +530,7 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 6);
 
-            let weekHtml = `<div class="week-row">`;
+            let weekHtml = '<div class="week-row">';
             for (let d = 0; d < 7; d++) {
                 const cellDate = new Date(weekStart);
                 cellDate.setDate(weekStart.getDate() + d);
@@ -548,10 +538,10 @@
                 const isCurrentMonth = cellDate.getMonth() === baseDate.getMonth();
                 const cellClass = isCurrentMonth ? 'day-cell' : 'day-cell other-month';
 
-                weekHtml += `<div class="${cellClass}"><span class="date-number ${isToday ? 'today-mark':''}">${cellDate.getDate()}</span></div>`;
+                weekHtml += '<div class="' + cellClass + '"><span class="date-number ' + (isToday ? 'today-mark':'') + '">' + cellDate.getDate() + '</span></div>';
             }
 
-            weekHtml += `<div class="task-bar-container">`;
+            weekHtml += '<div class="task-bar-container">';
             const slots = Array(7).fill(0);
 
             filteredTasks.forEach(task => {
@@ -580,29 +570,20 @@
                     const project = projects.find(p => p.id === task.projectId);
                     const statClass = getTaskStatusClass(task);
 
-                    weekHtml += `
-                        <div class="task-bar ${statClass}" 
-                             style="left: calc(${(drawStartIdx/7)*100}% + 2px); width: calc(${(spanDays/7)*100}% - 4px); --slot: ${slotIndex};"
-                             onclick="toggleTaskActive(this, event)">
-                            <div class="task-header">
-                                <span class="project-square" style="color: ${project ? project.color : '#ccc'};">■</span>
-                                <span class="task-name">${task.name}</span>
-                            </div>
-                            <div class="task-details">
-                                <div class="task-detail-row">
-                                    <span class="task-detail-label">担当:</span>
-                                    <span style="font-weight: 600; color: #1e293b;">${task.assignee}</span>
-                                </div>
-                                <div class="task-detail-row">
-                                    <span class="task-detail-label">期間:</span>
-                                    <span>${task.startDate.slice(5).replace('-','/')} ～ ${task.dueDate.slice(5).replace('-','/')}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    weekHtml += '<div class="task-bar ' + statClass + '" ' +
+                                'style="left: calc(' + ((drawStartIdx/7)*100) + '% + 2px); width: calc(' + ((spanDays/7)*100) + '% - 4px); --slot: ' + slotIndex + ';" ' +
+                                'onclick="toggleTaskActive(this, event)">' +
+                                '<div class="task-header">' +
+                                '<span class="project-square" style="color: ' + (project ? project.color : '#ccc') + ';">■</span>' +
+                                '<span class="task-name">' + task.name + '</span>' +
+                                '</div>' +
+                                '<div class="task-details">' +
+                                '<div class="task-detail-row"><span class="task-detail-label">担当:</span><span style="font-weight: 600; color: #1e293b;">' + task.assignee + '</span></div>' +
+                                '<div class="task-detail-row"><span class="task-detail-label">期間:</span><span>' + task.startDate.slice(5).replace('-','/') + ' ～ ' + task.dueDate.slice(5).replace('-','/') + '</span></div>' +
+                                '</div></div>';
                 }
             });
-            weekHtml += `</div></div>`;
+            weekHtml += '</div></div>';
             gridBody.innerHTML += weekHtml;
         }
     }
@@ -642,11 +623,9 @@
             if (isSat) colorStyle = 'color: #1d4ed8;';
             if (isSun) colorStyle = 'color: #b91c1c;';
 
-            weekHeaderGrid.innerHTML += `
-                <div class="day-name ${isSat?'saturday':''} ${isSun?'sunday':''}" style="${colorStyle}">
-                    ${currentDay.getMonth() + 1}/${currentDay.getDate()} (${daysStr[i]})
-                </div>
-            `;
+            weekHeaderGrid.innerHTML += '<div class="day-name ' + (isSat?'saturday':'') + ' ' + (isSun?'sunday':'') + '" style="' + colorStyle + '">' +
+                (currentDay.getMonth() + 1) + '/' + currentDay.getDate() + ' (' + daysStr[i] + ')' +
+                '</div>';
         }
 
         const filteredTasks = getFilteredTasks();
@@ -684,17 +663,11 @@
             const statClass = getTaskStatusClass(task);
             const topPos = (slotIndex * 50) + 8;
 
-            weekTaskContainer.innerHTML += `
-                <div class="week-task-bar ${statClass}"
-                     style="left: calc(${(drawStartIdx / 7) * 100}% + 2px); width: calc(${(spanDays / 7) * 100}% - 4px); top: ${topPos}px;">
-                    <div class="week-task-title">
-                        <span style="color: ${project ? project.color : '#ccc'};">■</span> ${task.name}
-                    </div>
-                    <div class="week-task-info">
-                        [担当] ${task.assignee} | [期間] ${task.startDate.slice(5).replace('-','/')}〜${task.dueDate.slice(5).replace('-','/')}
-                    </div>
-                </div>
-            `;
+            weekTaskContainer.innerHTML += '<div class="week-task-bar ' + statClass + '" ' +
+                'style="left: calc(' + ((drawStartIdx / 7) * 100) + '% + 2px); width: calc(' + ((spanDays / 7) * 100) + '% - 4px); top: ' + topPos + 'px;">' +
+                '<div class="week-task-title"><span style="color: ' + (project ? project.color : '#ccc') + ';">■</span> ' + task.name + '</div>' +
+                '<div class="week-task-info">[担当] ' + task.assignee + ' | [期間] ' + task.startDate.slice(5).replace('-','/') + '〜' + task.dueDate.slice(5).replace('-','/') + '</div>' +
+                '</div>';
         });
     }
 
@@ -704,25 +677,20 @@
         const dayTasks = getTasksForDate(baseDate);
         
         if (dayTasks.length === 0) {
-            todayBody.innerHTML = `<div class="no-task-msg">条件に一致する進行中のタスクはありません</div>`;
+            todayBody.innerHTML = '<div class="no-task-msg">条件に一致する進行中のタスクはありません</div>';
             return;
         }
 
         todayBody.innerHTML = dayTasks.map(task => {
             const project = projects.find(p => p.id === task.projectId);
             const projColor = project ? project.color : '#ccc';
-            return `
-                <div class="today-card" style="border-left-color: ${projColor};">
-                    <div class="proj-label">
-                        <span style="color: ${projColor};">■</span> ${project ? project.name : 'その他'}
-                    </div>
-                    <h4 class="card-title">${task.name}</h4>
-                    <div class="card-meta">
-                        <span>[担当] <b>${task.assignee}</b></span>
-                        <span>[期間] ${task.startDate.slice(5).replace('-','/')} ～ ${task.dueDate.slice(5).replace('-','/')}</span>
-                    </div>
-                </div>
-            `;
+            return '<div class="today-card" style="border-left-color: ' + projColor + ';">' +
+                   '<div class="proj-label"><span style="color: ' + projColor + ';">■</span> ' + (project ? project.name : 'その他') + '</div>' +
+                   '<h4 class="card-title">' + task.name + '</h4>' +
+                   '<div class="card-meta">' +
+                   '<span>[担当] <b>' + task.assignee + '</b></span>' +
+                   '<span>[期間] ' + task.startDate.slice(5).replace('-','/') + ' ～ ' + task.dueDate.slice(5).replace('-','/') + '</span>' +
+                   '</div></div>';
         }).join('');
     }
 
