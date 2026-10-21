@@ -201,42 +201,6 @@ body.dark-theme {
     --ui-sidebar-text: #eff4fa;
 }
 
-/* カスタムテーマ */
-body.custom-theme {
-    --ui-bg: var(--custom-bg-color, #ffffff);
-    --ui-text: var(--custom-text-color, #333333);
-
-    --ui-surface: color-mix(
-        in srgb, var(--ui-bg) 93%, var(--ui-text) 7%
-    );
-
-    --ui-column: color-mix(
-        in srgb, var(--ui-bg) 87%, var(--ui-text) 13%
-    );
-
-    --ui-muted: color-mix(
-        in srgb, var(--ui-text) 75%, var(--ui-bg) 25%
-    );
-
-    --ui-border: color-mix(
-        in srgb, var(--ui-text) 25%, var(--ui-bg) 75%
-    );
-
-    --ui-hover: color-mix(
-        in srgb, var(--ui-bg) 82%, var(--ui-text) 18%
-    );
-
-    --ui-selected: color-mix(
-        in srgb, var(--ui-bg) 78%, #3498db 22%
-    );
-
-    --ui-input: var(--ui-bg);
-
-    --ui-sidebar: var(--ui-column);
-    --ui-sidebar-hover: var(--ui-hover);
-    --ui-sidebar-text: var(--ui-text);
-}
-
 /* 共通レイアウトへ反映 */
 .main-content,
 body.dark-theme .main-content,
@@ -282,12 +246,37 @@ body.custom-theme .content-header {
    カスタムカラー：共通UIのみ変更
    ========================================= */
 
-/* ヘッダー・サイドバー・フッター */
-body.custom-theme .content-header,
-body.custom-theme .sidebar,
-body.custom-theme .footer {
+
+/* サイドバー：選択した色をそのまま使用 */
+body.custom-theme .sidebar {
     background-color: var(--custom-bg-color);
     color: var(--custom-text-color);
+}
+
+/* ヘッダー・フッター：選択色を白で50%薄める */
+body.custom-theme .content-header,
+body.custom-theme .footer {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    );
+
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+    );
+}
+
+/* ヘッダーのボタンとフッターのリンク文字も統一 */
+body.custom-theme .content-header .account-button,
+body.custom-theme .footer .footer-member a {
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+    );
 }
 
 /* サイドメニューの文字 */
@@ -328,4 +317,30 @@ body.custom-theme .account-button:hover {
         var(--custom-bg-color) 80%,
         var(--custom-text-color) 20%
     );
+}
+
+
+/* =========================================
+   カスタムテーマ共通アクセント
+   ========================================= */
+
+/* ボタンなどの背景色・文字色 */
+body.custom-theme .custom-theme-accent {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+
+/* ホバー時 */
+body.custom-theme .custom-theme-accent:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
+
+/* アクティブカスタムテーマ：背景色と文字色をテーマに連動 */
+body.custom-theme .custom-theme-accent-active.active {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
 }

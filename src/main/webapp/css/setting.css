@@ -220,32 +220,3 @@ body.dark-theme .role-badge {
 	background: #0d47a1;
 	color: #e3f2fd;
 }
-
-/* =========================================
-   カスタムテーマ用のスタイル
-   ========================================= */
-body.custom-theme .main-content,
-body.custom-theme .settings-panel {
-	background-color: var(--custom-bg-color);
-	color: var(--custom-text-color);
-}
-
-body.custom-theme .settings-sidebar {
-	background-color: var(--custom-bg-color);
-	color: var(--custom-text-color);
-	border-color: rgba(128, 128, 128, 0.3);
-}
-
-body.custom-theme .settings-item a {
-	color: var(--custom-text-color);
-}
-
-body.custom-theme .setting-input {
-	background-color: transparent;
-	color: var(--custom-text-color);
-	border: 1px solid rgba(128, 128, 128, 0.5);
-}
-
-body.custom-theme .setting-group h3 {
-	border-color: rgba(128, 128, 128, 0.2);
-}

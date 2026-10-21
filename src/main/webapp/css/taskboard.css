@@ -657,3 +657,7 @@ body.dark-theme .filter-reset {
     color: #f0f0f0;
 }
 
+/* カスタムテーマ：サイドパネルタブ用 */
+body.custom-theme .custom-theme-accent-active.active {
+	border-bottom-color: var(--custom-text-color);
+}

@@ -93,7 +93,7 @@
 									未着手（<%=todoCount%>）
 								</h2>
 
-								<button class="add-task-btn-small"
+								<button class="add-task-btn-small custom-theme-accent"
 									onclick="openAddTaskModal('未着手')">＋</button>
 							</div>
 
@@ -310,7 +310,7 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn">保存</button>
+										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -371,7 +371,7 @@
 								<h2>
 									進行中（<%=doingCount%>）
 								</h2>
-								<button class="add-task-btn-small"
+								<button class="add-task-btn-small custom-theme-accent"
 									onclick="openAddTaskModal('進行中')">＋</button>
 							</div>
 
@@ -584,7 +584,7 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn">保存</button>
+										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -645,7 +645,7 @@
 								<h2>
 									完了（<%=doneCount%>）
 								</h2>
-								<button class="add-task-btn-small"
+								<button class="add-task-btn-small custom-theme-accent"
 									onclick="openAddTaskModal('完了')">＋</button>
 							</div>
 
@@ -858,7 +858,7 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn">保存</button>
+										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -922,10 +922,10 @@
 
 						<!-- タブ -->
 						<div class="sidepanel-tabs">
-							<button type="button" class="sidepanel-tab active"
+							<button type="button" class="sidepanel-tab active custom-theme-accent-active"
 								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
-							<button type="button" class="sidepanel-tab" id="detailTab"
+							<button type="button" class="sidepanel-tab active custom-theme-accent-active" id="detailTab"
 								onclick="switchSideTab('detail', this)">詳細</button>
 						</div>
 
@@ -1018,7 +1018,7 @@
 								</select>
 
 								<div class="filter-buttons">
-									<button type="submit" class="filter-submit">適用</button>
+									<button type="submit" class="filter-submit custom-theme-accent">適用</button>
 
 									<a href="taskboard.jsp" class="filter-reset"> リセット </a>
 								</div>
@@ -1040,7 +1040,7 @@
 									<option value="name">タスク名順</option>
 								</select>
 
-								<button type="submit" class="filter-submit">適用</button>
+								<button type="submit" class="filter-submit custom-theme-accent">適用</button>
 
 							</form>
 
