@@ -38,15 +38,18 @@
         while (pRs.next()) {
             if (!firstP) projectsJson.append(",");
             String color = colors[colorIdx % colors.length];
+            String pName = pRs.getString("project_name");
+            if (pName == null) pName = "";
+            pName = pName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
+
             projectsJson.append("{id: 'proj-").append(pRs.getInt("project_id"))
-                        .append("', name: '").append(pRs.getString("project_name").replace("'", "\\'"))
+                        .append("', name: '").append(pName)
                         .append("', color: '").append(color).append("'}");
             firstP = false;
             colorIdx++;
         }
         pRs.close();
         pStmt.close();
-        projectsJson.append("]");
 
         // 2. ユーザー情報の取得（担当者フィルター用）
         Statement uStmt = conn.createStatement();
@@ -54,14 +57,17 @@
         boolean firstU = true;
         while (uRs.next()) {
             if (!firstU) usersJson.append(",");
+            String uName = uRs.getString("user_name");
+            if (uName == null) uName = "";
+            uName = uName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
+
             usersJson.append("{id: ").append(uRs.getInt("user_id"))
-                     .append(", name: '").append(uRs.getString("user_name").replace("'", "\\'"))
+                     .append(", name: '").append(uName)
                      .append("'}");
             firstU = false;
         }
         uRs.close();
         uStmt.close();
-        usersJson.append("]");
 
         // 3. タスク情報の取得
         String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date, " +
@@ -81,11 +87,19 @@
             String startStr = (start != null) ? start.toString() : "";
             String dueStr = (due != null) ? due.toString() : "";
 
+            String tName = tRs.getString("task_name");
+            if (tName == null) tName = "";
+            tName = tName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
+
+            String assignee = tRs.getString("assignee");
+            if (assignee == null) assignee = "未設定";
+            assignee = assignee.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
+
             tasksJson.append("{")
                      .append("id: ").append(tRs.getInt("task_id")).append(",")
                      .append("projectId: 'proj-").append(tRs.getInt("project_id")).append("',")
-                     .append("name: '").append(tRs.getString("task_name").replace("'", "\\'")).append("',")
-                     .append("assignee: '").append(tRs.getString("assignee").replace("'", "\\'")).append("',")
+                     .append("name: '").append(tName).append("',")
+                     .append("assignee: '").append(assignee).append("',")
                      .append("startDate: '").append(startStr).append("',")
                      .append("dueDate: '").append(dueStr).append("',")
                      .append("isCompleted: ").append(isCompleted)
@@ -100,9 +114,9 @@
         errorMessage = e.getMessage();
         e.printStackTrace();
     }
-    tasksJson.append("]");
-    usersJson.append("]");
     projectsJson.append("]");
+    usersJson.append("]");
+    tasksJson.append("]");
 %>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
