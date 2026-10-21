@@ -3,7 +3,7 @@
 <%@ page import="java.util.*"%>
 <%
     request.setCharacterEncoding("UTF-8");
-    request.setAttribute("pageTitle", "タスクカレンダー");
+    request.setAttribute("pageTitle", "タスクカレンダー (デバッグモード)");
     request.setAttribute("currentPage", "calendar");
 
     String loginUserName = (String) session.getAttribute("userName");
@@ -16,32 +16,34 @@
     List<Map<String, String>> projList = new ArrayList<>();
     List<Map<String, String>> userList = new ArrayList<>();
     List<Map<String, String>> taskList = new ArrayList<>();
-    String debugError = null;
+    
+    // 不安因子（エラーや件数）を保持する変数
+    StringBuilder debugLog = new StringBuilder();
+    boolean isDbConnected = false;
 
     Connection conn = null;
     try {
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
+        isDbConnected = true;
+        debugLog.append("【成功】データベース接続に成功しました。<br>");
 
-        // 1. プロジェクト取得（複数のカラム名を自動判定）
+        // 1. プロジェクト情報の取得確認
         Statement pStmt = conn.createStatement();
         ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
             int id = 0;
-            try { id = pRs.getInt("project_id"); } catch (Exception e1) {
-                try { id = pRs.getInt("id"); } catch (Exception e2) {}
-            }
+            try { id = pRs.getInt("project_id"); } catch (Exception e) { id = pRs.getInt("id"); }
             String name = null;
-            String[] pCols = {"project_name", "name", "title", "pj_name"};
-            for (String col : pCols) {
-                try { name = pRs.getString(col); if (name != null && !name.isEmpty()) break; } catch (Exception e) {}
+            try { name = pRs.getString("project_name"); } catch (Exception e1) {
+                try { name = pRs.getString("name"); } catch (Exception e2) {}
             }
-            if (name == null || name.isEmpty()) name = "プロジェクト " + (id > 0 ? id : (cIdx + 1));
+            if (name == null) name = "無題(" + id + ")";
 
             Map<String, String> m = new HashMap<>();
-            m.put("id", "proj-" + (id > 0 ? id : (cIdx + 1)));
+            m.put("id", "proj-" + id);
             m.put("name", name.replace("\"", "\\\"").replace("'", "\\'"));
             m.put("color", colors[cIdx % colors.length]);
             projList.add(m);
@@ -49,21 +51,19 @@
         }
         pRs.close();
         pStmt.close();
+        debugLog.append("【確認】プロジェクト取得件数: ").append(projList.size()).append("件<br>");
 
-        // 2. ユーザー取得（複数のカラム名を自動判定）
+        // 2. ユーザー情報の取得確認
         Statement uStmt = conn.createStatement();
         ResultSet uRs = uStmt.executeQuery("SELECT * FROM users");
         while (uRs.next()) {
             int id = 0;
-            try { id = uRs.getInt("user_id"); } catch (Exception e1) {
-                try { id = uRs.getInt("id"); } catch (Exception e2) {}
-            }
+            try { id = uRs.getInt("user_id"); } catch (Exception e) { id = uRs.getInt("id"); }
             String name = null;
-            String[] uCols = {"user_name", "name", "username", "account_name"};
-            for (String col : uCols) {
-                try { name = uRs.getString(col); if (name != null && !name.isEmpty()) break; } catch (Exception e) {}
+            try { name = uRs.getString("user_name"); } catch (Exception e1) {
+                try { name = uRs.getString("name"); } catch (Exception e2) {}
             }
-            if (name == null || name.isEmpty()) name = "ユーザー " + id;
+            if (name == null) name = "ユーザー(" + id + ")";
 
             Map<String, String> m = new HashMap<>();
             m.put("id", String.valueOf(id));
@@ -72,38 +72,31 @@
         }
         uRs.close();
         uStmt.close();
+        debugLog.append("【確認】ユーザー取得件数: ").append(userList.size()).append("件<br>");
 
-        // 3. タスク取得
+        // 3. タスク情報の取得確認
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
         while (tRs.next()) {
             int tid = 0;
-            try { tid = tRs.getInt("task_id"); } catch (Exception e1) {
-                try { tid = tRs.getInt("id"); } catch (Exception e2) {}
-            }
+            try { tid = tRs.getInt("task_id"); } catch (Exception e) { tid = tRs.getInt("id"); }
             int pid = 0;
             try { pid = tRs.getInt("project_id"); } catch (Exception e) {}
-
             String tName = null;
-            String[] tCols = {"task_name", "name", "title"};
-            for (String col : tCols) {
-                try { tName = tRs.getString(col); if (tName != null && !tName.isEmpty()) break; } catch (Exception e) {}
+            try { tName = tRs.getString("task_name"); } catch (Exception e1) {
+                try { tName = tRs.getString("name"); } catch (Exception e2) {}
             }
-            if (tName == null || tName.isEmpty()) tName = "タスク " + tid;
+            if (tName == null) tName = "タスク(" + tid + ")";
 
             String status = "";
             try { status = tRs.getString("status"); } catch (Exception e) {}
-
             java.sql.Date sDate = null;
             try { sDate = tRs.getDate("start_date"); } catch (Exception e) {}
             java.sql.Date dDate = null;
             try { dDate = tRs.getDate("due_date"); } catch (Exception e) {}
-
             String uName = "";
-            try { uName = tRs.getString("u_name"); } catch (Exception e1) {
-                try { uName = tRs.getString("user_name"); } catch (Exception e2) {}
-            }
+            try { uName = tRs.getString("u_name"); } catch (Exception e) {}
 
             if (!tMapGroup.containsKey(tid)) {
                 Map<String, Object> tm = new HashMap<>();
@@ -113,17 +106,10 @@
                 tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
-                
                 List<String> assignees = new ArrayList<>();
                 if (uName != null && !uName.isEmpty()) assignees.add(uName);
                 tm.put("assignees", assignees);
                 tMapGroup.put(tid, tm);
-            } else {
-                if (uName != null && !uName.isEmpty()) {
-                    @SuppressWarnings("unchecked")
-                    List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
-                    if (!assignees.contains(uName)) assignees.add(uName);
-                }
             }
         }
         tRs.close();
@@ -144,24 +130,13 @@
             fm.put("assignee", assigneeStr.replace("\"", "\\\"").replace("'", "\\'"));
             taskList.add(fm);
         }
+        debugLog.append("【確認】タスク取得件数: ").append(taskList.size()).append("件<br>");
 
     } catch (Exception e) {
-        debugError = e.toString();
+        debugLog.append("<b style='color:red;'>【エラー発生】: ").append(e.toString()).append("</b><br>");
         e.printStackTrace();
     } finally {
         if (conn != null) { try { conn.close(); } catch (SQLException ex) {} }
-    }
-
-    // フェイルセーフ（データが万が一0件のとき、強制的にダミーを入れて画面が消えないようにする）
-    if (projList.isEmpty()) {
-        Map<String, String> m = new HashMap<>();
-        m.put("id", "proj-1"); m.put("name", "サンプル案件"); m.put("color", "#1b6ef3");
-        projList.add(m);
-    }
-    if (userList.isEmpty()) {
-        Map<String, String> m = new HashMap<>();
-        m.put("id", "1"); m.put("name", "テストユーザー");
-        userList.add(m);
     }
 %>
 <jsp:include page="common/theme.jsp" />
@@ -170,21 +145,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理アプリ - タスクカレンダー</title>
+<title>タスク管理アプリ - カレンダー(デバッグ)</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-
+    .debug-banner { background: #1e293b; color: #38bdf8; padding: 15px; margin: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; line-height: 1.5; z-index: 9999; position: relative; }
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
     .calendar-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
-    
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .filter-label { font-size: 0.8rem; font-weight: bold; color: #555; min-width: 55px; }
-    
     .legend-item, .assignee-item { 
         display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 4px 10px; 
         border-radius: 16px; background-color: #fff; border: 1px solid #64748b;
@@ -193,54 +166,42 @@
     .legend-item:hover, .assignee-item:hover { background-color: #f0f4f8; }
     .legend-item.active, .assignee-item.active { background-color: #e8f0fe; border-color: #1b6ef3; font-weight: bold; color: #1b6ef3; }
     .legend-item.inactive, .assignee-item.inactive { opacity: 0.4; background-color: #f9f9f9; }
-
     .my-task-btn {
         background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 4px 12px;
         font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #333; transition: all 0.2s;
     }
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
-
     .calendar-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-    
     .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
     .view-switch button { border: none; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
     .view-switch button:hover { background: #94a3b8; }
     .view-switch button.active { background: #fff; color: #1b6ef3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    
     .date-nav-wrapper { display: flex; align-items: center; gap: 15px; }
     .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
     .date-nav-wrapper button:hover { background: #f0f4f8; border-color: #94a3b8; }
     .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 180px; text-align: center; color: #333; }
-
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
-
     .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     
     .status-warning { border-color: #dc2626; background-color: #fef2f2; color: #991b1b; }     
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
-
-    /* カレンダー本体・グリッド線 */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
     .day-name:last-child { border-right: none; }
     .day-name.saturday { color: #1d4ed8; background-color: #a5c7fe; } 
     .day-name.sunday { color: #b91c1c; background-color: #f8a5a5; }   
-    
     .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
-
     .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; position: relative; }
     .day-cell:last-child { border-right: none; }
     .day-cell:nth-child(6) { background-color: var(--saturday-bg); } 
     .day-cell:nth-child(7) { background-color: var(--sunday-bg); }   
     .day-cell.other-month { opacity: 0.45; }
-
     .date-number { font-size: 0.85rem; color: #333; display: inline-block; padding: 2px 6px; font-weight: bold; z-index: 2; position: relative; }
     .date-number.today-mark { background: #1b6ef3; color: #fff; border-radius: 12px; }
-
     .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; z-index: 5; }
     .task-bar {
         position: absolute; height: 22px; border: 2px solid; border-radius: 3px; padding: 0 5px; 
@@ -252,7 +213,6 @@
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
-
     .task-bar.active { 
         z-index: 1000 !important; height: auto !important; min-width: 190px; 
         box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; background: #ffffff !important; 
@@ -264,7 +224,6 @@
     .task-detail-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
     .task-detail-row:last-child { margin-bottom: 0; }
     .task-detail-label { color: #64748b; font-weight: 600; min-width: 45px; }
-
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
     .week-grid-body { flex: 1; overflow-y: auto; position: relative; min-height: 400px; display: flex; flex-direction: column; background: #fff; }
     .week-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; flex-shrink: 0; }
@@ -283,7 +242,6 @@
     .week-task-bar:hover { z-index: 10; box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
     .week-task-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; color: #333; }
     .week-task-info { font-size: 0.7rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
-
     .today-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; height: 100%; align-content: flex-start; background: #fafbfc; }
     .no-task-msg { padding: 30px; text-align: center; color: #888; font-size: 1.1rem; grid-column: 1 / -1; }
     .today-card { background: #fff; border: 1px solid #64748b; border-radius: 6px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left-width: 5px; border-left-style: solid; }
@@ -302,14 +260,14 @@
 			<%@ include file="common/header.jsp" %>
 
 			<div class="content-body">
+                
+                <!-- 【デバッグ表示パネル】 -->
+                <div class="debug-banner">
+                    <b>🔍 [カレンダー・デバッグ情報パネル]</b><br>
+                    <%= debugLog.toString() %>
+                </div>
+
 				<div class="calendar-container">
-
-                    <% if (debugError != null) { %>
-                        <div style="background: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 15px; border-radius: 4px; font-weight: bold;">
-                            Java側エラー: <%= debugError %>
-                        </div>
-                    <% } %>
-
 					<div class="calendar-header">
 						<div>
 							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
@@ -405,6 +363,10 @@
         <% } %>
     ];
     
+    console.log("Projects loaded:", projects);
+    console.log("Users loaded:", users);
+    console.log("Tasks loaded:", tasks);
+
     const loginUserName = "<%= loginUserName %>";
     const actualToday = new Date(2026, 9, 21);
     
