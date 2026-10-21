@@ -16,26 +16,21 @@
     List<Map<String, String>> projList = new ArrayList<>();
     List<Map<String, String>> userList = new ArrayList<>();
     List<Map<String, String>> taskList = new ArrayList<>();
-    String debugError = null;
 
     Connection conn = null;
     try {
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト情報の取得 (列名の揺れに完全対応)
+        // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
+        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
-            int id = 0;
-            try { id = pRs.getInt("project_id"); } catch (Exception e) { try { id = pRs.getInt("id"); } catch (Exception ex) {} }
-
-            String name = null;
-            try { name = pRs.getString("project_name"); } catch (Exception e) {}
-            if (name == null || name.isEmpty()) { try { name = pRs.getString("name"); } catch (Exception e) {} }
-            if (name == null || name.isEmpty()) name = "案件 " + id;
+            int id = pRs.getInt("project_id");
+            String name = pRs.getString("project_name");
+            if (name == null) name = "プロジェクト " + id;
 
             Map<String, String> m = new HashMap<>();
             m.put("id", "proj-" + id);
@@ -47,17 +42,13 @@
         pRs.close();
         pStmt.close();
 
-        // 2. ユーザー情報の取得 (列名の揺れに完全対応)
+        // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users");
+        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
-            int id = 0;
-            try { id = uRs.getInt("user_id"); } catch (Exception e) { try { id = uRs.getInt("id"); } catch (Exception ex) {} }
-
-            String name = null;
-            try { name = uRs.getString("user_name"); } catch (Exception e) {}
-            if (name == null || name.isEmpty()) { try { name = uRs.getString("name"); } catch (Exception e) {} }
-            if (name == null || name.isEmpty()) name = "ユーザー " + id;
+            int id = uRs.getInt("user_id");
+            String name = uRs.getString("user_name");
+            if (name == null) name = "ユーザー " + id;
 
             Map<String, String> m = new HashMap<>();
             m.put("id", String.valueOf(id));
@@ -68,40 +59,35 @@
         uStmt.close();
 
         // 3. タスク情報の取得
+        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, u.user_name " +
+                         "FROM task t " +
+                         "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
+                         "LEFT JOIN users u ON ta.user_id = u.user_id " +
+                         "ORDER BY t.task_id ASC";
         Statement tStmt = conn.createStatement();
-        ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id");
+        ResultSet tRs = tStmt.executeQuery(taskSql);
+        
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
         while (tRs.next()) {
-            int tid = 0;
-            try { tid = tRs.getInt("task_id"); } catch (Exception e) { try { tid = tRs.getInt("id"); } catch (Exception ex) {} }
+            int tid = tRs.getInt("task_id");
+            int pid = tRs.getInt("project_id");
+            String tName = tRs.getString("task_name");
+            if (tName == null) tName = "タスク " + tid;
 
-            int pid = 0;
-            try { pid = tRs.getInt("project_id"); } catch (Exception e) {}
-
-            String tName = null;
-            try { tName = tRs.getString("task_name"); } catch (Exception e) {}
-            if (tName == null || tName.isEmpty()) { try { tName = tRs.getString("name"); } catch (Exception e) {} }
-            if (tName == null || tName.isEmpty()) tName = "タスク " + tid;
-
-            String status = "";
-            try { status = tRs.getString("status"); } catch (Exception e) {}
-
-            java.sql.Date sDate = null;
-            try { sDate = tRs.getDate("start_date"); } catch (Exception e) {}
-            java.sql.Date dDate = null;
-            try { dDate = tRs.getDate("due_date"); } catch (Exception e) {}
-
-            String uName = "";
-            try { uName = tRs.getString("user_name"); } catch (Exception e) {}
+            String status = tRs.getString("status");
+            Date sDate = tRs.getDate("start_date");
+            Date dDate = tRs.getDate("due_date");
+            String uName = tRs.getString("user_name");
 
             if (!tMapGroup.containsKey(tid)) {
                 Map<String, Object> tm = new HashMap<>();
                 tm.put("id", tid);
                 tm.put("projectId", "proj-" + pid);
                 tm.put("name", tName.replace("\"", "\\\"").replace("'", "\\'"));
-                tm.put("status", status);
+                tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
+                
                 List<String> assignees = new ArrayList<>();
                 if (uName != null && !uName.isEmpty()) assignees.add(uName);
                 tm.put("assignees", assignees);
@@ -134,22 +120,9 @@
         }
 
     } catch (Exception e) {
-        debugError = e.getMessage();
         e.printStackTrace();
     } finally {
         if (conn != null) { try { conn.close(); } catch (SQLException ex) {} }
-    }
-
-    // フェイルセーフ（データが万が一0件のとき、画面が空になるのを防ぐためのサンプル）
-    if (projList.isEmpty()) {
-        Map<String, String> m = new HashMap<>();
-        m.put("id", "proj-1"); m.put("name", "サンプル案件"); m.put("color", "#1b6ef3");
-        projList.add(m);
-    }
-    if (userList.isEmpty()) {
-        Map<String, String> m = new HashMap<>();
-        m.put("id", "1"); m.put("name", "テストユーザー");
-        userList.add(m);
     }
 %>
 <jsp:include page="common/theme.jsp" />
@@ -292,12 +265,6 @@
 			<div class="content-body">
 				<div class="calendar-container">
 
-                    <% if (debugError != null) { %>
-                        <div style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 0.9rem;">
-                            <strong>DB/Javaエラー発生:</strong> <%= debugError %>
-                        </div>
-                    <% } %>
-
 					<div class="calendar-header">
 						<div>
 							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
@@ -364,7 +331,6 @@
 	</div>
 
 <script>
-    // Javaのリストから安全にJavaScriptの配列オブジェクトを構築
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
             Map<String, String> p = projList.get(i); %>
