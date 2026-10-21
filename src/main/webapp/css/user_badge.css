@@ -1,1 +1,221 @@
-@charset "UTF-8";
+
+User badge · CSS
+/* ===== アイコン(丸) =====
+   小さくても名前や背景との境目が分かるよう、
+   「白い縁」+「ユーザーごとの色の輪」の二重の縁取りをつける。
+   画像が無いユーザーは、名前の頭文字を、ユーザーごとに決まった色の丸で表示する。
+   色は JSP 側で --h(色相 0〜359)を渡して決める。 */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+    overflow: hidden;
+    font-weight: bold;
+    background: hsl(var(--h, 200), 45%, 82%);
+    color: hsl(var(--h, 200), 45%, 25%);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px hsl(var(--h, 200), 60%, 55%);
+    margin: 2px; /* 外側の色の輪が、隣の要素に重ならないように */
+}
+ 
+.avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 画像が縦長・横長でも、丸の中に収まるように切り抜く */
+}
+ 
+.avatar--sm { width: 40px; height: 40px; font-size: 18px; }
+ 
+.avatar--lg {
+    width: 96px;
+    height: 96px;
+    font-size: 42px;
+    border-width: 3px;
+    box-shadow: 0 0 0 3px hsl(var(--h, 200), 60%, 55%);
+    margin: 3px;
+}
+ 
+/* ===== サイドバー下部のユーザー表示(画面の左下に固定) =====
+   ・.user-badge を position: fixed にして、ページが長くスクロールしても、
+     画面の左下(サイドバーの真下)に常に表示する。
+   ・幅は common.css の .sidebar の幅(220px)に合わせてある。
+     サイドバーの幅を変えたときは、下の --sidebar-width も同じ値に変えること。
+   ・.sidebar-user は「場所取り」。メニューが長いとき、最後の項目が
+     固定されたユーザー表示の下に隠れないよう、同じ高さの空きを確保する。 */
+:root {
+    --sidebar-width: 220px;
+    --user-dock-height: 84px;
+}
+ 
+.sidebar-user {
+    height: var(--user-dock-height);
+}
+ 
+.user-badge {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: var(--sidebar-width);
+    height: var(--user-dock-height);
+    padding: 12px;
+    background: #34495e; /* common.css の .sidebar と同じ色 */
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+ 
+/* ===== ユーザーボタン ===== */
+.user-badge__trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    text-decoration: none;
+    font-size: 15px;
+}
+ 
+.user-badge__trigger:hover,
+.user-badge__trigger:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+}
+ 
+.user-badge__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+ 
+/* ===== ホバーカード(サイドバーの右側に開く / 大きさは従来の1.5倍) =====
+   position: fixed にして、サイドバーの overflow に切り取られないようにする。
+   開く位置(left / bottom)は、マウスを乗せたときに user_badge.jsp の
+   スクリプトが「ユーザーボタンのすぐ右・画面の下から少し上」に計算して決める。
+   padding-left の透明な部分が、ボタンとカードの間の隙間を埋める。
+   これが無いと、マウスをカードに動かす途中でカードが消えてしまう */
+.user-badge__card {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    padding-left: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s;
+}
+ 
+.user-badge:hover .user-badge__card,
+.user-badge:focus-within .user-badge__card {
+    opacity: 1;
+    visibility: visible;
+}
+ 
+.user-badge__card-inner {
+    box-sizing: border-box;
+    width: 390px;               /* 従来 260px の1.5倍 */
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 24px;              /* 従来 16px */
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 15px;        /* 従来 10px */
+    box-shadow: 0 6px 21px rgba(0, 0, 0, 0.2);
+    color: #333;
+    font-size: 21px;            /* 従来 14px */
+    text-align: left;
+}
+ 
+.user-badge__card-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+ 
+.user-badge__card-name {
+    font-weight: bold;
+    font-size: 24px;
+    word-break: break-all;
+}
+ 
+.user-badge__card-email {
+    color: #666;
+    font-size: 19.5px;
+    word-break: break-all;
+}
+ 
+.user-badge__list {
+    margin: 0 0 18px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+ 
+.user-badge__list dt {
+    margin-top: 9px;
+    color: #666;
+    font-size: 18px;
+}
+ 
+.user-badge__list dd {
+    margin: 0;
+}
+ 
+.user-badge__card-link {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #d9f2df;
+    border: 1px solid #a9d9b4;
+    color: #1e5b2e;
+    font-weight: bold;
+    text-decoration: none;
+}
+ 
+.user-badge__card-link:hover {
+    background: #c3e8cc;
+}
+ 
+/* ===== アイコン設定フォーム(account.jsp用) ===== */
+.icon-upload {
+    max-width: 420px;
+    margin: 16px 0;
+}
+ 
+.icon-upload__row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+ 
+.icon-upload__note {
+    color: #666;
+    font-size: 13px;
+    margin: 6px 0 10px;
+}
+ 
+.icon-upload__msg {
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+ 
+.icon-upload__msg--ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #b7dfb9; }
+.icon-upload__msg--ng { background: #fdecea; color: #b00020; border: 1px solid #f5c2c0; }
+ 
+Claudeが応答を完了しました
