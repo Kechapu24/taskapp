@@ -75,8 +75,9 @@
             if (tName == null) tName = "タスク " + tid;
 
             String status = tRs.getString("status");
-            Date sDate = tRs.getDate("start_date");
-            Date dDate = tRs.getDate("due_date");
+            // java.sql.Dateとして明確に型を指定
+            java.sql.Date sDate = tRs.getDate("start_date");
+            java.sql.Date dDate = tRs.getDate("due_date");
             String uName = tRs.getString("user_name");
 
             if (!tMapGroup.containsKey(tid)) {
