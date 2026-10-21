@@ -1,159 +1,122 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
-<%@ page import="java.time.LocalDate"%>
-<%@ page import="java.time.temporal.ChronoUnit"%>
 <%@ page import="java.util.*"%>
 <%
     request.setCharacterEncoding("UTF-8");
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
+    // セッションからログインユーザー情報を取得
     String loginUserName = (String) session.getAttribute("userName");
     if (loginUserName == null) {
         loginUserName = ""; 
     }
 
+    // ご提示いただいた正しいデータベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
 
-    StringBuilder projectsJson = new StringBuilder("[");
-    StringBuilder tasksJson = new StringBuilder("[");
-    StringBuilder usersJson = new StringBuilder("[");
+    List<Map<String, String>> projectList = new ArrayList<>();
+    List<Map<String, String>> userList = new ArrayList<>();
+    List<Map<String, String>> taskList = new ArrayList<>();
     String errorMessage = null;
 
     try {
         Class.forName("org.postgresql.Driver");
         Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト情報の取得（カラム名の揺れに対応）
+        // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
-        boolean firstP = true;
+        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int colorIdx = 0;
         while (pRs.next()) {
-            if (!firstP) projectsJson.append(",");
-            String color = colors[colorIdx % colors.length];
-            
-            int pId = 0;
-            try { pId = pRs.getInt("project_id"); } catch (Exception e) {
-                try { pId = pRs.getInt("id"); } catch (Exception ex) {}
-            }
-
-            String pName = null;
-            try { pName = pRs.getString("project_name"); } catch (Exception e) {}
-            if (pName == null) {
-                try { pName = pRs.getString("name"); } catch (Exception e) {}
-            }
-            if (pName == null) pName = "プロジェクト" + pId;
-            pName = pName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
-
-            projectsJson.append("{id: 'proj-").append(pId)
-                        .append("', name: '").append(pName)
-                        .append("', color: '").append(color).append("'}");
-            firstP = false;
+            Map<String, String> pMap = new HashMap<>();
+            pMap.put("id", "proj-" + pRs.getInt("project_id"));
+            pMap.put("name", pRs.getString("project_name") != null ? pRs.getString("project_name") : "無題の案件");
+            pMap.put("color", colors[colorIdx % colors.length]);
+            projectList.add(pMap);
             colorIdx++;
         }
         pRs.close();
         pStmt.close();
 
-        // 2. ユーザー情報の取得（カラム名の揺れに対応）
+        // 2. ユーザー情報の取得（担当者フィルター用）
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY 1");
-        boolean firstU = true;
+        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
-            if (!firstU) usersJson.append(",");
-            
-            int uId = 0;
-            try { uId = uRs.getInt("user_id"); } catch (Exception e) {
-                try { uId = uRs.getInt("id"); } catch (Exception ex) {}
-            }
-
-            String uName = null;
-            try { uName = uRs.getString("user_name"); } catch (Exception e) {}
-            if (uName == null) {
-                try { uName = uRs.getString("name"); } catch (Exception e) {}
-            }
-            if (uName == null) uName = "ユーザー" + uId;
-            uName = uName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
-
-            usersJson.append("{id: ").append(uId)
-                     .append(", name: '").append(uName)
-                     .append("'}");
-            firstU = false;
+            Map<String, String> uMap = new HashMap<>();
+            uMap.put("id", String.valueOf(uRs.getInt("user_id")));
+            uMap.put("name", uRs.getString("user_name") != null ? uRs.getString("user_name") : "未設定");
+            userList.add(uMap);
         }
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得
-        String taskSql = "SELECT t.*, COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
+        // 3. タスク情報の取得（タスクボードと完全同等のSQL）
+        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, u.user_name " +
                          "FROM task t " +
                          "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
                          "LEFT JOIN users u ON ta.user_id = u.user_id " +
-                         "GROUP BY t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date";
+                         "ORDER BY t.task_id ASC";
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery(taskSql);
-        boolean firstT = true;
+        
+        // タスクIDごとに担当者をまとめるためのマップ
+        Map<Integer, Map<String, Object>> taskMap = new LinkedHashMap<>();
         while (tRs.next()) {
-            if (!firstT) tasksJson.append(",");
-            
-            int tId = 0;
-            try { tId = tRs.getInt("task_id"); } catch (Exception e) {
-                try { tId = tRs.getInt("id"); } catch (Exception ex) {}
+            int taskId = tRs.getInt("task_id");
+            String userName = tRs.getString("user_name");
+
+            if (!taskMap.containsKey(taskId)) {
+                Map<String, Object> tMap = new HashMap<>();
+                tMap.put("id", taskId);
+                tMap.put("projectId", "proj-" + tRs.getInt("project_id"));
+                tMap.put("name", tRs.getString("task_name") != null ? tRs.getString("task_name") : "無題のタスク");
+                tMap.put("status", tRs.getString("status") != null ? tRs.getString("status") : "");
+                tMap.put("startDate", tRs.getDate("start_date") != null ? tRs.getDate("start_date").toString() : "");
+                tMap.put("dueDate", tRs.getDate("due_date") != null ? tRs.getDate("due_date").toString() : "");
+                
+                List<String> assignees = new ArrayList<>();
+                if (userName != null && !userName.isEmpty()) assignees.add(userName);
+                tMap.put("assignees", assignees);
+                
+                taskMap.put(taskId, tMap);
+            } else {
+                if (userName != null && !userName.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    List<String> assignees = (List<String>) taskMap.get(taskId).get("assignees");
+                    if (!assignees.contains(userName)) assignees.add(userName);
+                }
             }
-
-            int pId = 0;
-            try { pId = tRs.getInt("project_id"); } catch (Exception e) {}
-
-            String status = "";
-            try { status = tRs.getString("status"); } catch (Exception e) {}
-            boolean isCompleted = "完了".equals(status);
-
-            java.sql.Date start = null;
-            try { start = tRs.getDate("start_date"); } catch (Exception e) {}
-            java.sql.Date due = null;
-            try { due = tRs.getDate("due_date"); } catch (Exception e) {}
-
-            String startStr = (start != null) ? start.toString() : "";
-            String dueStr = (due != null) ? due.toString() : "";
-
-            String tName = null;
-            try { tName = tRs.getString("task_name"); } catch (Exception e) {}
-            if (tName == null) {
-                try { tName = tRs.getString("name"); } catch (Exception e) {}
-            }
-            if (tName == null) tName = "タスク" + tId;
-            tName = tName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
-
-            String assignee = "";
-            try { assignee = tRs.getString("assignee"); } catch (Exception e) {}
-            if (assignee == null || assignee.isEmpty()) assignee = "未設定";
-            assignee = assignee.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
-
-            tasksJson.append("{")
-                     .append("id: ").append(tId).append(",")
-                     .append("projectId: 'proj-").append(pId).append("',")
-                     .append("name: '").append(tName).append("',")
-                     .append("assignee: '").append(assignee).append("',")
-                     .append("startDate: '").append(startStr).append("',")
-                     .append("dueDate: '").append(dueStr).append("',")
-                     .append("isCompleted: ").append(isCompleted)
-                     .append("}");
-            firstT = false;
         }
         tRs.close();
         tStmt.close();
         conn.close();
 
+        // 描画用にリストへ変換
+        for (Map<String, Object> tMap : taskMap.values()) {
+            @SuppressWarnings("unchecked")
+            List<String> assignees = (List<String>) tMap.get("assignees");
+            String assigneeStr = assignees.isEmpty() ? "未設定" : String.join(", ", assignees);
+
+            Map<String, String> finalTask = new HashMap<>();
+            finalTask.put("id", String.valueOf(tMap.get("id")));
+            finalTask.put("projectId", (String) tMap.get("projectId"));
+            finalTask.put("name", (String) tMap.get("name"));
+            finalTask.put("status", (String) tMap.get("status"));
+            finalTask.put("startDate", (String) tMap.get("startDate"));
+            finalTask.put("dueDate", (String) tMap.get("dueDate"));
+            finalTask.put("assignee", assigneeStr);
+            taskList.add(finalTask);
+        }
+
     } catch (Exception e) {
         errorMessage = e.getMessage();
         e.printStackTrace();
     }
-    projectsJson.append("]");
-    usersJson.append("]");
-    tasksJson.append("]");
 %>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
@@ -212,6 +175,7 @@
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
+    /* カレンダー本体のグリッドと縦線 */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
@@ -222,23 +186,23 @@
     .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
 
-    .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; }
+    .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; position: relative; }
     .day-cell:last-child { border-right: none; }
     .day-cell:nth-child(6) { background-color: var(--saturday-bg); } 
     .day-cell:nth-child(7) { background-color: var(--sunday-bg); }   
     .day-cell.other-month { opacity: 0.45; }
 
-    .date-number { font-size: 0.85rem; color: #333; display: inline-block; padding: 2px 6px; font-weight: bold; }
+    .date-number { font-size: 0.85rem; color: #333; display: inline-block; padding: 2px 6px; font-weight: bold; z-index: 2; position: relative; }
     .date-number.today-mark { background: #1b6ef3; color: #fff; border-radius: 12px; }
 
-    .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; }
+    .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; z-index: 5; }
     .task-bar {
         position: absolute; height: 22px; border: 2px solid; border-radius: 3px; padding: 0 5px; 
         box-sizing: border-box; font-size: 0.75rem; background-color: #fff; display: flex; 
         align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 24px); 
-        z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s;
     }
-    .task-bar:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 10; }
+    .task-bar:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 20; }
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
@@ -366,9 +330,32 @@
 	</div>
 
 <script>
-    const projects = <%= projectsJson.toString() %>;
-    const tasks = <%= tasksJson.toString() %>;
-    const users = <%= usersJson.toString() %>;
+    // Java側で正しく取得したデータをJavaScriptの配列に展開
+    const projects = [
+        <% for(int i=0; i<projectList.size(); i++) { Map<String,String> p = projectList.get(i); %>
+            { id: '<%= p.get("id") %>', name: '<%= p.get("name").replace("'", "\\'") %>', color: '<%= p.get("color") %>' }<%= (i < projectList.size() - 1) ? "," : "" %>
+        <% } %>
+    ];
+
+    const users = [
+        <% for(int i=0; i<userList.size(); i++) { Map<String,String> u = userList.get(i); %>
+            { id: <%= u.get("id") %>, name: '<%= u.get("name").replace("'", "\\'") %>' }<%= (i < userList.size() - 1) ? "," : "" %>
+        <% } %>
+    ];
+
+    const tasks = [
+        <% for(int i=0; i<taskList.size(); i++) { Map<String,String> t = taskList.get(i); %>
+            {
+                id: <%= t.get("id") %>,
+                projectId: '<%= t.get("projectId") %>',
+                name: '<%= t.get("name").replace("'", "\\'") %>',
+                assignee: '<%= t.get("assignee").replace("'", "\\'") %>',
+                startDate: '<%= t.get("startDate") %>',
+                dueDate: '<%= t.get("dueDate") %>',
+                isCompleted: <%= "完了".equals(t.get("status")) %>
+            }<%= (i < taskList.size() - 1) ? "," : "" %>
+        <% } %>
+    ];
     
     const loginUserName = "<%= loginUserName %>";
     const actualToday = new Date(2026, 9, 8);
@@ -699,6 +686,34 @@
                 </div>
             `;
         });
+    }
+
+    function renderTodayView() {
+        const todayBody = document.getElementById('todayBody');
+        if (!todayBody) return;
+        const dayTasks = getTasksForDate(baseDate);
+        
+        if (dayTasks.length === 0) {
+            todayBody.innerHTML = `<div class="no-task-msg">条件に一致する進行中のタスクはありません</div>`;
+            return;
+        }
+
+        todayBody.innerHTML = dayTasks.map(task => {
+            const project = projects.find(p => p.id === task.projectId);
+            const projColor = project ? project.color : '#ccc';
+            return `
+                <div class="today-card" style="border-left-color: ${projColor};">
+                    <div class="proj-label">
+                        <span style="color: ${projColor};">■</span> ${project ? project.name : 'その他'}
+                    </div>
+                    <h4 class="card-title">${task.name}</h4>
+                    <div class="card-meta">
+                        <span>[担当] <b>${task.assignee}</b></span>
+                        <span>[期間] ${task.startDate.slice(5).replace('-','/')} ～ ${task.dueDate.slice(5).replace('-','/')}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     window.addEventListener('DOMContentLoaded', () => {
