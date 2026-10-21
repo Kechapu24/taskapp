@@ -353,7 +353,7 @@
 							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
 							<div class="filter-section">
 								<div class="filter-group">
-									<span class="filter-label">案件:</span>
+									<span class="filter-label">プロジェクト:</span>
 									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
 								<div class="filter-group">
@@ -502,7 +502,7 @@
 
 <script>
     // タイトルを「カレンダー」に強制上書き設定
-    document.title = "カレンダー";
+    document.title = "タスク管理-カレンダー";
 
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
