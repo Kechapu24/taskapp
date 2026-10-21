@@ -9,13 +9,11 @@
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
-    // セッションからログインユーザー情報を取得
     String loginUserName = (String) session.getAttribute("userName");
     if (loginUserName == null) {
         loginUserName = ""; 
     }
 
-    // データベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
@@ -29,20 +27,30 @@
         Class.forName("org.postgresql.Driver");
         Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト情報の取得
+        // 1. プロジェクト情報の取得（カラム名の揺れに対応）
         Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project");
+        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project");
         boolean firstP = true;
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int colorIdx = 0;
         while (pRs.next()) {
             if (!firstP) projectsJson.append(",");
             String color = colors[colorIdx % colors.length];
-            String pName = pRs.getString("project_name");
-            if (pName == null) pName = "";
+            
+            int pId = 0;
+            try { pId = pRs.getInt("project_id"); } catch (Exception e) {
+                try { pId = pRs.getInt("id"); } catch (Exception ex) {}
+            }
+
+            String pName = null;
+            try { pName = pRs.getString("project_name"); } catch (Exception e) {}
+            if (pName == null) {
+                try { pName = pRs.getString("name"); } catch (Exception e) {}
+            }
+            if (pName == null) pName = "プロジェクト" + pId;
             pName = pName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
 
-            projectsJson.append("{id: 'proj-").append(pRs.getInt("project_id"))
+            projectsJson.append("{id: 'proj-").append(pId)
                         .append("', name: '").append(pName)
                         .append("', color: '").append(color).append("'}");
             firstP = false;
@@ -51,17 +59,27 @@
         pRs.close();
         pStmt.close();
 
-        // 2. ユーザー情報の取得（担当者フィルター用）
+        // 2. ユーザー情報の取得（カラム名の揺れに対応）
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id");
+        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY 1");
         boolean firstU = true;
         while (uRs.next()) {
             if (!firstU) usersJson.append(",");
-            String uName = uRs.getString("user_name");
-            if (uName == null) uName = "";
+            
+            int uId = 0;
+            try { uId = uRs.getInt("user_id"); } catch (Exception e) {
+                try { uId = uRs.getInt("id"); } catch (Exception ex) {}
+            }
+
+            String uName = null;
+            try { uName = uRs.getString("user_name"); } catch (Exception e) {}
+            if (uName == null) {
+                try { uName = uRs.getString("name"); } catch (Exception e) {}
+            }
+            if (uName == null) uName = "ユーザー" + uId;
             uName = uName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
 
-            usersJson.append("{id: ").append(uRs.getInt("user_id"))
+            usersJson.append("{id: ").append(uId)
                      .append(", name: '").append(uName)
                      .append("'}");
             firstU = false;
@@ -70,8 +88,7 @@
         uStmt.close();
 
         // 3. タスク情報の取得
-        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.priority, t.start_date, t.due_date, " +
-                         "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
+        String taskSql = "SELECT t.*, COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
                          "FROM task t " +
                          "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
                          "LEFT JOIN users u ON ta.user_id = u.user_id " +
@@ -81,23 +98,43 @@
         boolean firstT = true;
         while (tRs.next()) {
             if (!firstT) tasksJson.append(",");
-            boolean isCompleted = "完了".equals(tRs.getString("status"));
-            java.sql.Date start = tRs.getDate("start_date");
-            java.sql.Date due = tRs.getDate("due_date");
+            
+            int tId = 0;
+            try { tId = tRs.getInt("task_id"); } catch (Exception e) {
+                try { tId = tRs.getInt("id"); } catch (Exception ex) {}
+            }
+
+            int pId = 0;
+            try { pId = tRs.getInt("project_id"); } catch (Exception e) {}
+
+            String status = "";
+            try { status = tRs.getString("status"); } catch (Exception e) {}
+            boolean isCompleted = "完了".equals(status);
+
+            java.sql.Date start = null;
+            try { start = tRs.getDate("start_date"); } catch (Exception e) {}
+            java.sql.Date due = null;
+            try { due = tRs.getDate("due_date"); } catch (Exception e) {}
+
             String startStr = (start != null) ? start.toString() : "";
             String dueStr = (due != null) ? due.toString() : "";
 
-            String tName = tRs.getString("task_name");
-            if (tName == null) tName = "";
+            String tName = null;
+            try { tName = tRs.getString("task_name"); } catch (Exception e) {}
+            if (tName == null) {
+                try { tName = tRs.getString("name"); } catch (Exception e) {}
+            }
+            if (tName == null) tName = "タスク" + tId;
             tName = tName.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
 
-            String assignee = tRs.getString("assignee");
-            if (assignee == null) assignee = "未設定";
+            String assignee = "";
+            try { assignee = tRs.getString("assignee"); } catch (Exception e) {}
+            if (assignee == null || assignee.isEmpty()) assignee = "未設定";
             assignee = assignee.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", " ");
 
             tasksJson.append("{")
-                     .append("id: ").append(tRs.getInt("task_id")).append(",")
-                     .append("projectId: 'proj-").append(tRs.getInt("project_id")).append("',")
+                     .append("id: ").append(tId).append(",")
+                     .append("projectId: 'proj-").append(pId).append("',")
                      .append("name: '").append(tName).append("',")
                      .append("assignee: '").append(assignee).append("',")
                      .append("startDate: '").append(startStr).append("',")
