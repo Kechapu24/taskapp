@@ -350,7 +350,7 @@
 				<div class="calendar-container">
 					<div class="calendar-header">
 						<div>
-							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">タスク状況</h2>
+							<h2 style="margin:0 0 5px 0; font-size:1.3rem;">カレンダー</h2>
 							<div class="filter-section">
 								<div class="filter-group">
 									<span class="filter-label">プロジェクト:</span>
