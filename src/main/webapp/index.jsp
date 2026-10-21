@@ -1,5 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="java.util.*"%>
 <%
@@ -7,117 +6,115 @@
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
-    // セッションからログインユーザー情報を取得
     String loginUserName = (String) session.getAttribute("userName");
-    if (loginUserName == null) {
-        loginUserName = ""; 
-    }
+    if (loginUserName == null) loginUserName = "";
 
-    // タスクボードと共通のデータベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
 
-    List<Map<String, String>> projectList = new ArrayList<>();
-    List<Map<String, String>> userList = new ArrayList<>();
-    List<Map<String, String>> taskList = new ArrayList<>();
-    String errorMessage = null;
+    StringBuilder projJson = new StringBuilder("[");
+    StringBuilder userJson = new StringBuilder("[");
+    StringBuilder taskJson = new StringBuilder("[");
 
+    Connection conn = null;
     try {
         Class.forName("org.postgresql.Driver");
-        Connection conn = DriverManager.getConnection(url, dbUser, dbPassword);
+        conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト情報の取得
+        // 1. プロジェクト取得
         Statement pStmt = conn.createStatement();
         ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
-        int colorIdx = 0;
+        int cIdx = 0;
+        boolean firstP = true;
         while (pRs.next()) {
-            Map<String, String> pMap = new HashMap<>();
-            pMap.put("id", "proj-" + pRs.getInt("project_id"));
-            String pName = pRs.getString("project_name");
-            pMap.put("name", pName != null ? pName : "無題の案件");
-            pMap.put("color", colors[colorIdx % colors.length]);
-            projectList.add(pMap);
-            colorIdx++;
+            if (!firstP) projJson.append(",");
+            int id = pRs.getInt("project_id");
+            String name = pRs.getString("project_name");
+            if (name == null) name = "プロジェクト" + id;
+            name = name.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+            
+            projJson.append("{\"id\":\"proj-").append(id)
+                    .append("\",\"name\":\"").append(name)
+                    .append("\",\"color\":\"").append(colors[cIdx % colors.length]).append("\"}");
+            firstP = false;
+            cIdx++;
         }
         pRs.close();
         pStmt.close();
 
-        // 2. ユーザー情報の取得（担当者フィルター用）
+        // 2. ユーザー取得
         Statement uStmt = conn.createStatement();
         ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
+        boolean firstU = true;
         while (uRs.next()) {
-            Map<String, String> uMap = new HashMap<>();
-            uMap.put("id", String.valueOf(uRs.getInt("user_id")));
-            String uName = uRs.getString("user_name");
-            uMap.put("name", uName != null ? uName : "未設定");
-            userList.add(uMap);
+            if (!firstU) userJson.append(",");
+            int id = uRs.getInt("user_id");
+            String name = uRs.getString("user_name");
+            if (name == null) name = "ユーザー" + id;
+            name = name.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+
+            userJson.append("{\"id\":").append(id)
+                    .append(",\"name\":\"").append(name).append("\"}");
+            firstU = false;
         }
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得
-        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, u.user_name " +
+        // 3. タスク取得
+        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, " +
+                         "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
                          "FROM task t " +
                          "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
                          "LEFT JOIN users u ON ta.user_id = u.user_id " +
+                         "GROUP BY t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date " +
                          "ORDER BY t.task_id ASC";
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery(taskSql);
-        
-        Map<Integer, Map<String, Object>> taskMap = new LinkedHashMap<>();
+        boolean firstT = true;
         while (tRs.next()) {
-            int taskId = tRs.getInt("task_id");
-            String userName = tRs.getString("user_name");
+            if (!firstT) taskJson.append(",");
+            int tid = tRs.getInt("task_id");
+            int pid = tRs.getInt("project_id");
+            String tName = tRs.getString("task_name");
+            if (tName == null) tName = "タスク" + tid;
+            tName = tName.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
 
-            if (!taskMap.containsKey(taskId)) {
-                Map<String, Object> tMap = new HashMap<>();
-                tMap.put("id", taskId);
-                tMap.put("projectId", "proj-" + tRs.getInt("project_id"));
-                String tName = tRs.getString("task_name");
-                tMap.put("name", tName != null ? tName : "無題のタスク");
-                tMap.put("status", tRs.getString("status") != null ? tRs.getString("status") : "");
-                tMap.put("startDate", tRs.getDate("start_date") != null ? tRs.getDate("start_date").toString() : "");
-                tMap.put("dueDate", tRs.getDate("due_date") != null ? tRs.getDate("due_date").toString() : "");
-                
-                List<String> assignees = new ArrayList<>();
-                if (userName != null && !userName.isEmpty()) assignees.add(userName);
-                tMap.put("assignees", assignees);
-                
-                taskMap.put(taskId, tMap);
-            } else {
-                if (userName != null && !userName.isEmpty()) {
-                    @SuppressWarnings("unchecked")
-                    List<String> assignees = (List<String>) taskMap.get(taskId).get("assignees");
-                    if (!assignees.contains(userName)) assignees.add(userName);
-                }
-            }
+            String status = tRs.getString("status");
+            boolean isComp = "完了".equals(status);
+
+            java.sql.Date sDate = tRs.getDate("start_date");
+            java.sql.Date dDate = tRs.getDate("due_date");
+            String sStr = sDate != null ? sDate.toString() : "";
+            String dStr = dDate != null ? dDate.toString() : "";
+
+            String assignee = tRs.getString("assignee");
+            if (assignee == null) assignee = "未設定";
+            assignee = assignee.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+
+            taskJson.append("{\"id\":").append(tid)
+                    .append(",\"projectId\":\"proj-").append(pid)
+                    .append("\",\"name\":\"").append(tName)
+                    .append("\",\"assignee\":\"").append(assignee)
+                    .append("\",\"startDate\":\"").append(sStr)
+                    .append("\",\"dueDate\":\"").append(dStr)
+                    .append("\",\"isCompleted\":").append(isComp).append("}");
+            firstT = false;
         }
         tRs.close();
         tStmt.close();
-        conn.close();
-
-        for (Map<String, Object> tMap : taskMap.values()) {
-            @SuppressWarnings("unchecked")
-            List<String> assignees = (List<String>) tMap.get("assignees");
-            String assigneeStr = assignees.isEmpty() ? "未設定" : String.join(", ", assignees);
-
-            Map<String, String> finalTask = new HashMap<>();
-            finalTask.put("id", String.valueOf(tMap.get("id")));
-            finalTask.put("projectId", (String) tMap.get("projectId"));
-            finalTask.put("name", (String) tMap.get("name"));
-            finalTask.put("status", (String) tMap.get("status"));
-            finalTask.put("startDate", (String) tMap.get("startDate"));
-            finalTask.put("dueDate", (String) tMap.get("dueDate"));
-            finalTask.put("assignee", assigneeStr);
-            taskList.add(finalTask);
-        }
 
     } catch (Exception e) {
-        errorMessage = e.getMessage();
         e.printStackTrace();
+    } finally {
+        if (conn != null) {
+            try { conn.close(); } catch (SQLException e) {}
+        }
     }
+    projJson.append("]");
+    userJson.append("]");
+    taskJson.append("]");
 %>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
@@ -129,8 +126,8 @@
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
-        --saturday-bg: #c0d9ff;
-        --sunday-bg: #fbc4c4;
+        --saturday-bg: #e8f0fe;
+        --sunday-bg: #fce8e8;
     }
 
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
@@ -138,7 +135,7 @@
     
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filter-label { font-size: 0.8rem; font-weight: bold; color: var(--custom-text-color, #555); min-width: 55px; }
+    .filter-label { font-size: 0.8rem; font-weight: bold; color: #555; min-width: 55px; }
     
     .legend-item, .assignee-item { 
         display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 4px 10px; 
@@ -176,7 +173,7 @@
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
-    /* カレンダーグリッド・区切り線 */
+    /* カレンダー本体・グリッド線定義 */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
@@ -258,12 +255,6 @@
 
 			<div class="content-body">
 				<div class="calendar-container">
-                    
-                    <% if (errorMessage != null) { %>
-                        <div style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
-                            <strong>DB取得エラー:</strong> <%= errorMessage %>
-                        </div>
-                    <% } %>
 
 					<div class="calendar-header">
 						<div>
@@ -331,35 +322,13 @@
 	</div>
 
 <script>
-    // 安全にエスケープ処理されたJavaデータをJS配列に展開
-    const projects = [
-        <% for(int i=0; i<projectList.size(); i++) { Map<String,String> p = projectList.get(i); %>
-            { id: '<%= p.get("id") %>', name: '<%= p.get("name").replace("\\", "\\\\").replace("'", "\\'") %>', color: '<%= p.get("color") %>' }<%= (i < projectList.size() - 1) ? "," : "" %>
-        <% } %>
-    ];
-
-    const users = [
-        <% for(int i=0; i<userList.size(); i++) { Map<String,String> u = userList.get(i); %>
-            { id: <%= u.get("id") %>, name: '<%= u.get("name").replace("\\", "\\\\").replace("'", "\\'") %>' }<%= (i < userList.size() - 1) ? "," : "" %>
-        <% } %>
-    ];
-
-    const tasks = [
-        <% for(int i=0; i<taskList.size(); i++) { Map<String,String> t = taskList.get(i); %>
-            {
-                id: <%= t.get("id") %>,
-                projectId: '<%= t.get("projectId") %>',
-                name: '<%= t.get("name").replace("\\", "\\\\").replace("'", "\\'") %>',
-                assignee: '<%= t.get("assignee").replace("\\", "\\\\").replace("'", "\\'") %>',
-                startDate: '<%= t.get("startDate") %>',
-                dueDate: '<%= t.get("dueDate") %>',
-                isCompleted: <%= "完了".equals(t.get("status")) %>
-            }<%= (i < taskList.size() - 1) ? "," : "" %>
-        <% } %>
-    ];
+    // Java側から安全に出力されたJSONデータを確実に受け渡し
+    const projects = <%= projJson.toString() %>;
+    const users = <%= userJson.toString() %>;
+    const tasks = <%= taskJson.toString() %>;
     
     const loginUserName = "<%= loginUserName %>";
-    const actualToday = new Date(2026, 9, 8);
+    const actualToday = new Date(2026, 9, 21);
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
@@ -717,7 +686,7 @@
         }).join('');
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         renderAll();
     });
     
