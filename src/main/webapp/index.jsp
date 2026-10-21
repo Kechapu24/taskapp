@@ -247,7 +247,7 @@
     .day-name:last-child { border-right: none; }
     .day-name.saturday { color: #1d4ed8; background-color: #a5c7fe; } 
     .day-name.sunday { color: #b91c1c; background-color: #f8a5a5; }   
-    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
+    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 130px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
     .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; position: relative; }
     .day-cell:last-child { border-right: none; }
@@ -259,25 +259,25 @@
     
     .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; z-index: 5; }
     .task-bar {
-        position: absolute; height: 20px; border: 2px solid; border-radius: 3px; padding: 0 4px; 
-        box-sizing: border-box; font-size: 0.72rem; background-color: #fff; display: flex; 
-        align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 22px); 
+        position: absolute; height: 22px; border: 2px solid; border-radius: 3px; padding: 0 5px; 
+        box-sizing: border-box; font-size: 0.75rem; background-color: #fff; display: flex; 
+        align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 24px); 
         box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s;
     }
     .task-bar:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 20; }
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
-    .project-square { font-size: 0.75rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
+    .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
 
-    /* 「+〇件」バッジのスタイル */
+    /* 「+〇件」バッジのスタイル（サイズ拡大・視認性向上） */
     .more-badge {
-        position: absolute; height: 18px; padding: 0 6px; box-sizing: border-box;
-        font-size: 0.7rem; font-weight: bold; background-color: #e2e8f0; color: #334155;
-        border: 1px solid #cbd5e1; border-radius: 3px; display: flex; align-items: center;
-        justify-content: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 22px);
-        transition: background 0.2s; z-index: 10;
+        position: absolute; height: 22px; padding: 0 8px; box-sizing: border-box;
+        font-size: 0.75rem; font-weight: bold; background-color: #1e293b; color: #ffffff;
+        border-radius: 4px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 24px);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: background 0.2s; z-index: 15;
     }
-    .more-badge:hover { background-color: #cbd5e1; color: #0f172a; }
+    .more-badge:hover { background-color: #0f172a; }
 
     /* モーダルのスタイル */
     .modal-overlay {
@@ -300,7 +300,7 @@
     }
     .modal-tab-btn.active { background: #1b6ef3; color: #fff; }
     .modal-close {
-        background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1;
+        background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1U;
     }
     .modal-close:hover { color: #0f172a; }
     
@@ -728,7 +728,7 @@
         return d;
     }
 
-    // モバイル・詳細モーダル関連
+    // モーダル関連
     function switchModalTab(tabName) {
         document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -785,7 +785,6 @@
         }
     }
 
-    // 週の「+〇件」クリック時に開くポップアップ用データ保持マップ
     const weekHiddenTasksMap = {};
 
     function openMoreTasksModal(weekIndex) {
@@ -836,8 +835,8 @@
         if (dayOfWeek < 0) dayOfWeek = 6;
         startDate.setDate(startDate.getDate() - dayOfWeek);
 
-        // 1つの週行に表示できる最大タスク数（高さを考慮して制限）
-        const MAX_SLOTS = 4;
+        // 1つの週行に表示できる最大タスク数（日付と被らないよう余裕を持たせる）
+        const MAX_SLOTS = 3;
 
         for (let w = 0; w < 6; w++) {
             const weekStart = new Date(startDate);
@@ -884,7 +883,7 @@
                         slotIndex++;
                     }
 
-                    // 最大スロット数（MAX_SLOTS）を超える場合は非表示にして「+〇件」用に保存
+                    // 最大スロット数を超える場合は非表示にして「+〇件」用に保存
                     if (slotIndex >= MAX_SLOTS) {
                         if (!weekHiddenTasksMap[w].some(t => t.id === task.id)) {
                             weekHiddenTasksMap[w].push(task);
@@ -905,10 +904,10 @@
                 }
             });
 
-            // 溢れたタスクがある場合、一番下のスロット（MAX_SLOTSの位置）に「+〇件」を表示
+            // 溢れたタスクがある場合、一番左下の分かりやすい位置（上の週に属することが明確な位置）に「+〇件」を表示
             if (weekHiddenTasksMap[w].length > 0) {
                 const hiddenCount = weekHiddenTasksMap[w].length;
-                weekHtml += '<div class="more-badge" style="left: 6px; --slot: ' + MAX_SLOTS + ';" onclick="openMoreTasksModal(' + w + ')">' +
+                weekHtml += '<div class="more-badge" style="left: 6px; top: ' + (MAX_SLOTS * 24 + 2) + 'px;" onclick="openMoreTasksModal(' + w + ')">' +
                             '+ ' + hiddenCount + ' 件' +
                             '</div>';
             }
