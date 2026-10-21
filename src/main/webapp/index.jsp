@@ -192,7 +192,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理-カレンダー</title>
+<title>カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -256,17 +256,28 @@
     .day-cell.other-month { opacity: 0.45; }
     .date-number { font-size: 0.85rem; color: #333; display: inline-block; padding: 2px 6px; font-weight: bold; z-index: 2; position: relative; }
     .date-number.today-mark { background: #1b6ef3; color: #fff; border-radius: 12px; }
+    
     .task-bar-container { position: absolute; top: 28px; left: 0; right: 0; bottom: 4px; pointer-events: none; z-index: 5; }
     .task-bar {
-        position: absolute; height: 22px; border: 2px solid; border-radius: 3px; padding: 0 5px; 
-        box-sizing: border-box; font-size: 0.75rem; background-color: #fff; display: flex; 
-        align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 24px); 
+        position: absolute; height: 20px; border: 2px solid; border-radius: 3px; padding: 0 4px; 
+        box-sizing: border-box; font-size: 0.72rem; background-color: #fff; display: flex; 
+        align-items: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 22px); 
         box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s;
     }
     .task-bar:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 20; }
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
-    .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
+    .project-square { font-size: 0.75rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
+
+    /* 「+〇件」バッジのスタイル */
+    .more-badge {
+        position: absolute; height: 18px; padding: 0 6px; box-sizing: border-box;
+        font-size: 0.7rem; font-weight: bold; background-color: #e2e8f0; color: #334155;
+        border: 1px solid #cbd5e1; border-radius: 3px; display: flex; align-items: center;
+        justify-content: center; cursor: pointer; pointer-events: auto; top: calc(var(--slot) * 22px);
+        transition: background 0.2s; z-index: 10;
+    }
+    .more-badge:hover { background-color: #cbd5e1; color: #0f172a; }
 
     /* モーダルのスタイル */
     .modal-overlay {
@@ -360,7 +371,7 @@
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
-								<span class="filter-label">プロジェクト:</span>
+								<span class="filter-label">案件:</span>
 								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 							</div>
 							
@@ -380,7 +391,7 @@
 							</div>
 						</div>
 
-						<!-- 日付ナビゲーション（< 2026年 10月 >） -->
+						<!-- 日付ナビゲーション -->
 						<div class="date-nav-wrapper">
 							<button type="button" onclick="changeDate(-1)">&lt;</button>
 							<div class="month-nav" id="displayDateText">2026年10月</div>
@@ -506,6 +517,19 @@
 
             <div id="modalFooter" class="modal-footer" style="display: none;">
                 <button type="button" class="btn-save" onclick="saveTask()">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 週ごとの隠れタスク一覧ポップアップモーダル -->
+    <div id="moreTasksModal" class="modal-overlay" style="display: none;" onclick="closeMoreModalOnBackdrop(event)">
+        <div class="modal-content" style="width: 420px;">
+            <div class="modal-header">
+                <h3 style="margin:0; font-size:1.05rem; color:#1e293b;">該当週のタスク一覧</h3>
+                <button type="button" class="modal-close" onclick="closeMoreModal()">×</button>
+            </div>
+            <div class="modal-body" id="moreTasksBody" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- JSで動的生成 -->
             </div>
         </div>
     </div>
@@ -681,7 +705,6 @@
         });
     }
 
-    // ステータス判定（未完了かつ期限切れは黒枠、完了済みは薄く、デフォルトは青枠）
     function getTaskStatusClass(task) {
         if (task.isCompleted) return "status-completed";
         if (task.dueDate) {
@@ -690,10 +713,10 @@
             const todayObj = new Date(actualToday);
             todayObj.setHours(0,0,0,0);
             if (dueDateObj < todayObj) {
-                return "status-overdue"; // 期限切れ・未完了（黒枠）
+                return "status-overdue";
             }
         }
-        return "status-normal"; // 期限内・未完了（デフォルト青枠）
+        return "status-normal";
     }
 
     function getWeekStart(date) {
@@ -705,7 +728,7 @@
         return d;
     }
 
-    // モーダル・タブ切替
+    // モバイル・詳細モーダル関連
     function switchModalTab(tabName) {
         document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -721,7 +744,6 @@
         }
     }
 
-    // モーダルを開く関数
     function openTaskModal(taskId, event) {
         if (event) event.stopPropagation();
         const task = tasks.find(t => t.id === String(taskId));
@@ -729,7 +751,6 @@
 
         const project = projects.find(p => p.id === task.projectId);
 
-        // 詳細タブにセット
         document.getElementById('modalTaskName').innerText = task.name || '（未設定）';
         document.getElementById('modalProjName').innerText = project ? project.name : 'その他';
         document.getElementById('modalDesc').innerText = task.description || '（なし）';
@@ -740,7 +761,6 @@
         document.getElementById('modalStartDate').innerText = task.startDate || '未設定';
         document.getElementById('modalDueDate').innerText = task.dueDate || '未設定';
 
-        // 編集タブにセット
         document.getElementById('editTaskId').value = task.id;
         document.getElementById('editTaskName').value = task.name || '';
         document.getElementById('editProjectId').value = task.rawProjectId || '';
@@ -762,6 +782,34 @@
     function closeModalOnBackdrop(event) {
         if (event.target.id === 'taskModal') {
             closeModal();
+        }
+    }
+
+    // 週の「+〇件」クリック時に開くポップアップ用データ保持マップ
+    const weekHiddenTasksMap = {};
+
+    function openMoreTasksModal(weekIndex) {
+        const list = weekHiddenTasksMap[weekIndex] || [];
+        const bodyEl = document.getElementById('moreTasksBody');
+        bodyEl.innerHTML = list.map(t => {
+            const project = projects.find(p => p.id === t.projectId);
+            const projColor = project ? project.color : '#ccc';
+            return '<div style="padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; cursor: pointer; display: flex; flex-direction: column; gap: 4px;" onclick="closeMoreModal(); openTaskModal(\'' + t.id + '\', event)">' +
+                   '<div style="font-size:0.75rem; font-weight:bold; color:#555;"><span style="color:' + projColor + ';">■</span> ' + (project ? project.name : 'その他') + '</div>' +
+                   '<div style="font-size:0.9rem; font-weight:bold; color:#1e293b;">' + t.name + '</div>' +
+                   '<div style="font-size:0.75rem; color:#64748b;">[期間] ' + t.startDate + ' 〜 ' + t.dueDate + '</div>' +
+                   '</div>';
+        }).join('');
+        document.getElementById('moreTasksModal').style.display = 'flex';
+    }
+
+    function closeMoreModal() {
+        document.getElementById('moreTasksModal').style.display = 'none';
+    }
+
+    function closeMoreModalOnBackdrop(event) {
+        if (event.target.id === 'moreTasksModal') {
+            closeMoreModal();
         }
     }
 
@@ -788,11 +836,16 @@
         if (dayOfWeek < 0) dayOfWeek = 6;
         startDate.setDate(startDate.getDate() - dayOfWeek);
 
+        // 1つの週行に表示できる最大タスク数（高さを考慮して制限）
+        const MAX_SLOTS = 4;
+
         for (let w = 0; w < 6; w++) {
             const weekStart = new Date(startDate);
             weekStart.setDate(startDate.getDate() + (w * 7));
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 6);
+
+            weekHiddenTasksMap[w] = [];
 
             let weekHtml = '<div class="week-row">';
             for (let d = 0; d < 7; d++) {
@@ -831,6 +884,14 @@
                         slotIndex++;
                     }
 
+                    // 最大スロット数（MAX_SLOTS）を超える場合は非表示にして「+〇件」用に保存
+                    if (slotIndex >= MAX_SLOTS) {
+                        if (!weekHiddenTasksMap[w].some(t => t.id === task.id)) {
+                            weekHiddenTasksMap[w].push(task);
+                        }
+                        return;
+                    }
+
                     const project = projects.find(p => p.id === task.projectId);
                     const statClass = getTaskStatusClass(task);
 
@@ -843,6 +904,15 @@
                                 '</div></div>';
                 }
             });
+
+            // 溢れたタスクがある場合、一番下のスロット（MAX_SLOTSの位置）に「+〇件」を表示
+            if (weekHiddenTasksMap[w].length > 0) {
+                const hiddenCount = weekHiddenTasksMap[w].length;
+                weekHtml += '<div class="more-badge" style="left: 6px; --slot: ' + MAX_SLOTS + ';" onclick="openMoreTasksModal(' + w + ')">' +
+                            '+ ' + hiddenCount + ' 件' +
+                            '</div>';
+            }
+
             weekHtml += '</div></div>';
             gridBody.innerHTML += weekHtml;
         }
