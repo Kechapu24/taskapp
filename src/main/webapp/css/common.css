@@ -92,7 +92,7 @@
 /* メインコンテンツ */
 .main-content {
 	flex: 1;
-	background-color: #ecf0f1;
+	background-color: #EFEFEF;
 	display: flex;
 	flex-direction: column;
 }
