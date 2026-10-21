@@ -3,7 +3,6 @@
 <%@ page import="java.util.*"%>
 <%
     request.setCharacterEncoding("UTF-8");
-    request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
     String loginUserName = (String) session.getAttribute("userName");
@@ -66,7 +65,7 @@
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得
+        // 3. タスク情報の取得（説明、優先度、タグなどの拡張カラムにも対応）
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
@@ -75,6 +74,7 @@
             try { tid = tRs.getInt("task_id"); } catch (Exception e) { tid = tRs.getInt("id"); }
             int pid = 0;
             try { pid = tRs.getInt("project_id"); } catch (Exception e) {}
+            
             String tName = null;
             try { tName = tRs.getString("task_name"); } catch (Exception e1) {
                 try { tName = tRs.getString("name"); } catch (Exception e2) {}
@@ -83,6 +83,23 @@
 
             String status = "";
             try { status = tRs.getString("status"); } catch (Exception e) {}
+
+            String description = "";
+            try { description = tRs.getString("description"); } catch (Exception e) {
+                try { description = tRs.getString("details"); } catch (Exception ex) {}
+            }
+            if (description == null) description = "";
+
+            String priority = "中";
+            try { priority = tRs.getString("priority"); } catch (Exception e) {}
+            if (priority == null || priority.isEmpty()) priority = "中";
+
+            String tag = "";
+            try { tag = tRs.getString("tag"); } catch (Exception e) {
+                try { tag = tRs.getString("tags"); } catch (Exception ex) {}
+            }
+            if (tag == null) tag = "";
+
             java.sql.Date sDate = null;
             try { sDate = tRs.getDate("start_date"); } catch (Exception e) {}
             java.sql.Date dDate = null;
@@ -95,6 +112,9 @@
                 tm.put("id", tid);
                 tm.put("projectId", "proj-" + pid);
                 tm.put("name", tName.replace("\"", "\\\"").replace("'", "\\'"));
+                tm.put("description", description.replace("\"", "\\\"").replace("'", "\\'").replace("\r", "").replace("\n", "\\n"));
+                tm.put("priority", priority);
+                tm.put("tag", tag);
                 tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
@@ -102,6 +122,12 @@
                 if (uName != null && !uName.isEmpty()) assignees.add(uName);
                 tm.put("assignees", assignees);
                 tMapGroup.put(tid, tm);
+            } else {
+                if (uName != null && !uName.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
+                    if (!assignees.contains(uName)) assignees.add(uName);
+                }
             }
         }
         tRs.close();
@@ -116,6 +142,9 @@
             fm.put("id", String.valueOf(tm.get("id")));
             fm.put("projectId", (String) tm.get("projectId"));
             fm.put("name", (String) tm.get("name"));
+            fm.put("description", (String) tm.get("description"));
+            fm.put("priority", (String) tm.get("priority"));
+            fm.put("tag", (String) tm.get("tag"));
             fm.put("status", (String) tm.get("status"));
             fm.put("startDate", (String) tm.get("startDate"));
             fm.put("dueDate", (String) tm.get("dueDate"));
@@ -135,7 +164,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理アプリ - タスクカレンダー</title>
+<title>カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -204,17 +233,33 @@
     .task-header { display: flex; align-items: center; gap: 4px; font-weight: bold; width: 100%; pointer-events: none; }
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
-    .task-bar.active { 
-        z-index: 1000 !important; height: auto !important; min-width: 190px; 
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; background: #ffffff !important; 
-        padding: 10px 12px; flex-direction: column; align-items: flex-start; border-radius: 6px;
+
+    /* モーダルのスタイル */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center;
+        z-index: 9999;
     }
-    .task-bar.active .task-name { white-space: normal; line-height: 1.4; font-size: 0.88rem; font-weight: bold; color: #1e293b; margin-bottom: 4px; }
-    .task-details { display: none; margin-top: 6px; padding-top: 6px; border-top: 1px solid #cbd5e1; font-size: 0.78rem; line-height: 1.6; color: #334155; width: 100%; pointer-events: none; }
-    .task-bar.active .task-details { display: block; }
-    .task-detail-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-    .task-detail-row:last-child { margin-bottom: 0; }
-    .task-detail-label { color: #64748b; font-weight: 600; min-width: 45px; }
+    .modal-content {
+        background: #fff; width: 480px; max-width: 90%; border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column;
+    }
+    .modal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: bold; }
+    .modal-close {
+        background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1;
+    }
+    .modal-close:hover { color: #0f172a; }
+    .modal-body {
+        padding: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; color: #334155; max-height: 70vh; overflow-y: auto;
+    }
+    .modal-row { display: flex; gap: 12px; line-height: 1.5; }
+    .modal-row strong { min-width: 95px; color: #64748b; text-align: right; flex-shrink: 0; }
+    .modal-row span { word-break: break-all; flex: 1; color: #1e293b; }
+
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
     .week-grid-body { flex: 1; overflow-y: auto; position: relative; min-height: 400px; display: flex; flex-direction: column; background: #fff; }
     .week-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; flex-shrink: 0; }
@@ -241,8 +286,7 @@
     .today-card .card-meta { font-size: 0.8rem; color: #555; display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
-<body class="${themeValue}-theme font-${themeFontSize}"
-      style="--custom-bg-color: ${themeBgColor}; --custom-text-color:${themeTextColor};">
+<body class="theme-default">
 
 	<div class="app-container">
 		<%@ include file="common/sidebar.jsp" %>
@@ -317,6 +361,27 @@
 		</main>
 	</div>
 
+    <!-- タスク詳細モーダル -->
+    <div id="taskModal" class="modal-overlay" style="display: none;" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>詳細</h3>
+                <button type="button" class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-row"><strong>タスク名：</strong><span id="modalTaskName"></span></div>
+                <div class="modal-row"><strong>プロジェクト：</strong><span id="modalProjName"></span></div>
+                <div class="modal-row"><strong>説明：</strong><span id="modalDesc"></span></div>
+                <div class="modal-row"><strong>担当者：</strong><span id="modalAssignee"></span></div>
+                <div class="modal-row"><strong>タグ：</strong><span id="modalTag"></span></div>
+                <div class="modal-row"><strong>状態：</strong><span id="modalStatus"></span></div>
+                <div class="modal-row"><strong>優先度：</strong><span id="modalPriority"></span></div>
+                <div class="modal-row"><strong>開始日：</strong><span id="modalStartDate"></span></div>
+                <div class="modal-row"><strong>期限：</strong><span id="modalDueDate"></span></div>
+            </div>
+        </div>
+    </div>
+
 <script>
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
@@ -339,6 +404,9 @@
                 id: "<%= t.get("id") %>",
                 projectId: "<%= t.get("projectId") %>",
                 name: "<%= t.get("name") %>",
+                description: "<%= t.get("description") %>",
+                priority: "<%= t.get("priority") %>",
+                tag: "<%= t.get("tag") %>",
                 assignee: "<%= t.get("assignee") %>",
                 startDate: "<%= t.get("startDate") %>",
                 dueDate: "<%= t.get("dueDate") %>",
@@ -379,10 +447,10 @@
         currentView = view;
         if (view === 'today') baseDate = new Date(actualToday);
         document.querySelectorAll('.view-switch button').forEach(b => b.classList.remove('active'));
-        const btn = document.getElementById(`btn-${view}`);
+        const btn = document.getElementById('btn-' + view);
         if (btn) btn.classList.add('active');
         document.querySelectorAll('.view-wrapper').forEach(el => el.classList.remove('active'));
-        const viewEl = document.getElementById(`view-${view}`);
+        const viewEl = document.getElementById('view-' + view);
         if (viewEl) viewEl.classList.add('active');
         renderAll();
     }
@@ -508,6 +576,39 @@
         return d;
     }
 
+    // モーダルを開く関数
+    function openTaskModal(taskId, event) {
+        if (event) event.stopPropagation();
+        const task = tasks.find(t => t.id === String(taskId));
+        if (!task) return;
+
+        const project = projects.find(p => p.id === task.projectId);
+
+        document.getElementById('modalTaskName').innerText = task.name || '（未設定）';
+        document.getElementById('modalProjName').innerText = project ? project.name : 'その他';
+        document.getElementById('modalDesc').innerText = task.description || '（なし）';
+        document.getElementById('modalAssignee').innerText = task.assignee || '未設定';
+        document.getElementById('modalTag').innerText = task.tag || '（なし）';
+        document.getElementById('modalStatus').innerText = task.status || '未着手';
+        document.getElementById('modalPriority').innerText = task.priority || '中';
+        document.getElementById('modalStartDate').innerText = task.startDate || '未設定';
+        document.getElementById('modalDueDate').innerText = task.dueDate || '未設定';
+
+        document.getElementById('taskModal').style.display = 'flex';
+    }
+
+    // モーダルを閉じる関数
+    function closeModal() {
+        document.getElementById('taskModal').style.display = 'none';
+    }
+
+    // 背景クリックで閉じる
+    function closeModalOnBackdrop(event) {
+        if (event.target.id === 'taskModal') {
+            closeModal();
+        }
+    }
+
     function renderMonthView() {
         const gridBody = document.getElementById('calendarBody');
         if (!gridBody) return;
@@ -570,14 +671,10 @@
 
                     weekHtml += '<div class="task-bar ' + statClass + '" ' +
                                 'style="left: calc(' + ((drawStartIdx/7)*100) + '% + 2px); width: calc(' + ((spanDays/7)*100) + '% - 4px); --slot: ' + slotIndex + ';" ' +
-                                'onclick="toggleTaskActive(this, event)">' +
+                                'onclick="openTaskModal(\'' + task.id + '\', event)">' +
                                 '<div class="task-header">' +
                                 '<span class="project-square" style="color: ' + (project ? project.color : '#ccc') + ';">■</span>' +
                                 '<span class="task-name">' + task.name + '</span>' +
-                                '</div>' +
-                                '<div class="task-details">' +
-                                '<div class="task-detail-row"><span class="task-detail-label">担当:</span><span style="font-weight: 600; color: #1e293b;">' + task.assignee + '</span></div>' +
-                                '<div class="task-detail-row"><span class="task-detail-label">期間:</span><span>' + task.startDate.slice(5).replace('-','/') + ' ～ ' + task.dueDate.slice(5).replace('-','/') + '</span></div>' +
                                 '</div></div>';
                 }
             });
@@ -585,16 +682,6 @@
             gridBody.innerHTML += weekHtml;
         }
     }
-
-    function toggleTaskActive(element, event) {
-        event.stopPropagation();
-        const isActive = element.classList.contains('active');
-        document.querySelectorAll('.task-bar.active').forEach(el => el.classList.remove('active'));
-        if (!isActive) element.classList.add('active');
-    }
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.task-bar.active').forEach(el => el.classList.remove('active'));
-    });
 
     function renderWeekView() {
         const weekHeaderGrid = document.getElementById('weekHeaderGrid');
@@ -662,7 +749,8 @@
             const topPos = (slotIndex * 50) + 8;
 
             weekTaskContainer.innerHTML += '<div class="week-task-bar ' + statClass + '" ' +
-                'style="left: calc(' + ((drawStartIdx / 7) * 100) + '% + 2px); width: calc(' + ((spanDays / 7) * 100) + '% - 4px); top: ' + topPos + 'px;">' +
+                'style="left: calc(' + ((drawStartIdx / 7) * 100) + '% + 2px); width: calc(' + ((spanDays / 7) * 100) + '% - 4px); top: ' + topPos + 'px;" ' +
+                'onclick="openTaskModal(\'' + task.id + '\', event)">' +
                 '<div class="week-task-title"><span style="color: ' + (project ? project.color : '#ccc') + ';">■</span> ' + task.name + '</div>' +
                 '<div class="week-task-info">[担当] ' + task.assignee + ' | [期間] ' + task.startDate.slice(5).replace('-','/') + '〜' + task.dueDate.slice(5).replace('-','/') + '</div>' +
                 '</div>';
@@ -682,7 +770,7 @@
         todayBody.innerHTML = dayTasks.map(task => {
             const project = projects.find(p => p.id === task.projectId);
             const projColor = project ? project.color : '#ccc';
-            return '<div class="today-card" style="border-left-color: ' + projColor + ';">' +
+            return '<div class="today-card" style="border-left-color: ' + projColor + '; cursor: pointer;" onclick="openTaskModal(\'' + task.id + '\', event)">' +
                    '<div class="proj-label"><span style="color: ' + projColor + ';">■</span> ' + (project ? project.name : 'その他') + '</div>' +
                    '<h4 class="card-title">' + task.name + '</h4>' +
                    '<div class="card-meta">' +
