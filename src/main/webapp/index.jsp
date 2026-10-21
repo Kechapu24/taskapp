@@ -13,7 +13,7 @@
         loginUserName = ""; 
     }
 
-    // データベース接続情報
+    // ご提示いただいた正しいデータベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
@@ -29,7 +29,7 @@
 
         // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project");
+        ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int colorIdx = 0;
         while (pRs.next()) {
@@ -45,7 +45,7 @@
 
         // 2. ユーザー情報の取得（担当者フィルター用）
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id");
+        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
             Map<String, String> uMap = new HashMap<>();
             uMap.put("id", String.valueOf(uRs.getInt("user_id")));
@@ -55,29 +55,63 @@
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得（タスクボードと完全連動）
-        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, " +
-                         "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
+        // 3. タスク情報の取得（タスクボードと完全同等のSQL）
+        String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, u.user_name " +
                          "FROM task t " +
                          "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
                          "LEFT JOIN users u ON ta.user_id = u.user_id " +
-                         "GROUP BY t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date";
+                         "ORDER BY t.task_id ASC";
         Statement tStmt = conn.createStatement();
         ResultSet tRs = tStmt.executeQuery(taskSql);
+        
+        // タスクIDごとに担当者をまとめるためのマップ
+        Map<Integer, Map<String, Object>> taskMap = new LinkedHashMap<>();
         while (tRs.next()) {
-            Map<String, String> tMap = new HashMap<>();
-            tMap.put("id", String.valueOf(tRs.getInt("task_id")));
-            tMap.put("projectId", "proj-" + tRs.getInt("project_id"));
-            tMap.put("name", tRs.getString("task_name") != null ? tRs.getString("task_name") : "無題のタスク");
-            tMap.put("status", tRs.getString("status") != null ? tRs.getString("status") : "");
-            tMap.put("startDate", tRs.getDate("start_date") != null ? tRs.getDate("start_date").toString() : "");
-            tMap.put("dueDate", tRs.getDate("due_date") != null ? tRs.getDate("due_date").toString() : "");
-            tMap.put("assignee", tRs.getString("assignee") != null ? tRs.getString("assignee") : "未設定");
-            taskList.add(tMap);
+            int taskId = tRs.getInt("task_id");
+            String userName = tRs.getString("user_name");
+
+            if (!taskMap.containsKey(taskId)) {
+                Map<String, Object> tMap = new HashMap<>();
+                tMap.put("id", taskId);
+                tMap.put("projectId", "proj-" + tRs.getInt("project_id"));
+                tMap.put("name", tRs.getString("task_name") != null ? tRs.getString("task_name") : "無題のタスク");
+                tMap.put("status", tRs.getString("status") != null ? tRs.getString("status") : "");
+                tMap.put("startDate", tRs.getDate("start_date") != null ? tRs.getDate("start_date").toString() : "");
+                tMap.put("dueDate", tRs.getDate("due_date") != null ? tRs.getDate("due_date").toString() : "");
+                
+                List<String> assignees = new ArrayList<>();
+                if (userName != null && !userName.isEmpty()) assignees.add(userName);
+                tMap.put("assignees", assignees);
+                
+                taskMap.put(taskId, tMap);
+            } else {
+                if (userName != null && !userName.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    List<String> assignees = (List<String>) taskMap.get(taskId).get("assignees");
+                    if (!assignees.contains(userName)) assignees.add(userName);
+                }
+            }
         }
         tRs.close();
         tStmt.close();
         conn.close();
+
+        // 描画用にリストへ変換
+        for (Map<String, Object> tMap : taskMap.values()) {
+            @SuppressWarnings("unchecked")
+            List<String> assignees = (List<String>) tMap.get("assignees");
+            String assigneeStr = assignees.isEmpty() ? "未設定" : String.join(", ", assignees);
+
+            Map<String, String> finalTask = new HashMap<>();
+            finalTask.put("id", String.valueOf(tMap.get("id")));
+            finalTask.put("projectId", (String) tMap.get("projectId"));
+            finalTask.put("name", (String) tMap.get("name"));
+            finalTask.put("status", (String) tMap.get("status"));
+            finalTask.put("startDate", (String) tMap.get("startDate"));
+            finalTask.put("dueDate", (String) tMap.get("dueDate"));
+            finalTask.put("assignee", assigneeStr);
+            taskList.add(finalTask);
+        }
 
     } catch (Exception e) {
         errorMessage = e.getMessage();
@@ -141,7 +175,7 @@
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
-    /* カレンダー本体のグリッドと縦線を修正 */
+    /* カレンダー本体のグリッドと縦線 */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
@@ -296,7 +330,7 @@
 	</div>
 
 <script>
-    // Java側から安全に構築されたJSONデータを受け取る
+    // Java側で正しく取得したデータをJavaScriptの配列に展開
     const projects = [
         <% for(int i=0; i<projectList.size(); i++) { Map<String,String> p = projectList.get(i); %>
             { id: '<%= p.get("id") %>', name: '<%= p.get("name").replace("'", "\\'") %>', color: '<%= p.get("color") %>' }<%= (i < projectList.size() - 1) ? "," : "" %>
