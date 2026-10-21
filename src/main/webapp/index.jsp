@@ -6,9 +6,11 @@
     request.setAttribute("pageTitle", "タスクカレンダー");
     request.setAttribute("currentPage", "calendar");
 
+    // ログインユーザー情報の取得
     String loginUserName = (String) session.getAttribute("userName");
     if (loginUserName == null) loginUserName = "";
 
+    // データベース接続情報
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
@@ -22,7 +24,7 @@
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト取得
+        // 1. プロジェクト情報の取得
         Statement pStmt = conn.createStatement();
         ResultSet pRs = pStmt.executeQuery("SELECT project_id, project_name FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
@@ -44,7 +46,7 @@
         pRs.close();
         pStmt.close();
 
-        // 2. ユーザー取得
+        // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
         ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
         boolean firstU = true;
@@ -62,7 +64,7 @@
         uRs.close();
         uStmt.close();
 
-        // 3. タスク取得
+        // 3. タスク情報の取得（タスクボードと完全連動）
         String taskSql = "SELECT t.task_id, t.project_id, t.task_name, t.status, t.start_date, t.due_date, " +
                          "COALESCE(string_agg(u.user_name, ', '), '未設定') AS assignee " +
                          "FROM task t " +
@@ -173,7 +175,7 @@
     .status-overdue { border-color: #475569; background-color: #f8fafc; color: #334155; }     
     .status-completed { border-color: #64748b; background-color: #f1f5f9; color: #475569; opacity: 0.85; } 
 
-    /* カレンダー本体・グリッド線定義 */
+    /* カレンダー本体・グリッド線 */
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
     .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
