@@ -65,3 +65,16 @@
 .dropdown-delete-item:hover {
 	background-color: #fff5f5;
 }
+
+/* カスタムテーマ：個人タスクのチェックボックス */
+body.custom-theme .task-check {
+    accent-color: var(--custom-bg-color);
+}
+
+#deleteMessage {
+    color: var(--ui-muted);
+}
+
+body.dark-theme .pti-name.completed-task {
+    color: var(--ui-muted) !important;
+}

@@ -16,6 +16,11 @@
 	border-bottom: 1px solid #ddd;
 }
 
+/* ダークモードのヘッダー背景を独立させる */
+body.dark-theme .content-header {
+    background-color: var(--ui-header-bg);
+}
+
 .page-title {
 	margin-right: auto;
 	font-size: 28px;
@@ -92,7 +97,6 @@
 /* メインコンテンツ */
 .main-content {
 	flex: 1;
-	background-color: #ecf0f1;
 	display: flex;
 	flex-direction: column;
 }
@@ -169,14 +173,14 @@ body.font-large {
 
 /* ライトモード（標準） */
 body {
-    --ui-bg: #ecf0f1;
+    --ui-bg: #ffffff;
     --ui-surface: #ffffff;
-    --ui-column: #f4f6f8;
-    --ui-text: #2c3e50;
-    --ui-muted: #555555;
+    --ui-column: #f6f6f6;
+    --ui-text: #333333;
+    --ui-muted: #666666;
     --ui-border: #dddddd;
-    --ui-hover: #f0f0f0;
-    --ui-selected: #f8fbff;
+    --ui-hover: #eeeeee;
+    --ui-selected: #ededed;
     --ui-input: #ffffff;
 
     --ui-sidebar: #34495e;
@@ -186,7 +190,8 @@ body {
 
 /* ダークモード */
 body.dark-theme {
-    --ui-bg: #202631;
+    --ui-bg: #333333;
+    --ui-header-bg: #202631;
     --ui-surface: #303b4d;
     --ui-column: #273140;
     --ui-text: #eff4fa;
@@ -340,7 +345,37 @@ body.custom-theme .custom-theme-accent:hover {
 }
 
 /* アクティブカスタムテーマ：背景色と文字色をテーマに連動 */
-body.custom-theme .custom-theme-accent-active.active {
-    background-color: var(--custom-bg-color);
-    color: var(--custom-text-color);
+body.custom-theme .custom-theme-accent-active.active,
+body.custom-theme .active > .custom-theme-accent-active {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    	);
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+        );
+}
+
+/* 開発メンバーメニュー */
+body.custom-theme .member-submenu {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    );
+}
+
+body.custom-theme .member-submenu li a {
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+    );
+}
+
+body.dark-theme .member-submenu {
+    background-color: var(--ui-sidebar);
 }

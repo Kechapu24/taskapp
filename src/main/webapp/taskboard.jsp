@@ -925,7 +925,7 @@
 							<button type="button" class="sidepanel-tab active custom-theme-accent-active"
 								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
-							<button type="button" class="sidepanel-tab active custom-theme-accent-active" id="detailTab"
+							<button type="button" class="sidepanel-tab custom-theme-accent-active" id="detailTab"
 								onclick="switchSideTab('detail', this)">詳細</button>
 						</div>
 
@@ -1257,7 +1257,7 @@
 				<option value="5">加藤</option>
 			</select>
 
-			<button type="submit" class="modal-submit-btn">追加</button>
+			<button type="submit" class="modal-submit-btn custom-theme-accent">追加</button>
 		</form>
 	</div>
 

@@ -5,19 +5,6 @@
 
 
 <%
-// ★ セッションからテーマ・フォントサイズ・色の設定を取得
-String currentTheme = (String) session.getAttribute("currentTheme");
-String currentBgColor = (String) session.getAttribute("currentBgColor");
-String currentTextColor = (String) session.getAttribute("currentTextColor");
-String currentFontSize = (String) session.getAttribute("currentFontSize");
-
-// セッションに値がない場合の初期値設定
-if (currentTheme == null) {
-	currentTheme = "light";
-	currentBgColor = "#ffffff";
-	currentTextColor = "#333333";
-	currentFontSize = "medium";
-}
 
 // 文字化け防止
 request.setCharacterEncoding("UTF-8");
@@ -166,20 +153,6 @@ if (action != null) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マイタスク - タスク管理アプリ</title>
 <link rel="stylesheet" href="css/common.css">
-
-<!-- カスタムカラーおよびテーマ・フォントサイズの適用処理 -->
-<style>
-:root {
-	--custom-bg-color: <%=currentBgColor%>;
-	--custom-text-color: <%=currentTextColor%>;
-}
-</style>
-<script>
-	document.addEventListener("DOMContentLoaded", function() {
-		document.body.classList.add('<%=currentTheme%>-theme');
-		document.body.classList.add('font-<%=currentFontSize%>');
-	});
-</script>
 
 <style>
 .main-content {
@@ -545,19 +518,6 @@ body.dark-theme .modal-form-group input {
 	border-color: #555 !important;
 }
 
-/* 2. カスタムテーマ (.custom-theme) */
-body.custom-theme .mytasks-container, body.custom-theme .left-column,
-	body.custom-theme .right-column, body.custom-theme .personal-task-item
-	{
-	background-color: var(--custom-bg-color) !important;
-	color: var(--custom-text-color) !important;
-	border-color: rgba(0, 0, 0, 0.15) !important;
-}
-
-body.custom-theme .column-title, body.custom-theme .pti-name {
-	color: var(--custom-text-color) !important;
-}
-
 /* 3. フォントサイズ変更 (.font-small, .font-medium, .font-large) */
 body.font-small {
 	font-size: 1④px;
@@ -584,7 +544,9 @@ body.font-large .pti-name {
 }
 </style>
 </head>
-<body>
+<body class="${themeValue}-theme font-${themeFontSize}"
+      style="--custom-bg-color: ${themeBgColor};
+             --custom-text-color: ${themeTextColor};">
 
 	<%
 	request.setAttribute("pageTitle", "マイタスク");
@@ -615,7 +577,7 @@ body.font-large .pti-name {
 						<!-- 非同期で個人タスクが読み込まれます -->
 					</div>
 
-					<button class="btn-add-personal" onclick="openAddModal()">+
+					<button class="btn-add-personal custom-theme-accent" onclick="openAddModal()">+
 						個人タスクを追加</button>
 				</div>
 			</div>
@@ -636,7 +598,7 @@ body.font-large .pti-name {
 
 					<div class="modal-actions">
 						<button class="btn-cancel" onclick="closeModal()">キャンセル</button>
-						<button class="btn-save" onclick="submitModal()">保存</button>
+						<button class="btn-save custom-theme-accent" onclick="submitModal()">保存</button>
 					</div>
 				</div>
 			</div>
@@ -645,7 +607,7 @@ body.font-large .pti-name {
 			<div id="deleteModal" class="modal-overlay">
 				<div class="modal-content delete-modal-content">
 					<h3>タスクの削除</h3>
-					<p id="deleteMessage" style="margin: 15px 0 25px 0; color: #555;"></p>
+					<p id="deleteMessage" style="margin: 15px 0 25px 0;"></p>
 					<div class="modal-actions"
 						style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
 						<button class="btn-cancel" onclick="closeDeleteModal()">キャンセル</button>

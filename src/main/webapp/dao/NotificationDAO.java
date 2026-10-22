@@ -181,15 +181,24 @@ public class NotificationDAO {
         ) {
 
 
-            ps.setInt(1, userId);
+        	ps.setInt(1, userId);
 
-            ps.setInt(2, projectId);
+        	// プロジェクトIDがない場合はNULL
+        	if (projectId > 0) {
+        	    ps.setInt(2, projectId);
+        	} else {
+        	    ps.setNull(2, java.sql.Types.INTEGER);
+        	}
 
-            ps.setInt(3, taskId);
+        	// タスクIDがない場合はNULL
+        	if (taskId > 0) {
+        	    ps.setInt(3, taskId);
+        	} else {
+        	    ps.setNull(3, java.sql.Types.INTEGER);
+        	}
 
-            ps.setString(4, type);
-
-            ps.setString(5, message);
+        	ps.setString(4, type);
+        	ps.setString(5, message);
 
 
             int result = ps.executeUpdate();
@@ -302,6 +311,164 @@ public class NotificationDAO {
 
         }
 
+    }
+
+    // ==========================================
+    // ⑤ 新しいタスクが作成された
+    // ==========================================
+    public boolean notifyTaskCreated(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "TASK_CREATED",
+            "新しいタスク「" + taskName + "」が作成されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑥ タスクの担当者になった
+    // ==========================================
+    public boolean notifyTaskAssigned(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "TASK_ASSIGNED",
+            "あなたがタスク「" + taskName + "」の担当者になりました。"
+        );
+    }
+
+    // ==========================================
+    // ⑦ タスクのステータスが変更された
+    // ==========================================
+    public boolean notifyStatusChanged(
+            int userId, int projectId, int taskId,
+            String taskName, String status) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "STATUS_CHANGED",
+            "タスク「" + taskName + "」の状態が「"
+                + status + "」に変更されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑧ タスクが完了した
+    // ==========================================
+    public boolean notifyTaskCompleted(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "TASK_COMPLETED",
+            "タスク「" + taskName + "」が完了しました。"
+        );
+    }
+
+    // ==========================================
+    // ⑨ 担当タスクにコメントが追加された
+    // ==========================================
+    public boolean notifyCommentAdded(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "COMMENT_ADDED",
+            "担当タスク「" + taskName + "」に新しいコメントが追加されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑩ コメント内でメンションされた
+    // ==========================================
+    public boolean notifyMention(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "MENTION",
+            "タスク「" + taskName + "」のコメント内であなたがメンションされました。"
+        );
+    }
+
+    // ==========================================
+    // ⑪ コメントに返信があった
+    // ==========================================
+    public boolean notifyCommentReply(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "COMMENT_REPLY",
+            "タスク「" + taskName + "」のあなたのコメントに返信がありました。"
+        );
+    }
+
+    // ==========================================
+    // ⑫ タスクの優先度が変更された
+    // ==========================================
+    public boolean notifyPriorityChanged(
+            int userId, int projectId, int taskId,
+            String taskName, String priority) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "PRIORITY_CHANGED",
+            "タスク「" + taskName + "」の優先度が「"
+                + priority + "」に変更されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑬ プロジェクトにメンバーが追加された
+    // ==========================================
+    public boolean notifyProjectJoined(
+            int userId, int projectId,
+            String projectName) {
+
+        return insertNotification(
+            userId, projectId, 0,
+            "PROJECT_JOINED",
+            "プロジェクト「" + projectName
+                + "」のメンバーに追加されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑭ ファイルが添付された
+    // ==========================================
+    public boolean notifyFileAttached(
+            int userId, int projectId, int taskId,
+            String taskName, String fileName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "FILE_ATTACHED",
+            "タスク「" + taskName
+                + "」にファイル「" + fileName + "」が添付されました。"
+        );
+    }
+
+    // ==========================================
+    // ⑮ レビューを依頼された
+    // ==========================================
+    public boolean notifyReviewRequested(
+            int userId, int projectId, int taskId,
+            String taskName) {
+
+        return insertNotification(
+            userId, projectId, taskId,
+            "REVIEW_REQUESTED",
+            "タスク「" + taskName + "」の成果物のレビューをお願いします。"
+        );
     }
 
 }

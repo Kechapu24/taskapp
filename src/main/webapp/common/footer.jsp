@@ -3,7 +3,7 @@
 
 <footer class="footer">
 	<div class="footer-member">
-		<a href="#" onclick="toggleMemberMenu()"> 開発メンバー ▼ </a>
+		<a href="#" onclick="toggleMemberMenu(); return false;"> 開発メンバー ▼ </a>
 
 		<ul class="member-submenu" id="memberSubmenu">
 			<li><a href="member/sakata/Sakata.jsp">坂田</a></li>
