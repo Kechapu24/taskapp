@@ -55,3 +55,64 @@
 
 	z-index: 9999;
 }
+
+/* 通知1件分の枠 */
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    margin-bottom: 12px;
+    background: var(--custom-bg-color, #ffffff);
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+/* マウスを乗せたとき */
+.notification-item:hover {
+    background-color: #f5f8fc;
+    transform: translateY(-2px);
+}
+
+/* 通知アイコン */
+.notification-icon {
+    flex-shrink: 0;
+    font-size: 24px;
+    line-height: 1.4;
+}
+
+/* 通知の内容 */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 通知タイトル */
+.notification-title {
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* タスク名・プロジェクト名 */
+.notification-task,
+.notification-project {
+    margin-top: 5px;
+    color: #555555;
+    font-size: 13px;
+}
+
+/* 詳細メッセージ */
+.notification-detail {
+    margin-top: 9px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+/* 通知日時 */
+.notification-date {
+    margin-top: 10px;
+    color: #888888;
+    font-size: 12px;
+}

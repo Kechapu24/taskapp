@@ -2,6 +2,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
+<%@ page import="dao.NotificationDAO" %>
+<%@ page import="model.Notification" %>
+<%@ page import="java.util.List" %>
 <jsp:include page="common/theme.jsp" />
 
 
@@ -14,19 +17,13 @@
 <html lang="ja">
 
 <head>
-<<<<<<< HEAD
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>タスク管理アプリ</title>
-    <link rel="stylesheet" href="css/style.css">
-=======
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>タスク管理アプリ</title>
-<link rel="stylesheet" href="css/common.css">
-<link rel="stylesheet" href="css/notifications.css">
->>>>>>> branch 'main' of https://github.com/Kechapu24/taskapp.git
+    <title>タスク管理アプリ</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/notifications.css">
 </head>
 
 <body class="${themeValue}-theme font-${themeFontSize}"
@@ -192,6 +189,148 @@
 
                 </div>
             </div>
+
+<%
+    // DAOから保存済みの通知を取得する
+    // ログイン処理でsessionにuserIdが保存されている想定
+    Object loginUserId = session.getAttribute("userId");
+
+    if (loginUserId instanceof Number) {
+
+        int loggedInUserId =
+            ((Number) loginUserId).intValue();
+
+        NotificationDAO notificationDAO =
+            new NotificationDAO();
+
+        List<Notification> savedNotifications =
+            notificationDAO.getNotifications(loggedInUserId);
+
+        for (Notification notification : savedNotifications) {
+
+            notificationExists = true;
+
+            String type = notification.getType();
+            String title = "お知らせ";
+            String icon = "🔔";
+
+            // 通知の種類に応じてタイトルとアイコンを変更
+            if ("TASK_CREATED".equals(type)) {
+                title = "新しいタスクが作成されました";
+                icon = "➕";
+
+            } else if ("TASK_ASSIGNED".equals(type)) {
+                title = "担当者になりました";
+                icon = "👤";
+
+            } else if ("STATUS_CHANGED".equals(type)) {
+                title = "タスクの状態が変更されました";
+                icon = "🔄";
+
+            } else if ("TASK_COMPLETED".equals(type)) {
+                title = "タスクが完了しました";
+                icon = "✅";
+
+            } else if ("COMMENT_ADDED".equals(type)) {
+                title = "担当タスクにコメントが付きました";
+                icon = "💬";
+
+            } else if ("MENTION".equals(type)) {
+                title = "メンションされました";
+                icon = "📣";
+
+            } else if ("COMMENT_REPLY".equals(type)) {
+                title = "コメントに返信がありました";
+                icon = "↩️";
+
+            } else if ("PRIORITY_CHANGED".equals(type)) {
+                title = "優先度が変更されました";
+                icon = "⚡";
+
+            } else if ("PROJECT_JOINED".equals(type)) {
+                title = "プロジェクトに参加しました";
+                icon = "👥";
+
+            } else if ("FILE_ATTACHED".equals(type)) {
+                title = "ファイルが添付されました";
+                icon = "📎";
+
+            } else if ("REVIEW_REQUESTED".equals(type)) {
+                title = "レビューを依頼されました";
+                icon = "📝";
+            }
+
+            String taskName = notification.getTaskName();
+            String projectName = notification.getProjectName();
+            String message = notification.getMessage();
+
+            if (taskName == null) {
+                taskName = "";
+            }
+
+            if (projectName == null) {
+                projectName = "";
+            }
+
+            if (message == null) {
+                message = "";
+            }
+%>
+
+<div class="notification-item">
+
+    <span class="notification-icon"><%= icon %></span>
+
+    <div class="notification-content">
+
+        <div class="notification-title">
+            <%= title %>
+        </div>
+
+        <% if (!taskName.isEmpty()) { %>
+        <div class="notification-task">
+            タスク：<%= taskName %>
+        </div>
+        <% } %>
+
+        <% if (!projectName.isEmpty()) { %>
+        <div class="notification-project">
+            プロジェクト：<%= projectName %>
+        </div>
+        <% } %>
+
+        <div class="notification-detail">
+            <%= message %>
+        </div>
+
+        <div class="notification-date">
+            <%= notification.getCreatedAt() %>
+        </div>
+
+    </div>
+
+</div>
+
+<%
+        }
+
+    } else {
+%>
+
+<div class="notification-item">
+    <div class="notification-content">
+        <div class="notification-title">
+            ログインユーザーを確認できません
+        </div>
+        <div class="notification-detail">
+            セッションにuserIdが設定されているか確認してください。
+        </div>
+    </div>
+</div>
+
+<%
+    }
+%>
 
             <%
                 }
