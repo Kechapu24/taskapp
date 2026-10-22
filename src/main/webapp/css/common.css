@@ -185,7 +185,7 @@ body {
 
 /* ダークモード */
 body.dark-theme {
-    --ui-bg: #202631;
+    --ui-bg: #333333;
     --ui-surface: #303b4d;
     --ui-column: #273140;
     --ui-text: #eff4fa;

@@ -221,6 +221,11 @@ body.dark-theme .role-badge {
 	color: #e3f2fd;
 }
 
+/* ダークモード：設定メニューのホバー */
+body.dark-theme .settings-item a:hover {
+    background-color: var(--ui-hover);
+}
+
 /* カスタムテーマ：選択コントロール */
 body.custom-theme .radio-label input[type="radio"],
 body.custom-theme .checkbox-label input[type="checkbox"] {
