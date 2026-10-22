@@ -169,7 +169,7 @@ body.font-large {
 
 /* ライトモード（標準） */
 body {
-    --ui-bg: #efefef;
+    --ui-bg: #ffffff;
     --ui-surface: #ffffff;
     --ui-column: #f6f6f6;
     --ui-text: #333333;
