@@ -220,3 +220,19 @@ body.dark-theme .role-badge {
 	background: #0d47a1;
 	color: #e3f2fd;
 }
+
+/* カスタムテーマ：選択コントロール */
+body.custom-theme .radio-label input[type="radio"],
+body.custom-theme .checkbox-label input[type="checkbox"] {
+    accent-color: var(--custom-bg-color);
+}
+
+/* メニューホバー */
+#custom-color-picker {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: var(--ui-column);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+}

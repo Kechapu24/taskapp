@@ -130,16 +130,9 @@ if (currentTheme == null) {
 	--custom-text-color: <%=currentTextColor%>;
 }
 </style>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // bodyにテーマとフォントサイズのクラスを付与
-        document.body.classList.add('<%=currentTheme%>-theme');
-        document.body.classList.add('font-<%=currentFontSize%>');
-    });
-</script>
 
 </head>
-<body>
+<body class="<%=currentTheme%>-theme font-<%=currentFontSize%>">
 
 	<%
 	request.setAttribute("pageTitle", "設定");
@@ -157,11 +150,11 @@ if (currentTheme == null) {
 
 				<aside class="settings-sidebar">
 					<ul class="settings-menu">
-						<li class="settings-item active" id="tab-general"><a href="#"
+						<li class="settings-item active" id="tab-general"><a href="#" class="custom-theme-accent-active"
 							onclick="switchTab('general')">一般</a></li>
-						<li class="settings-item" id="tab-account"><a href="#"
+						<li class="settings-item" id="tab-account"><a href="#" class="custom-theme-accent-active"
 							onclick="switchTab('account')">アカウント</a></li>
-						<li class="settings-item" id="tab-notifications"><a href="#"
+						<li class="settings-item" id="tab-notifications"><a href="#" class="custom-theme-accent-active"
 							onclick="switchTab('notifications')">通知</a></li>
 					</ul>
 				</aside>
@@ -185,8 +178,7 @@ if (currentTheme == null) {
 									カスタムカラー</label>
 							</div>
 
-							<div id="custom-color-picker"
-								style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
+							<div id="custom-color-picker" style="display: none;">
 								<div style="margin-bottom: 10px;">
 									<label style="display: flex; align-items: center; gap: 10px;">
 										背景色を選択: <input type="color" id="bgColor" value="#ffffff"
@@ -242,7 +234,7 @@ if (currentTheme == null) {
 								placeholder="現在のパスワード"><br> <input type="password"
 								class="setting-input" placeholder="新しいパスワード"
 								style="margin-top: 10px;"><br>
-							<button class="setting-btn" style="margin-top: 15px;">変更を保存</button>
+							<button class="setting-btn custom-theme-accent" style="margin-top: 15px;">変更を保存</button>
 						</div>
 					</div>
 

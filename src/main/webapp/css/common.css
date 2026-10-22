@@ -92,7 +92,6 @@
 /* メインコンテンツ */
 .main-content {
 	flex: 1;
-	background-color: #EFEFEF;
 	display: flex;
 	flex-direction: column;
 }
@@ -340,7 +339,8 @@ body.custom-theme .custom-theme-accent:hover {
 }
 
 /* アクティブカスタムテーマ：背景色と文字色をテーマに連動 */
-body.custom-theme .custom-theme-accent-active.active {
+body.custom-theme .custom-theme-accent-active.active,
+body.custom-theme .active > .custom-theme-accent-active {
     background-color: color-mix(
         in srgb,
         var(--custom-bg-color) 50%,
@@ -351,4 +351,25 @@ body.custom-theme .custom-theme-accent-active.active {
         var(--custom-text-color) 50%,
         #000000 50%
         );
+}
+
+/* 開発メンバーメニュー */
+body.custom-theme .member-submenu {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    );
+}
+
+body.custom-theme .member-submenu li a {
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+    );
+}
+
+body.dark-theme .member-submenu {
+    background-color: var(--ui-sidebar);
 }
