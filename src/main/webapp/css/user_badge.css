@@ -1,10 +1,15 @@
 
-User badge · CSS
+/* ※ 消さないこと。
+   環境によって、ファイルの先頭にある1つ目のルールだけが無視される問題が起きたため、
+   何も影響しない空のルールを先頭に置いている。これが巻き込まれることで、
+   下の本物のルール(.avatar など)が無視されないようにするお守り。 */
+.user-badge-css-guard {
+}
+ 
 /* ===== アイコン(丸) =====
-   小さくても名前や背景との境目が分かるよう、
-   「白い縁」+「ユーザーごとの色の輪」の二重の縁取りをつける。
-   画像が無いユーザーは、名前の頭文字を、ユーザーごとに決まった色の丸で表示する。
-   色は JSP 側で --h(色相 0〜359)を渡して決める。 */
+   ・丸い形。頭文字は大きく、丸の中央に表示する。
+   ・背景は、ユーザーごとに決まった淡い色(色は JSP 側で --h = 色相 0〜359 を渡して決める)。
+   ・名前や背景との境目が分かるよう、グレーの縁取りをつける。 */
 .avatar {
     display: inline-flex;
     align-items: center;
@@ -13,12 +18,13 @@ User badge · CSS
     box-sizing: border-box;
     border-radius: 50%;
     overflow: hidden;
-    font-weight: bold;
+    border: 2px solid #c5cbd0;   /* グレーの縁取り */
     background: hsl(var(--h, 200), 45%, 82%);
     color: hsl(var(--h, 200), 45%, 25%);
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 2px hsl(var(--h, 200), 60%, 55%);
-    margin: 2px; /* 外側の色の輪が、隣の要素に重ならないように */
+    font-weight: bold;
+    line-height: 1;              /* 頭文字が上下の真ん中に来るようにする */
+    text-transform: uppercase;   /* 英字の頭文字は大文字にする */
+    user-select: none;
 }
  
 .avatar img {
@@ -28,15 +34,13 @@ User badge · CSS
     object-fit: cover; /* 画像が縦長・横長でも、丸の中に収まるように切り抜く */
 }
  
-.avatar--sm { width: 40px; height: 40px; font-size: 18px; }
+.avatar--sm { width: 44px; height: 44px; font-size: 22px; }
  
 .avatar--lg {
     width: 96px;
     height: 96px;
-    font-size: 42px;
+    font-size: 48px;
     border-width: 3px;
-    box-shadow: 0 0 0 3px hsl(var(--h, 200), 60%, 55%);
-    margin: 3px;
 }
  
 /* ===== サイドバー下部のユーザー表示(画面の左下に固定) =====
@@ -48,7 +52,7 @@ User badge · CSS
      固定されたユーザー表示の下に隠れないよう、同じ高さの空きを確保する。 */
 :root {
     --sidebar-width: 220px;
-    --user-dock-height: 84px;
+    --user-dock-height: 88px;
 }
  
 .sidebar-user {
@@ -83,7 +87,7 @@ User badge · CSS
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
     text-decoration: none;
-    font-size: 15px;
+    font-size: 16px;
 }
  
 .user-badge__trigger:hover,
@@ -218,4 +222,3 @@ User badge · CSS
 .icon-upload__msg--ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #b7dfb9; }
 .icon-upload__msg--ng { background: #fdecea; color: #b00020; border: 1px solid #f5c2c0; }
  
-

@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ログイン</title>
+<title>ログイン</title>M
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/auth.css">
 <script src="${pageContext.request.contextPath}/js/auth.js"></script>

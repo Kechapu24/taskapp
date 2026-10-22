@@ -32,6 +32,17 @@ public class UploadIconServlet extends HttpServlet {
 
     private final UserDAO userDAO = new UserDAO();
 
+    /**
+     * アドレス欄に直接URLを入力した場合や、履歴から開いた場合はGETで届く。
+     * このサーブレットはフォーム送信(POST)専用なので、
+     * GETのときはアカウント情報画面(account.jsp)へ案内する。
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/account.jsp");
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

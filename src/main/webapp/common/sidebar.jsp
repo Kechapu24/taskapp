@@ -39,8 +39,7 @@
     <div class="sidebar-user">
         <% if (session.getAttribute("loginUser") != null) { %>
             <jsp:include page="/common/user_badge.jsp" />
-        <% } else { %>
-            <a href="account.jsp" class="account-button">アカウント情報</a>
+           
         <% } %>
     </div>
 </aside>
