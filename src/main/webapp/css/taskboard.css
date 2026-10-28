@@ -571,11 +571,6 @@
    ========================================= */
 
 /* タスクコラム */
-body.dark-theme .task-column {
-    background-color: #292929;
-    color: #f0f0f0;
-}
-
 body.dark-theme .task-column h2 {
     color: #f0f0f0;
 }
@@ -586,16 +581,6 @@ body.dark-theme .task-card {
     color: #f0f0f0;
 }
 
-body.dark-theme .task-card.selected {
-    background-color: #40536a;
-}
-
-/* サイドパネル */
-body.dark-theme .sidepanel {
-    background-color: #333333;
-    color: #f0f0f0;
-}
-
 body.dark-theme .sidepanel-content h3,
 body.dark-theme .filter-form label {
     color: #f0f0f0;
@@ -603,17 +588,11 @@ body.dark-theme .filter-form label {
 
 /* サイドパネルのタブ */
 body.dark-theme .sidepanel-tab {
-    background-color: #292929;
     color: #dddddd;
 }
 
 body.dark-theme .sidepanel-tab.active {
-    background-color: #3b3b3b;
     color: #8bc4ff;
-}
-
-body.dark-theme .sidepanel-tab:hover {
-    background-color: #454545;
 }
 
 /* カード内ボタン */
@@ -626,9 +605,7 @@ body.dark-theme .modal-close {
 /* ドロップダウンメニュー */
 body.dark-theme .menu-dropdown,
 body.dark-theme .menu-dropdown button {
-    background-color: #333333;
     color: #f0f0f0;
-    border-color: #555555;
 }
 
 body.dark-theme .menu-dropdown button:hover {
@@ -637,7 +614,6 @@ body.dark-theme .menu-dropdown button:hover {
 
 /* モーダル */
 body.dark-theme .modal-content {
-    background-color: #333333;
     color: #f0f0f0;
 }
 
@@ -647,13 +623,11 @@ body.dark-theme .edit-form textarea,
 body.dark-theme .edit-form select,
 body.dark-theme .filter-input,
 body.dark-theme .filter-form select {
-    background-color: #292929;
     color: #f0f0f0;
     border-color: #666666;
 }
 
 body.dark-theme .filter-reset {
-    background-color: #454545;
     color: #f0f0f0;
 }
 

@@ -186,34 +186,33 @@
 /* =========================================
    ダークモード用のスタイル
    ========================================= */
-body.dark-theme .main-content,
 body.dark-theme .settings-panel {
-	background: #333;
+	background: 	var(--ui-surface);
 	color: #fff;
 	border-color: #555;
 }
 
 body.dark-theme .settings-sidebar {
-	background: #222;
+	background: 	var(--ui-column);
 	border-color: #444;
 }
 
 body.dark-theme .settings-item a {
-	color: #ddd;
+	color: var(--ui-text);
 }
 
 body.dark-theme .setting-group h3 {
-	border-color: #555;
+	border-color: var(--ui-border);
 }
 
 body.dark-theme .setting-input {
-	background: #444;
+	background: var(--ui-input);
 	color: #fff;
 	border-color: #666;
 }
 
 body.dark-theme .setting-input[readonly] {
-	background: #2a2a2a;
+	background: var(--ui-column);
 }
 
 body.dark-theme .role-badge {

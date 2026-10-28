@@ -312,54 +312,73 @@
 /* ==========================================
 	   ★ テーマスタイル適用（ダーク＆カスタム）
 	   ========================================== */
-/* 1. ダークテーマ (.dark-theme) */
+
+/* マイタスク：ダークモード */
 body.dark-theme .mytasks-container {
-	background-color: #1e1e1e !important;
+    background-color: var(--ui-bg);
 }
 
-body.dark-theme .left-column, body.dark-theme .right-column, body.dark-theme .personal-task-item
-	{
-	background-color: #2a2a2a !important;
-	border-color: #3a3a3a !important;
-	color: #e0e0e0 !important;
+body.dark-theme .left-column,
+body.dark-theme .right-column {
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
 }
 
-body.dark-theme .column-title, body.dark-theme .pti-name {
-	color: #ffffff !important;
+body.dark-theme .personal-task-item {
+    background-color: var(--ui-card);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
 }
 
-body.dark-theme .pti-info, body.dark-theme .task-menu-trigger {
-	color: #aaa !important;
+body.dark-theme .column-title,
+body.dark-theme .pti-name,
+body.dark-theme .dropdown-edit-item,
+body.dark-theme .modal-form-group label {
+    color: var(--ui-text);
 }
 
-body.dark-theme .task-dropdown-menu {
-	background-color: #333 !important;
-	border-color: #444 !important;
+body.dark-theme .pti-info,
+body.dark-theme .task-menu-trigger {
+    color: var(--ui-muted);
+}
+
+body.dark-theme .task-dropdown-menu,
+body.dark-theme .modal-content {
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
 }
 
 body.dark-theme .dropdown-edit-item {
-	color: #eee !important;
-	border-bottom-color: #444 !important;
+    border-bottom-color: var(--ui-border);
 }
 
-body.dark-theme .dropdown-edit-item:hover {
-	background-color: #444 !important;
-}
-
-body.dark-theme .modal-content {
-	background-color: #2a2a2a !important;
-	color: #fff !important;
-}
-
-body.dark-theme .modal-form-group label {
-	color: #ddd !important;
+body.dark-theme .dropdown-edit-item:hover,
+body.dark-theme .dropdown-delete-item:hover {
+    background-color: var(--ui-hover);
 }
 
 body.dark-theme .modal-form-group input {
-	background-color: #333 !important;
-	color: #fff !important;
-	border-color: #555 !important;
+    background-color: var(--ui-input);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
 }
+
+body.dark-theme .modal-content h3,
+body.dark-theme .modal-actions {
+    border-color: var(--ui-border);
+}
+
+body.dark-theme .btn-cancel {
+    background-color: var(--ui-column);
+    color: var(--ui-text);
+}
+
+body.dark-theme .btn-cancel:hover {
+    background-color: var(--ui-hover);
+}
+
 
 /* 3. フォントサイズ変更 (.font-small, .font-medium, .font-large) */
 body.font-small {

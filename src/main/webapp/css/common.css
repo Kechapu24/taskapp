@@ -190,8 +190,8 @@ body {
 
 /* ダークモード */
 body.dark-theme {
-    --ui-bg: #212121;
-    --ui-header-bg: #212121;
+    --ui-bg: #171717;
+    --ui-header-bg: #171717;
 
     --ui-surface: #303030;
     --ui-card: #303030;
