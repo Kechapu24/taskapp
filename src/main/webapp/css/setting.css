@@ -189,12 +189,12 @@
 body.dark-theme .settings-panel {
 	background: 	var(--ui-surface);
 	color: #fff;
-	border-color: #555;
+	border-color: var(--ui-border);
 }
 
 body.dark-theme .settings-sidebar {
 	background: 	var(--ui-column);
-	border-color: #444;
+	border-color: var(--ui-border);
 }
 
 body.dark-theme .settings-item a {
@@ -208,7 +208,7 @@ body.dark-theme .setting-group h3 {
 body.dark-theme .setting-input {
 	background: var(--ui-input);
 	color: #fff;
-	border-color: #666;
+	border-color: var(--ui-border);
 }
 
 body.dark-theme .setting-input[readonly] {
