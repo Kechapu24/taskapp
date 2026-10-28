@@ -292,7 +292,7 @@
 
 /* 上半分：プロジェクト進捗一覧エリア */
 .top-project-section {
-	height: 45%; /* 初期高さ */
+	height: 80%; /* 初期高さ */
 	min-height: 100px;
 	overflow-y: auto;
 	padding: 12px 20px;
@@ -859,6 +859,13 @@
 .task-dropdown-menu {
     background-color: var(--ui-surface);
     color: var(--ui-text);
+}
+
+/* ダークモード：プロジェクト一覧の背景 */
+body.dark-theme .top-project-section,
+body.dark-theme .bottom-task-section,
+body.dark-theme .bottom-task-header {
+    background-color: var(--ui-bg);
 }
 
 /* 境界線 */

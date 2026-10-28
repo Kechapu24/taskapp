@@ -215,6 +215,10 @@ body.dark-theme .sidebar {
     box-shadow: inset -1px 0 0 #404040;
 }
 
+body.dark-theme .footer {
+    box-shadow: inset 0 1px 0 0 #404040;
+}
+
 /* 共通レイアウトへ反映 */
 .main-content,
 body.dark-theme .main-content,
