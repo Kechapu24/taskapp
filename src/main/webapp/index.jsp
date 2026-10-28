@@ -192,7 +192,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理-カレンダー</title>
+<title>カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -269,7 +269,7 @@
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
 
-    /* 「+〇件」バッジのスタイル（サイズ拡大・視認性向上） */
+    /* 「+〇件」バッジのスタイル */
     .more-badge {
         position: absolute; height: 22px; padding: 0 8px; box-sizing: border-box;
         font-size: 0.75rem; font-weight: bold; background-color: #1e293b; color: #ffffff;
@@ -300,7 +300,7 @@
     }
     .modal-tab-btn.active { background: #1b6ef3; color: #fff; }
     .modal-close {
-        background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1U;
+        background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1;
     }
     .modal-close:hover { color: #0f172a; }
     
@@ -371,7 +371,7 @@
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
-								<span class="filter-label">プロジェクト:</span>
+								<span class="filter-label">案件:</span>
 								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 							</div>
 							
@@ -570,7 +570,8 @@
     ];
     
     const loginUserName = "<%= loginUserName %>";
-    const actualToday = new Date(2026, 9, 21);
+    // リアルタイムの現在日時に変更
+    const actualToday = new Date();
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
@@ -835,7 +836,6 @@
         if (dayOfWeek < 0) dayOfWeek = 6;
         startDate.setDate(startDate.getDate() - dayOfWeek);
 
-        // 1つの週行に表示できる最大タスク数（日付と被らないよう余裕を持たせる）
         const MAX_SLOTS = 3;
 
         for (let w = 0; w < 6; w++) {
@@ -850,7 +850,7 @@
             for (let d = 0; d < 7; d++) {
                 const cellDate = new Date(weekStart);
                 cellDate.setDate(weekStart.getDate() + d);
-                const isToday = cellDate.getTime() === actualToday.getTime();
+                const isToday = cellDate.toDateString() === actualToday.toDateString();
                 const isCurrentMonth = cellDate.getMonth() === baseDate.getMonth();
                 const cellClass = isCurrentMonth ? 'day-cell' : 'day-cell other-month';
 
@@ -883,7 +883,6 @@
                         slotIndex++;
                     }
 
-                    // 最大スロット数を超える場合は非表示にして「+〇件」用に保存
                     if (slotIndex >= MAX_SLOTS) {
                         if (!weekHiddenTasksMap[w].some(t => t.id === task.id)) {
                             weekHiddenTasksMap[w].push(task);
@@ -904,7 +903,6 @@
                 }
             });
 
-            // 溢れたタスクがある場合、一番左下の分かりやすい位置（上の週に属することが明確な位置）に「+〇件」を表示
             if (weekHiddenTasksMap[w].length > 0) {
                 const hiddenCount = weekHiddenTasksMap[w].length;
                 weekHtml += '<div class="more-badge" style="left: 6px; top: ' + (MAX_SLOTS * 24 + 2) + 'px;" onclick="openMoreTasksModal(' + w + ')">' +
@@ -934,7 +932,7 @@
         for (let i = 0; i < 7; i++) {
             const currentDay = new Date(weekStart);
             currentDay.setDate(weekStart.getDate() + i);
-            const isToday = currentDay.setHours(0,0,0,0) === actualToday.setHours(0,0,0,0);
+            const isToday = currentDay.toDateString() === actualToday.toDateString();
             const isSat = (i === 5);
             const isSun = (i === 6);
             
