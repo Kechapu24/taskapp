@@ -193,7 +193,7 @@ body.dark-theme .settings-panel {
 }
 
 body.dark-theme .settings-sidebar {
-	background: 	var(--ui-column);
+	background: 	var(--ui-surface);
 	border-color: var(--ui-border);
 }
 
