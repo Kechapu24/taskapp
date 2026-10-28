@@ -199,16 +199,19 @@
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
-    .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+    /* 上下の余白を詰めるための調整 */
+    .content-body { padding: 6px 10px !important; }
+
+    .calendar-container { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; height: 100%; box-sizing: border-box; }
+    .calendar-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
     
-    .filter-section { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
-    .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filter-group-row2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .filter-group-row2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .filter-label { font-size: 0.8rem; font-weight: bold; color: #555; min-width: 55px; }
     
     .legend-item, .assignee-item { 
-        display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 4px 10px; 
+        display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 3px 8px; 
         border-radius: 16px; background-color: #fff; border: 1px solid #64748b;
         cursor: pointer; user-select: none; transition: all 0.2s; color: #333;
     }
@@ -216,22 +219,22 @@
     .legend-item.active, .assignee-item.active { background-color: #e8f0fe; border-color: #1b6ef3; font-weight: bold; color: #1b6ef3; }
     .legend-item.inactive, .assignee-item.inactive { opacity: 0.4; background-color: #f9f9f9; }
     .my-task-btn {
-        background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 4px 12px;
+        background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 3px 10px;
         font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #333; transition: all 0.2s;
     }
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
     
     /* 今日・週・月ボタン & 日付ナビゲーション */
-    .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
-    .view-switch button { border: none; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
+    .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 2px; }
+    .view-switch button { border: none; background: transparent; padding: 4px 14px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
     .view-switch button:hover { background: #94a3b8; }
     .view-switch button.active { background: #fff; color: #1b6ef3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     
-    .date-nav-wrapper { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
-    .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
+    .date-nav-wrapper { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
+    .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
     .date-nav-wrapper button:hover { background: #f0f4f8; border-color: #94a3b8; }
-    .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center; color: #333; }
+    .month-nav { font-size: 1.1rem; font-weight: bold; min-width: 140px; text-align: center; color: #333; }
     
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
@@ -243,11 +246,11 @@
 
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
-    .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
+    .day-name { padding: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
     .day-name:last-child { border-right: none; }
     .day-name.saturday { color: #1d4ed8; background-color: #a5c7fe; } 
     .day-name.sunday { color: #b91c1c; background-color: #f8a5a5; }   
-    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 130px; border-bottom: 1px solid #64748b; }
+    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
     .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; position: relative; }
     .day-cell:last-child { border-right: none; }
@@ -372,7 +375,7 @@
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
 								<span class="filter-label">案件:</span>
-								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
 							</div>
 							
 							<!-- 2行目: 担当者フィルター（左側） と 今日/週/月ボタン（右側） -->
@@ -380,7 +383,7 @@
 								<div class="filter-group">
 									<span class="filter-label">担当者:</span>
 									<button type="button" id="myTaskBtn" class="my-task-btn" onclick="toggleMyTask()">自分のタスク</button>
-									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
 								</div>
 								
 								<div class="view-switch">
@@ -570,7 +573,6 @@
     ];
     
     const loginUserName = "<%= loginUserName %>";
-    // リアルタイムの現在日時に変更
     const actualToday = new Date();
     
     let baseDate = new Date(actualToday);
