@@ -199,10 +199,35 @@
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    /* 上下の余白を詰めるための調整 */
-    .content-body { padding: 6px 10px !important; }
+    /* ページの背景色を白にして、上や左右の余白部分を完全に覆い隠す */
+    html, body, .app-container, .main-content, .content-body {
+        background-color: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 
-    .calendar-container { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; height: 100%; box-sizing: border-box; }
+    .content-body { 
+        padding: 0px !important; 
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff !important;
+    }
+
+    .calendar-container { 
+        padding: 10px 12px; 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        overflow: hidden; 
+        background: #fff !important; 
+        border-radius: 0px; 
+        box-shadow: none; 
+        width: 100%; 
+        height: 100%; 
+        box-sizing: border-box; 
+    }
+
     .calendar-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
     
     .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
