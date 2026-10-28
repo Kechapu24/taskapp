@@ -12,7 +12,6 @@
 	display: flex;
 	align-items: center;
 	padding: 20px 30px;
-	margin-bottom: 20px;
 	border-bottom: 1px solid #ddd;
 }
 
@@ -175,6 +174,7 @@ body.font-large {
 body {
     --ui-bg: #ffffff;
     --ui-surface: #ffffff;
+    --ui-card: #ffffff;
     --ui-column: #f6f6f6;
     --ui-text: #333333;
     --ui-muted: #666666;
@@ -190,20 +190,29 @@ body {
 
 /* ダークモード */
 body.dark-theme {
-    --ui-bg: #333333;
-    --ui-header-bg: #202631;
-    --ui-surface: #303b4d;
-    --ui-column: #273140;
-    --ui-text: #eff4fa;
-    --ui-muted: #bac8d7;
-    --ui-border: #4c5c70;
-    --ui-hover: #3b485a;
-    --ui-selected: #344f6c;
-    --ui-input: #263142;
+    --ui-bg: #212121;
+    --ui-header-bg: #212121;
 
-    --ui-sidebar: #171d27;
-    --ui-sidebar-hover: #344355;
-    --ui-sidebar-text: #eff4fa;
+    --ui-surface: #303030;
+    --ui-card: #303030;
+    --ui-column: #212121;
+
+    --ui-text: #ffffff;
+    --ui-muted: #cdcdcd;
+    --ui-border: #ffffff26;
+
+    --ui-hover: #414141;
+    --ui-selected: #414141;
+    --ui-input: #303030;
+
+    --ui-sidebar: #171717;
+    --ui-sidebar-hover: #2f2f2f;
+    --ui-sidebar-text: #ffffff;
+}
+
+/* ダークモード：サイドバー右端の境界線 */
+body.dark-theme .sidebar {
+    box-shadow: inset -1px 0 0 #404040;
 }
 
 /* 共通レイアウトへ反映 */
