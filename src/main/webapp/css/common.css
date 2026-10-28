@@ -64,6 +64,10 @@ body.dark-theme .content-header {
 	width: 220px;
 	min-width: 220px;
 	flex: 0 0 220px;
+	position: sticky;
+    top: 0;
+    height: 100vh;
+    align-self: flex-start;
 	background-color: #34495e;
 	color: white;
 	padding: 20px 0;
@@ -372,7 +376,7 @@ body.custom-theme .active > .custom-theme-accent-active {
         );
 }
 
-/* 開発メンバーメニュー */
+/* フッターの開発メンバーメニュー */
 body.custom-theme .member-submenu {
     background-color: color-mix(
         in srgb,
@@ -391,4 +395,242 @@ body.custom-theme .member-submenu li a {
 
 body.dark-theme .member-submenu {
     background-color: var(--ui-sidebar);
+}
+
+
+/* =========================================
+   ユーザー情報：共通テーマ対応
+   ========================================= */
+
+/* サイドバー下部 */
+body .user-badge {
+    background-color: var(--ui-sidebar);
+    border-top-color: var(--ui-border);
+}
+
+/* ユーザーボタン */
+body .user-badge__trigger {
+    background-color: var(--ui-sidebar-hover);
+    color: var(--ui-sidebar-text);
+}
+
+body .user-badge__trigger:hover,
+body .user-badge__trigger:focus-visible {
+    background-color: color-mix(
+        in srgb,
+        var(--ui-sidebar-hover) 80%,
+        var(--ui-sidebar-text) 20%
+    );
+}
+
+/* ログイン情報ウィンドウ */
+body .user-badge__card-inner {
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+}
+
+/* 補助文字 */
+body .user-badge__card-email,
+body .user-badge__list dt {
+    color: var(--ui-muted);
+}
+
+/* 区切り線 */
+body .user-badge__list {
+    border-top-color: var(--ui-border);
+}
+
+/* アカウント情報ボタン */
+body .user-badge__card-link {
+    background-color: var(--ui-selected);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+}
+
+body .user-badge__card-link:hover {
+    background-color: var(--ui-hover);
+}
+
+/* 団体切り替え */
+body .org-switcher {
+    border-top-color: var(--ui-border) !important;
+}
+
+body .org-switcher label {
+    color: var(--ui-muted) !important;
+}
+
+body .org-switcher select {
+    background-color: var(--ui-input) !important;
+    color: var(--ui-text) !important;
+    border-color: var(--ui-border) !important;
+}
+
+/* =========================================
+   カスタムカラー専用
+   ========================================= */
+
+/* サイドバーと同じカラー */
+body.custom-theme .user-badge {
+    background-color: var(--custom-bg-color);
+}
+
+/* ユーザーボタン */
+body.custom-theme .user-badge__trigger {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+    color: var(--custom-text-color);
+}
+
+body.custom-theme .user-badge__trigger:hover,
+body.custom-theme .user-badge__trigger:focus-visible {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 65%,
+        var(--custom-text-color) 35%
+    );
+}
+
+/* ウィンドウは選択色を薄く反映 */
+body.custom-theme .user-badge__card-inner {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 20%,
+        #ffffff 80%
+    );
+}
+
+/* アカウント情報ボタンに選択色を適用 */
+body.custom-theme .user-badge__card-link {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+    border-color: var(--custom-bg-color);
+}
+
+body.custom-theme .user-badge__card-link:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
+
+/* サイドバーを通常コンテンツより前面に */
+body .sidebar {
+    z-index: 500;
+}
+
+/* モーダルはサイドバーより前面に */
+body .modal-overlay {
+    z-index: 2000;
+}
+
+
+
+/* =========================================
+   開発情報：サイドバーボタン
+   ========================================= */
+
+.sidebar-dev {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.sidebar-dev-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    color: var(--ui-sidebar-text);
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.sidebar-dev-button:hover,
+.sidebar-dev-button[aria-expanded="true"] {
+    background-color: var(--ui-sidebar-hover);
+}
+
+/* =========================================
+   開発情報：右側のポップアップ
+   ========================================= */
+
+.sidebar-dev-popup {
+    position: fixed;
+    width: 300px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 18px;
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 600;
+}
+
+.sidebar-dev-popup[hidden] {
+    display: none;
+}
+
+.sidebar-dev-popup h3 {
+    margin: 0 0 14px;
+    font-size: 17px;
+}
+
+.sidebar-dev-section {
+    padding: 10px 0;
+    border-top: 1px solid var(--ui-border);
+}
+
+.sidebar-dev-heading {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--ui-muted);
+    font-weight: bold;
+}
+
+.sidebar-dev-section a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--ui-text);
+    text-decoration: none;
+}
+
+.sidebar-dev-section a:hover {
+    background-color: var(--ui-hover);
+}
+
+/* カスタムテーマ */
+body.custom-theme .sidebar-dev-button {
+    color: var(--custom-text-color);
+}
+
+body.custom-theme .sidebar-dev-button:hover,
+body.custom-theme .sidebar-dev-button[aria-expanded="true"] {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
+
+/* モーダルより下のレイヤーにする */
+body .sidebar {
+    z-index: 500;
+}
+
+body .modal-overlay {
+    z-index: 2000;
 }

@@ -1,6 +1,7 @@
 
 <%@ page pageEncoding="UTF-8" %>
 
+<%--一旦コメントアウト
 <footer class="footer">
 	<div class="footer-member">
 		<a href="#" onclick="toggleMemberMenu(); return false;"> 開発メンバー ▼ </a>
@@ -25,3 +26,5 @@
 		}
 	</script>
 </footer>
+--%>
+

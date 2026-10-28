@@ -449,6 +449,12 @@
     text-align: center;
 }
 
+/* タスクコラムと右サイドパネルの枠線 */
+.task-column,
+.sidepanel {
+    border: 1px solid var(--ui-border);
+}
+
 /* =========================================
    タスクボードのテーマカラー連動
    ========================================= */
@@ -585,3 +591,9 @@ body.custom-theme .custom-theme-accent-active.active {
         var(--custom-text-color) 20%
     );
 }
+
+/* 削除メニューの赤色を維持 */
+.menu-dropdown .delete-menu-button {
+    color: #d9534f;
+}
+
