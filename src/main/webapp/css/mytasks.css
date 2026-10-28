@@ -359,7 +359,8 @@ body.dark-theme .dropdown-delete-item:hover {
     background-color: var(--ui-hover);
 }
 
-body.dark-theme .modal-form-group input {
+body.dark-theme .modal-form-group input,
+body.dark-theme .modal-form-group select {
     background-color: var(--ui-input);
     color: var(--ui-text);
     border-color: var(--ui-border);
