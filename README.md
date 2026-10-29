@@ -69,11 +69,14 @@ GitHubを介してチーム全員が同じ環境を共有して開発を進め�
 
 ---
 
-## 動作環境
+## 開発環境
 
-- Java 17（※学校で使用のバージョンに変更してください）
-- Apache Tomcat 10.x
-- PostgreSQL 15.x
+- Windows 11
+- Eclipse (Pleiades 2023-12)
+- Java 17.0.10
+- Apache Tomcat 9.0.85
+- javax.servlet
+- PostgreSQL 16.13
 - 仮想環境（VirtualBox 等）
 
 ---
