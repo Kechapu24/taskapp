@@ -170,10 +170,9 @@
     .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
     .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
     
-    .header-top-row { display: flex; justify-content: space-between; align-items: center; }
     .btn-create-task {
         background-color: #1b6ef3; color: #fff; border: none; padding: 6px 14px; border-radius: 4px;
-        font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;
+        font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; white-space: nowrap;
     }
     .btn-create-task:hover { background-color: #1557b0; }
 
@@ -341,15 +340,14 @@
 			<div class="content-body">
 				<div class="calendar-container">
 					<div class="calendar-header">
-						<div class="header-top-row">
-							<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
-						</div>
-						
 						<div class="filter-section">
-							<!-- 1行目: 案件フィルター -->
-							<div class="filter-group">
-								<span class="filter-label">プロジェクト:</span>
-								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+							<!-- 1行目: 案件フィルター と 右側に「+ 新規タスク作成」ボタン -->
+							<div class="filter-group-row2" style="margin-bottom: 5px;">
+								<div class="filter-group" style="flex: 1;">
+									<span class="filter-label">プロジェクト:</span>
+									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+								</div>
+								<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
 							</div>
 							
 							<!-- 2行目: 担当者フィルター と 今日/週/月ボタン -->
