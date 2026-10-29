@@ -75,9 +75,10 @@ GitHubを介してチーム全員が同じ環境を共有して開発を進め�
 - Eclipse (Pleiades 2023-12)
 - Java 17.0.10
 - Apache Tomcat 9.0.85
-- javax.servlet
+- Servlet / JSP (javax.servlet)
 - PostgreSQL 16.13
-- 仮想環境（チーム開発では仮想環境上のLinuxサーバーを利用）
+- Linuxサーバー環境（チーム共有の開発・検証環境）
+- GitHub
 
 ---
 
