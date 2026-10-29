@@ -27,12 +27,8 @@
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
-            int id = 0;
-            try { id = pRs.getInt("project_id"); } catch (Exception e) { id = pRs.getInt("id"); }
-            String name = null;
-            try { name = pRs.getString("project_name"); } catch (Exception e1) {
-                try { name = pRs.getString("name"); } catch (Exception e2) {}
-            }
+            int id = pRs.getInt("project_id");
+            String name = pRs.getString("project_name");
             if (name == null) name = "プロジェクト " + id;
 
             Map<String, String> m = new HashMap<>();
@@ -50,12 +46,8 @@
         Statement uStmt = conn.createStatement();
         ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
-            int id = 0;
-            try { id = uRs.getInt("user_id"); } catch (Exception e) { id = uRs.getInt("id"); }
-            String name = null;
-            try { name = uRs.getString("user_name"); } catch (Exception e1) {
-                try { name = uRs.getString("name"); } catch (Exception e2) {}
-            }
+            int id = uRs.getInt("user_id");
+            String name = uRs.getString("user_name");
             if (name == null) name = "ユーザー " + id;
 
             Map<String, String> m = new HashMap<>();
@@ -71,45 +63,23 @@
         ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id ORDER BY t.task_id ASC");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
         while (tRs.next()) {
-            int tid = 0;
-            try { tid = tRs.getInt("task_id"); } catch (Exception e) { tid = tRs.getInt("id"); }
-            int pid = 0;
-            try { pid = tRs.getInt("project_id"); } catch (Exception e) {}
-            
-            String tName = null;
-            try { tName = tRs.getString("task_name"); } catch (Exception e1) {
-                try { tName = tRs.getString("name"); } catch (Exception e2) {}
-            }
+            int tid = tRs.getInt("task_id");
+            int pid = tRs.getInt("project_id");
+            String tName = tRs.getString("task_name");
             if (tName == null) tName = "タスク " + tid;
 
-            String status = "";
-            try { status = tRs.getString("status"); } catch (Exception e) {}
-
-            String description = "";
-            try { description = tRs.getString("description"); } catch (Exception e) {
-                try { description = tRs.getString("details"); } catch (Exception ex) {}
-            }
+            String status = tRs.getString("status");
+            String description = tRs.getString("description");
             if (description == null) description = "";
 
-            String priority = "中";
-            try { priority = tRs.getString("priority"); } catch (Exception e) {}
+            String priority = tRs.getString("priority");
             if (priority == null || priority.isEmpty()) priority = "中";
 
-            String tag = "";
-            try { tag = tRs.getString("tag"); } catch (Exception e) {
-                try { tag = tRs.getString("tags"); } catch (Exception ex) {}
-            }
-            if (tag == null) tag = "";
-
-            java.sql.Date sDate = null;
-            try { sDate = tRs.getDate("start_date"); } catch (Exception e) {}
-            java.sql.Date dDate = null;
-            try { dDate = tRs.getDate("due_date"); } catch (Exception e) {}
+            java.sql.Date sDate = tRs.getDate("start_date");
+            java.sql.Date dDate = tRs.getDate("due_date");
             
-            String uName = "";
-            try { uName = tRs.getString("u_name"); } catch (Exception e) {}
-            int uId = 0;
-            try { uId = tRs.getInt("u_id"); } catch (Exception e) {}
+            String uName = tRs.getString("u_name");
+            int uId = tRs.getInt("u_id");
 
             if (!tMapGroup.containsKey(tid)) {
                 Map<String, Object> tm = new HashMap<>();
@@ -119,7 +89,6 @@
                 tm.put("name", tName.replace("\"", "\\\"").replace("'", "\\'"));
                 tm.put("description", description.replace("\"", "\\\"").replace("'", "\\'").replace("\r", "").replace("\n", "\\n"));
                 tm.put("priority", priority);
-                tm.put("tag", tag);
                 tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
@@ -164,7 +133,6 @@
             fm.put("name", (String) tm.get("name"));
             fm.put("description", (String) tm.get("description"));
             fm.put("priority", (String) tm.get("priority"));
-            fm.put("tag", (String) tm.get("tag"));
             fm.put("status", (String) tm.get("status"));
             fm.put("startDate", (String) tm.get("startDate"));
             fm.put("dueDate", (String) tm.get("dueDate"));
@@ -199,44 +167,23 @@
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    /* ページの背景色を白にして、上や左右の余白部分を完全に覆い隠す */
-    html, body, .app-container, .main-content, .content-body {
-        background-color: #ffffff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .content-body { 
-        padding: 0px !important; 
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background-color: #ffffff !important;
-    }
-
-    .calendar-container { 
-        padding: 10px 12px; 
-        flex: 1; 
-        display: flex; 
-        flex-direction: column; 
-        overflow: hidden; 
-        background: #fff !important; 
-        border-radius: 0px; 
-        box-shadow: none; 
-        width: 100%; 
-        height: 100%; 
-        box-sizing: border-box; 
-    }
-
-    .calendar-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+    .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
+    .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
     
-    .filter-section { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
-    .filter-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-    .filter-group-row2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .header-top-row { display: flex; justify-content: space-between; align-items: center; }
+    .btn-create-task {
+        background-color: #1b6ef3; color: #fff; border: none; padding: 6px 14px; border-radius: 4px;
+        font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;
+    }
+    .btn-create-task:hover { background-color: #1557b0; }
+
+    .filter-section { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .filter-group-row2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .filter-label { font-size: 0.8rem; font-weight: bold; color: #555; min-width: 55px; }
     
     .legend-item, .assignee-item { 
-        display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 3px 8px; 
+        display: flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 4px 10px; 
         border-radius: 16px; background-color: #fff; border: 1px solid #64748b;
         cursor: pointer; user-select: none; transition: all 0.2s; color: #333;
     }
@@ -244,22 +191,22 @@
     .legend-item.active, .assignee-item.active { background-color: #e8f0fe; border-color: #1b6ef3; font-weight: bold; color: #1b6ef3; }
     .legend-item.inactive, .assignee-item.inactive { opacity: 0.4; background-color: #f9f9f9; }
     .my-task-btn {
-        background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 3px 10px;
+        background-color: #f8fafc; border: 1px solid #64748b; border-radius: 16px; padding: 4px 12px;
         font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #333; transition: all 0.2s;
     }
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
     
     /* 今日・週・月ボタン & 日付ナビゲーション */
-    .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 2px; }
-    .view-switch button { border: none; background: transparent; padding: 4px 14px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
+    .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
+    .view-switch button { border: none; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
     .view-switch button:hover { background: #94a3b8; }
     .view-switch button.active { background: #fff; color: #1b6ef3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     
-    .date-nav-wrapper { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
-    .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
+    .date-nav-wrapper { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
+    .date-nav-wrapper button { background: #fff; border: 1px solid #64748b; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; color: #555; transition: 0.2s; }
     .date-nav-wrapper button:hover { background: #f0f4f8; border-color: #94a3b8; }
-    .month-nav { font-size: 1.1rem; font-weight: bold; min-width: 140px; text-align: center; color: #333; }
+    .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center; color: #333; }
     
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
@@ -271,11 +218,11 @@
 
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
-    .day-name { padding: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
+    .day-name { padding: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #64748b; color: #333; }
     .day-name:last-child { border-right: none; }
     .day-name.saturday { color: #1d4ed8; background-color: #a5c7fe; } 
     .day-name.sunday { color: #b91c1c; background-color: #f8a5a5; }   
-    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid #64748b; }
+    .week-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 130px; border-bottom: 1px solid #64748b; }
     .week-row:last-child { border-bottom: none; }
     .day-cell { border-right: 1px solid #64748b; padding: 6px; box-sizing: border-box; position: relative; }
     .day-cell:last-child { border-right: none; }
@@ -394,21 +341,24 @@
 			<div class="content-body">
 				<div class="calendar-container">
 					<div class="calendar-header">
-						<h2 style="margin:0; font-size:1.3rem;">カレンダー</h2>
+						<div class="header-top-row">
+							<h2 style="margin:0; font-size:1.3rem;">カレンダー</h2>
+							<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
+						</div>
 						
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター -->
 							<div class="filter-group">
 								<span class="filter-label">案件:</span>
-								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+								<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 							</div>
 							
-							<!-- 2行目: 担当者フィルター（左側） と 今日/週/月ボタン（右側） -->
+							<!-- 2行目: 担当者フィルター と 今日/週/月ボタン -->
 							<div class="filter-group-row2">
 								<div class="filter-group">
 									<span class="filter-label">担当者:</span>
 									<button type="button" id="myTaskBtn" class="my-task-btn" onclick="toggleMyTask()">自分のタスク</button>
-									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+									<div id="assigneeLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
 								
 								<div class="view-switch">
@@ -480,7 +430,6 @@
                     <div class="modal-row"><strong>プロジェクト：</strong><span id="modalProjName"></span></div>
                     <div class="modal-row"><strong>説明：</strong><span id="modalDesc"></span></div>
                     <div class="modal-row"><strong>担当者：</strong><span id="modalAssignee"></span></div>
-                    <div class="modal-row"><strong>タグ：</strong><span id="modalTag"></span></div>
                     <div class="modal-row"><strong>状態：</strong><span id="modalStatus"></span></div>
                     <div class="modal-row"><strong>優先度：</strong><span id="modalPriority"></span></div>
                     <div class="modal-row"><strong>開始日：</strong><span id="modalStartDate"></span></div>
@@ -535,16 +484,84 @@
                                 <input type="date" id="editDueDate" name="dueDate" class="form-control">
                             </div>
                         </div>
-                        <div class="form-group" style="margin-top: 10px;">
-                            <label>タグ</label>
-                            <input type="text" id="editTag" name="tag" class="form-control">
-                        </div>
                     </form>
                 </div>
             </div>
 
             <div id="modalFooter" class="modal-footer" style="display: none;">
                 <button type="button" class="btn-save" onclick="saveTask()">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新規タスク作成モーダル -->
+    <div id="createTaskModal" class="modal-overlay" style="display: none;" onclick="closeCreateModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin:0; font-size:1.05rem; color:#1e293b;">新規タスク作成</h3>
+                <button type="button" class="modal-close" onclick="closeCreateModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="createTaskForm" action="TaskCreateServlet" method="post">
+                    <div class="form-group">
+                        <label>タスク名</label>
+                        <input type="text" name="taskName" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>プロジェクト</label>
+                        <select name="projectId" class="form-control" required>
+                            <% for (Map<String, String> p : projList) { %>
+                                <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>担当者</label>
+                        <select name="userId" class="form-control">
+                            <option value="">（未設定）</option>
+                            <% for (Map<String, String> u : userList) { %>
+                                <option value="<%= u.get("id") %>"><%= u.get("name") %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>説明</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-row-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label>状態</label>
+                            <select name="status" class="form-control">
+                                <option value="未着手" selected>未着手</option>
+                                <option value="進行中">進行中</option>
+                                <option value="完了">完了</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>優先度</label>
+                            <select name="priority" class="form-control">
+                                <option value="高">高</option>
+                                <option value="中" selected>中</option>
+                                <option value="低">低</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label>開始日</label>
+                            <input type="date" name="startDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>期限</label>
+                            <input type="date" name="dueDate" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-save" onclick="saveNewTask()">作成する</button>
             </div>
         </div>
     </div>
@@ -587,11 +604,10 @@
                 name: "<%= t.get("name") %>",
                 description: "<%= t.get("description") %>",
                 priority: "<%= t.get("priority") %>",
-                tag: "<%= t.get("tag") %>",
+                status: "<%= t.get("status") %>",
                 assignee: "<%= t.get("assignee") %>",
                 startDate: "<%= t.get("startDate") %>",
                 dueDate: "<%= t.get("dueDate") %>",
-                status: "<%= t.get("status") %>",
                 isCompleted: <%= "完了".equals(t.get("status")) %>
             }<%= (i < taskList.size() - 1) ? "," : "" %>
         <% } %>
@@ -605,16 +621,33 @@
     let activeProjectId = null; 
     let activeAssignee = null;  
 
+    // 新規作成モーダル制御
+    function openCreateModal() {
+        document.getElementById('createTaskModal').style.display = 'flex';
+    }
+    function closeCreateModal() {
+        document.getElementById('createTaskModal').style.display = 'none';
+    }
+    function closeCreateModalOnBackdrop(event) {
+        if (event.target.id === 'createTaskModal') {
+            closeCreateModal();
+        }
+    }
+    function saveNewTask() {
+        const form = document.getElementById('createTaskForm');
+        if (form.checkValidity()) {
+            form.submit();
+        } else {
+            form.reportValidity();
+        }
+    }
+
     function toggleMyTask() {
         if (!loginUserName) {
             alert("ログインユーザー情報が見つかりません。");
             return;
         }
-        if (activeAssignee === loginUserName) {
-            activeAssignee = null; 
-        } else {
-            activeAssignee = loginUserName; 
-        }
+        activeAssignee = (activeAssignee === loginUserName) ? null : loginUserName;
         renderAll();
     }
 
@@ -756,7 +789,7 @@
         return d;
     }
 
-    // モーダル関連
+    // 詳細・編集モーダル制御
     function switchModalTab(tabName) {
         document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -783,7 +816,6 @@
         document.getElementById('modalProjName').innerText = project ? project.name : 'その他';
         document.getElementById('modalDesc').innerText = task.description || '（なし）';
         document.getElementById('modalAssignee').innerText = task.assignee || '未設定';
-        document.getElementById('modalTag').innerText = task.tag || '（なし）';
         document.getElementById('modalStatus').innerText = task.status || '未着手';
         document.getElementById('modalPriority').innerText = task.priority || '中';
         document.getElementById('modalStartDate').innerText = task.startDate || '未設定';
@@ -797,7 +829,6 @@
         document.getElementById('editPriority').value = task.priority || '中';
         document.getElementById('editStartDate').value = task.startDate || '';
         document.getElementById('editDueDate').value = task.dueDate || '';
-        document.getElementById('editTag').value = task.tag || '';
 
         switchModalTab('detail');
         document.getElementById('taskModal').style.display = 'flex';
