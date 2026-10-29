@@ -160,15 +160,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理アプリ - カレンダー</title>
+<title>カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
         --saturday-bg: #e8f0fe;
         --sunday-bg: #fce8e8;
     }
-    .calendar-container { padding: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
-    .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+    .calendar-container { padding: 15px; flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 0px; box-shadow: none; width: 100%; height: 100%; box-sizing: border-box; }
+    .calendar-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; flex-shrink: 0; }
     
     .btn-create-task {
         background-color: #1b6ef3; color: #fff; border: none; padding: 6px 14px; border-radius: 4px;
@@ -206,7 +206,7 @@
     .date-nav-wrapper button:hover { background: #f0f4f8; border-color: #94a3b8; }
     .month-nav { font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center; color: #333; }
     
-    .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
+    .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 4px;}
     .view-wrapper.active { display: flex; }
     
     .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }
@@ -250,7 +250,6 @@
     }
     .more-badge:hover { background-color: #0f172a; }
 
-    /* モーダルの共通スタイル（少し大きめに調整） */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center;
@@ -285,7 +284,6 @@
     .modal-row strong { min-width: 95px; color: #64748b; text-align: right; flex-shrink: 0; }
     .modal-row span { word-break: break-all; flex: 1; color: #1e293b; }
 
-    /* フォーム用スタイル（気持ち大きくゆったり） */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { font-weight: bold; color: #334155; font-size: 0.9rem; }
     .form-control {
@@ -334,14 +332,14 @@
 		<main class="main-content">
 			<%@ include file="common/header.jsp" %>
 
-			<div class="content-body">
+			<div class="content-body" style="padding: 0;">
 				<div class="calendar-container">
 					<div class="calendar-header">
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター と 右側に「+ 新規タスク作成」ボタン -->
 							<div class="filter-group-row2" style="margin-bottom: 5px;">
 								<div class="filter-group" style="flex: 1;">
-									<span class="filter-label">プロジェクト:</span>
+									<span class="filter-label">案件:</span>
 									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
 								<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
@@ -488,7 +486,7 @@
         </div>
     </div>
 
-    <!-- 新規タスク作成モーダル（ご指定のレイアウト＆サイズに調整） -->
+    <!-- 新規タスク作成モーダル -->
     <div id="createTaskModal" class="modal-overlay" style="display: none;" onclick="closeCreateModalOnBackdrop(event)">
         <div class="modal-content">
             <div class="modal-header">
