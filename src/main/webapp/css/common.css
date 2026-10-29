@@ -634,3 +634,15 @@ body .sidebar {
 body .modal-overlay {
     z-index: 2000;
 }
+
+
+/* ログイン情報ウィンドウの枠線をテーマに統一 */
+body .user-badge__card-inner {
+    border-color: var(--ui-border);
+}
+
+/* ユーザー表示エリアの境界線 */
+body .user-badge {
+    border-top-color: var(--ui-border);
+    border-right: 1px solid var(--ui-border);
+}

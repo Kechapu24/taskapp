@@ -3,6 +3,7 @@
 <%@ page import="java.sql.*"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
+<%@ page import="model.User"%>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">
@@ -14,7 +15,7 @@
 <link rel="stylesheet" href="css/taskboard.css">
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
-      style="--custom-bg-color: ${themeBgColor};
+	style="--custom-bg-color: ${themeBgColor};
              --custom-text-color: ${themeTextColor};">
 
 	<%
@@ -31,6 +32,71 @@
 			<%@ include file="common/header.jsp"%>
 
 			<div class="content-body">
+
+				<%
+				User loginUser = (User) session.getAttribute("loginUser");
+				if (loginUser == null) {
+					response.sendRedirect(request.getContextPath() + "/login.jsp");
+					return;
+				}
+				int loginUserId = loginUser.getUserId();
+				Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
+				boolean personalMode = (activeOrgId == null);
+				%>
+
+				<%
+				if (personalMode) {
+				%>
+
+				<!-- 個人モードのタスクボード -->
+				<%
+				int personalTodoCount = 0;
+				int personalDoingCount = 0;
+				int personalDoneCount = 0;
+
+				try {
+					Class.forName("org.postgresql.Driver");
+
+					Connection conn = DriverManager.getConnection("jdbc:postgresql://172.16.1.119:5432/taskapp", "taskuser",
+					"taskpass");
+
+					String countSql = "SELECT status, COUNT(*) AS task_count " + "FROM personal_task " + "WHERE user_id = ? "
+					+ "GROUP BY status";
+
+					PreparedStatement stmt = conn.prepareStatement(countSql);
+
+					stmt.setInt(1, loginUserId);
+
+					ResultSet rs = stmt.executeQuery();
+
+					while (rs.next()) {
+
+						String status = rs.getString("status");
+						int count = rs.getInt("task_count");
+
+						if ("未着手".equals(status)) {
+					personalTodoCount = count;
+
+						} else if ("進行中".equals(status)) {
+					personalDoingCount = count;
+
+						} else if ("完了".equals(status)) {
+					personalDoneCount = count;
+						}
+					}
+
+					rs.close();
+					stmt.close();
+					conn.close();
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				%>
+
+				<%
+				} else {
+				%>
 
 				<%
 				String keyword = request.getParameter("keyword");
@@ -310,7 +376,8 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
+										<button type="submit"
+											class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -584,7 +651,8 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
+										<button type="submit"
+											class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -858,7 +926,8 @@
 											<option value="5">加藤</option>
 										</select>
 
-										<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
+										<button type="submit"
+											class="modal-submit-btn custom-theme-accent">保存</button>
 									</form>
 								</div>
 
@@ -922,10 +991,12 @@
 
 						<!-- タブ -->
 						<div class="sidepanel-tabs">
-							<button type="button" class="sidepanel-tab active custom-theme-accent-active"
+							<button type="button"
+								class="sidepanel-tab active custom-theme-accent-active"
 								onclick="switchSideTab('filter', this)">検索・絞込</button>
 
-							<button type="button" class="sidepanel-tab custom-theme-accent-active" id="detailTab"
+							<button type="button"
+								class="sidepanel-tab custom-theme-accent-active" id="detailTab"
 								onclick="switchSideTab('detail', this)">詳細</button>
 						</div>
 
@@ -1057,6 +1128,10 @@
 				</div>
 
 			</div>
+
+			<%
+			}
+			%>
 
 			<%@ include file="common/footer.jsp"%>
 
