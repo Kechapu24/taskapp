@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="true"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="java.util.*"%>
 <%
@@ -428,9 +428,9 @@
                     <div class="modal-row"><strong>期限：</strong><span id="modalDueDate"></span></div>
                 </div>
 
-                <!-- 2. 編集タブ -->
+                <!-- 2. 編集タブ (【修正済】actionにコンテキストパスを追加) -->
                 <div id="tabPaneEdit" class="tab-pane">
-                    <form id="editTaskForm" action="TaskUpdateServlet" method="post">
+                    <form id="editTaskForm" action="${pageContext.request.contextPath}/TaskUpdateServlet" method="post">
                         <input type="hidden" id="editTaskId" name="taskId">
                         <div class="form-group">
                             <label>タスク名</label>
@@ -486,7 +486,7 @@
         </div>
     </div>
 
-    <!-- 新規タスク作成モーダル -->
+    <!-- 新規タスク作成モーダル (【修正済】actionにコンテキストパスを追加) -->
     <div id="createTaskModal" class="modal-overlay" style="display: none;" onclick="closeCreateModalOnBackdrop(event)">
         <div class="modal-content">
             <div class="modal-header">
@@ -495,7 +495,7 @@
             </div>
             
             <div class="modal-body">
-                <form id="createTaskForm" action="TaskCreateServlet" method="post">
+                <form id="createTaskForm" action="${pageContext.request.contextPath}/TaskCreateServlet" method="post">
                     <!-- 1. タスク名 -->
                     <div class="form-group">
                         <label>タスク名 <span style="color: #ef4444;">*</span></label>
