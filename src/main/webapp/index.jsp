@@ -160,7 +160,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理アプリ - カレンダー</title>
+<title>カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -196,7 +196,6 @@
     .my-task-btn:hover { background-color: #f0f4f8; }
     .my-task-btn.active { background-color: #1b6ef3; color: #fff; border-color: #1b6ef3; }
     
-    /* 今日・週・月ボタン & 日付ナビゲーション */
     .view-switch { display: flex; background: #cbd5e1; border-radius: 6px; padding: 3px; }
     .view-switch button { border: none; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: bold; color: #555; border-radius: 4px; transition: 0.2s; }
     .view-switch button:hover { background: #94a3b8; }
@@ -210,10 +209,9 @@
     .view-wrapper { flex: 1; overflow: hidden; display: none; flex-direction: column; background: #fff; border: 1px solid #64748b; border-radius: 6px;}
     .view-wrapper.active { display: flex; }
     
-    /* ステータス別の枠線色 */
-    .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }     /* 青（デフォルト・期限内未完了） */
-    .status-overdue { border-color: #0f172a; background-color: #f8fafc; color: #0f172a; }    /* 黒（期限切れ未完了） */
-    .status-completed { border-color: #94a3b8; background-color: #f1f5f9; color: #64748b; opacity: 0.75; } /* 薄い表示（完了済み） */
+    .status-normal { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }
+    .status-overdue { border-color: #0f172a; background-color: #f8fafc; color: #0f172a; }
+    .status-completed { border-color: #94a3b8; background-color: #f1f5f9; color: #64748b; opacity: 0.75; }
 
     .grid-body-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; background: #fff; }
     .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 20; }
@@ -243,7 +241,6 @@
     .project-square { font-size: 0.85rem; flex-shrink: 0; line-height: 1; margin-right: 1px; }
     .task-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; color: #333; }
 
-    /* 「+〇件」バッジのスタイル */
     .more-badge {
         position: absolute; height: 22px; padding: 0 8px; box-sizing: border-box;
         font-size: 0.75rem; font-weight: bold; background-color: #1e293b; color: #ffffff;
@@ -253,19 +250,19 @@
     }
     .more-badge:hover { background-color: #0f172a; }
 
-    /* モーダルのスタイル */
+    /* モーダルの共通スタイル（少し大きめに調整） */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center;
         z-index: 9999;
     }
     .modal-content {
-        background: #fff; width: 520px; max-width: 92%; border-radius: 8px;
+        background: #fff; width: 620px; max-width: 92%; border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column;
     }
     .modal-header {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+        padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
     }
     .modal-tabs { display: flex; gap: 8px; }
     .modal-tab-btn {
@@ -279,28 +276,28 @@
     .modal-close:hover { color: #0f172a; }
     
     .modal-body {
-        padding: 20px; font-size: 0.9rem; color: #334155; max-height: 70vh; overflow-y: auto;
+        padding: 24px; font-size: 0.95rem; color: #334155; max-height: 75vh; overflow-y: auto;
     }
-    .tab-pane { display: none; flex-direction: column; gap: 12px; }
+    .tab-pane { display: none; flex-direction: column; gap: 14px; }
     .tab-pane.active { display: flex; }
 
     .modal-row { display: flex; gap: 12px; line-height: 1.5; }
     .modal-row strong { min-width: 95px; color: #64748b; text-align: right; flex-shrink: 0; }
     .modal-row span { word-break: break-all; flex: 1; color: #1e293b; }
 
-    /* 編集フォーム用スタイル */
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group label { font-weight: bold; color: #475569; font-size: 0.85rem; }
+    /* フォーム用スタイル（気持ち大きくゆったり） */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-weight: bold; color: #334155; font-size: 0.9rem; }
     .form-control {
-        width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px;
-        font-size: 0.9rem; box-sizing: border-box; color: #1e293b;
+        width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
+        font-size: 0.95rem; box-sizing: border-box; color: #1e293b; background-color: #fff;
     }
     .form-control:focus { outline: none; border-color: #1b6ef3; }
-    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .modal-footer {
-        padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;
+        padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;
     }
-    .btn-save { background: #1b6ef3; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .btn-save { background: #1b6ef3; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
     .btn-save:hover { background: #1557b0; }
 
     .week-container { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
@@ -344,7 +341,7 @@
 							<!-- 1行目: 案件フィルター と 右側に「+ 新規タスク作成」ボタン -->
 							<div class="filter-group-row2" style="margin-bottom: 5px;">
 								<div class="filter-group" style="flex: 1;">
-									<span class="filter-label">プロジェクト:</span>
+									<span class="filter-label">案件:</span>
 									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
 								<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
@@ -491,42 +488,24 @@
         </div>
     </div>
 
-    <!-- 新規タスク作成モーダル -->
+    <!-- 新規タスク作成モーダル（ご指定のレイアウト＆サイズに調整） -->
     <div id="createTaskModal" class="modal-overlay" style="display: none;" onclick="closeCreateModalOnBackdrop(event)">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="margin:0; font-size:1.05rem; color:#1e293b;">新規タスク作成</h3>
+                <h3 style="margin:0; font-size:1.2rem; font-weight:bold; color:#1e293b;">タスクの追加</h3>
                 <button type="button" class="modal-close" onclick="closeCreateModal()">×</button>
             </div>
             
             <div class="modal-body">
                 <form id="createTaskForm" action="TaskCreateServlet" method="post">
+                    <!-- 1. タスク名 -->
                     <div class="form-group">
-                        <label>タスク名</label>
-                        <input type="text" name="taskName" class="form-control" required>
+                        <label>タスク名 <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="taskName" class="form-control" placeholder="例：要件定義書の作成" required>
                     </div>
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label>プロジェクト</label>
-                        <select name="projectId" class="form-control" required>
-                            <% for (Map<String, String> p : projList) { %>
-                                <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
-                            <% } %>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label>担当者</label>
-                        <select name="userId" class="form-control">
-                            <option value="">（未設定）</option>
-                            <% for (Map<String, String> u : userList) { %>
-                                <option value="<%= u.get("id") %>"><%= u.get("name") %></option>
-                            <% } %>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label>説明</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="form-row-2" style="margin-top: 10px;">
+
+                    <!-- 2. 状態 & 優先度 (2カラム) -->
+                    <div class="form-row-2" style="margin-top: 14px;">
                         <div class="form-group">
                             <label>状態</label>
                             <select name="status" class="form-control">
@@ -544,7 +523,9 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-row-2" style="margin-top: 10px;">
+
+                    <!-- 3. 開始日 & 期限 (2カラム) -->
+                    <div class="form-row-2" style="margin-top: 14px;">
                         <div class="form-group">
                             <label>開始日</label>
                             <input type="date" name="startDate" class="form-control">
@@ -553,6 +534,33 @@
                             <label>期限</label>
                             <input type="date" name="dueDate" class="form-control">
                         </div>
+                    </div>
+
+                    <!-- 4. 担当者 -->
+                    <div class="form-group" style="margin-top: 14px;">
+                        <label>担当者</label>
+                        <select name="userId" class="form-control">
+                            <option value="">未設定</option>
+                            <% for (Map<String, String> u : userList) { %>
+                                <option value="<%= u.get("id") %>"><%= u.get("name") %></option>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- 5. プロジェクト（案件） -->
+                    <div class="form-group" style="margin-top: 14px;">
+                        <label>プロジェクト</label>
+                        <select name="projectId" class="form-control" required>
+                            <% for (Map<String, String> p : projList) { %>
+                                <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- 6. 説明 -->
+                    <div class="form-group" style="margin-top: 14px;">
+                        <label>説明</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="タスクの詳細や備考を入力..."></textarea>
                     </div>
                 </form>
             </div>
@@ -786,7 +794,6 @@
         return d;
     }
 
-    // 詳細・編集モーダル制御
     function switchModalTab(tabName) {
         document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
