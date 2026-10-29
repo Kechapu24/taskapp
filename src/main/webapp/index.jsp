@@ -160,7 +160,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>カレンダー</title>
+<title>タスク管理アプリ - カレンダー</title>
 <link rel="stylesheet" href="css/common.css">
 <style>
     :root {
@@ -341,7 +341,7 @@
 							<!-- 1行目: 案件フィルター と 右側に「+ 新規タスク作成」ボタン -->
 							<div class="filter-group-row2" style="margin-bottom: 5px;">
 								<div class="filter-group" style="flex: 1;">
-									<span class="filter-label">案件:</span>
+									<span class="filter-label">プロジェクト:</span>
 									<div id="projectLegends" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
 								</div>
 								<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
