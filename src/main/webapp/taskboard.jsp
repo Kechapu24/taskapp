@@ -45,57 +45,17 @@
 				%>
 
 				<%
+				String scopeCondition;
+				int scopeId;
 				if (personalMode) {
-				%>
-
-				<!-- 個人モードのタスクボード -->
-				<%
-				int personalTodoCount = 0;
-				int personalDoingCount = 0;
-				int personalDoneCount = 0;
-
-				try {
-					Class.forName("org.postgresql.Driver");
-
-					Connection conn = DriverManager.getConnection("jdbc:postgresql://172.16.1.119:5432/taskapp", "taskuser",
-					"taskpass");
-
-					String countSql = "SELECT status, COUNT(*) AS task_count " + "FROM personal_task " + "WHERE user_id = ? "
-					+ "GROUP BY status";
-
-					PreparedStatement stmt = conn.prepareStatement(countSql);
-
-					stmt.setInt(1, loginUserId);
-
-					ResultSet rs = stmt.executeQuery();
-
-					while (rs.next()) {
-
-						String status = rs.getString("status");
-						int count = rs.getInt("task_count");
-
-						if ("未着手".equals(status)) {
-					personalTodoCount = count;
-
-						} else if ("進行中".equals(status)) {
-					personalDoingCount = count;
-
-						} else if ("完了".equals(status)) {
-					personalDoneCount = count;
-						}
-					}
-
-					rs.close();
-					stmt.close();
-					conn.close();
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				%>
-
-				<%
+					// 個人モード
+					scopeCondition = "p.user_id = ? ";
+					scopeId = loginUserId;
 				} else {
+					// 団体モード
+					scopeCondition = "p.org_id = ? ";
+					scopeId = activeOrgId;
+				}
 				%>
 
 				<%
@@ -118,10 +78,14 @@
 					Class.forName("org.postgresql.Driver");
 					Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-					String countSql = "SELECT status, COUNT(*) AS task_count " + "FROM task " + "GROUP BY status";
+					String countSql = "SELECT t.status, COUNT(*) AS task_count " + "FROM task t "
+					+ "JOIN project p ON t.project_id = p.project_id " + "WHERE " + scopeCondition + "GROUP BY t.status";
 
-					Statement countStmt = countConn.createStatement();
-					ResultSet countRs = countStmt.executeQuery(countSql);
+					PreparedStatement countStmt = countConn.prepareStatement(countSql);
+
+					countStmt.setInt(1, scopeId);
+
+					ResultSet countRs = countStmt.executeQuery();
 
 					while (countRs.next()) {
 						String status = countRs.getString("status");
@@ -181,7 +145,7 @@
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									sql += "AND t.task_name ILIKE ? ";
@@ -234,6 +198,9 @@
 								int param = 1;
 
 								stmt.setString(param++, "未着手");
+
+								// 個人ならuser_id、団体ならorg_id
+								stmt.setInt(param++, scopeId);
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									stmt.setString(param++, "%" + keyword.trim() + "%");
@@ -456,7 +423,7 @@
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									sql += "AND t.task_name ILIKE ? ";
@@ -509,6 +476,9 @@
 								int param = 1;
 
 								stmt.setString(param++, "進行中");
+
+								// 個人ならuser_id、団体ならorg_id
+								stmt.setInt(param++, scopeId);
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									stmt.setString(param++, "%" + keyword.trim() + "%");
@@ -731,7 +701,7 @@
 								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
 								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
 								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? ";
+								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									sql += "AND t.task_name ILIKE ? ";
@@ -784,6 +754,9 @@
 								int param = 1;
 
 								stmt.setString(param++, "完了");
+
+								// 個人ならuser_id、団体ならorg_id
+								stmt.setInt(param++, scopeId);
 
 								if (keyword != null && !keyword.trim().isEmpty()) {
 									stmt.setString(param++, "%" + keyword.trim() + "%");
@@ -1129,9 +1102,6 @@
 
 			</div>
 
-			<%
-			}
-			%>
 
 			<%@ include file="common/footer.jsp"%>
 
