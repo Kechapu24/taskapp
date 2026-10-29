@@ -342,7 +342,6 @@
 				<div class="calendar-container">
 					<div class="calendar-header">
 						<div class="header-top-row">
-							<h2 style="margin:0; font-size:1.6rem;">カレンダー</h2>
 							<button type="button" class="btn-create-task" onclick="openCreateModal()">+ 新規タスク作成</button>
 						</div>
 						
