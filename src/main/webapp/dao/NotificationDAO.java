@@ -470,5 +470,90 @@ public class NotificationDAO {
             "タスク「" + taskName + "」の成果物のレビューをお願いします。"
         );
     }
+ // ==========================================
+ // ⑯ タスク担当者にまとめて通知する
+ // ==========================================
+ public int notifyTaskAssignees(
+         int taskId,
+         int projectId,
+         int actorUserId,
+         String type,
+         String message) {
 
+     List<Integer> recipientIds = new ArrayList<>();
+
+     String sql =
+         "SELECT user_id " +
+         "FROM task_assignee " +
+         "WHERE task_id = ? AND user_id <> ?";
+
+     // ① 通知対象の担当者IDを取得する
+     try (Connection conn =
+              DriverManager.getConnection(URL, USER, PASSWORD);
+          PreparedStatement ps = conn.prepareStatement(sql)) {
+
+         ps.setInt(1, taskId);
+         ps.setInt(2, actorUserId);
+
+         try (ResultSet rs = ps.executeQuery()) {
+             while (rs.next()) {
+                 recipientIds.add(rs.getInt("user_id"));
+             }
+         }
+
+     } catch (SQLException e) {
+         e.printStackTrace();
+         return 0;
+     }
+
+     // ② 取得した担当者それぞれに通知を登録する
+     int successCount = 0;
+
+     for (int recipientId : recipientIds) {
+         boolean success = insertNotification(
+             recipientId,
+             projectId,
+             taskId,
+             type,
+             message
+         );
+
+         if (success) {
+             successCount++;
+         }
+     }
+
+     return successCount;
+ }
+ NotificationDAO notificationDAO = new NotificationDAO();
+
+ int count = notificationDAO.notifyTaskAssignees(
+     taskId,
+     projectId,
+     loginUserId,
+     "TASK_CREATED",
+     "新しいタスク「" + taskName + "」が作成されました。"
+ );
+ String type = "完了".equals(newStatus)
+		    ? "TASK_COMPLETED"
+		    : "STATUS_CHANGED";
+
+		String message = "タスク「" + taskName
+		    + "」の状態が「" + newStatus + "」に変更されました。";
+
+		notificationDAO.notifyTaskAssignees(
+		    taskId,
+		    projectId,
+		    loginUserId,
+		    type,
+		    message
+		);
+		notificationDAO.notifyTaskAssignees(
+			    taskId,
+			    projectId,
+			    loginUserId,
+			    "COMMENT_ADDED",
+			    "担当タスク「" + taskName
+			        + "」に新しいコメントが追加されました。"
+			);
 }
