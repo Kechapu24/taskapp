@@ -31,7 +31,7 @@ Java Servlet/JSPとPostgreSQLを用いたチーム開発のタスク管理アプ
 | Apache HTTP Server | Webサーバー |
 | JDBC（DriverManager方式） | DB接続 |
 | DAOパターン | データアクセス層の分離 |
-| 仮想環境（VirtualBox等） | 開発・検証環境 |
+| 仮想環境 | 開発・検証環境 |
 | GitHub | バージョン管理・チーム共有 |
 
 ---
@@ -77,7 +77,7 @@ GitHubを介してチーム全員が同じ環境を共有して開発を進め�
 - Apache Tomcat 9.0.85
 - javax.servlet
 - PostgreSQL 16.13
-- 仮想環境（VirtualBox 等）
+- 仮想環境（チーム開発では仮想環境上のLinuxサーバーを利用）
 
 ---
 
