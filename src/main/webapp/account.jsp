@@ -21,7 +21,7 @@
         <c:forEach var="org" items="${sessionScope.orgList}">
             <option value="${org.orgId}"
                 <c:if test="${org.orgId == sessionScope.activeOrgId}">selected</c:if>>
-                ${org.orgName}
+                <c:out value="${org.orgName}" />
             </option>
         </c:forEach>
     </select>
@@ -29,6 +29,11 @@
     <button type="submit">切り替え</button>
 
 </form>
+
+<hr>
+
+<%-- プロフィール画像の設定(今回追加) --%>
+<jsp:include page="/common/icon_upload.jsp" />
 
 <hr>
 

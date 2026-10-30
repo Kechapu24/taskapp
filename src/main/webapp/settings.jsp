@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%
 request.setCharacterEncoding("UTF-8");
 
@@ -150,11 +151,14 @@ if (currentTheme == null) {
 
 				<aside class="settings-sidebar">
 					<ul class="settings-menu">
-						<li class="settings-item active" id="tab-general"><a href="#" class="custom-theme-accent-active"
-							onclick="switchTab('general')">一般</a></li>
-						<li class="settings-item" id="tab-account"><a href="#" class="custom-theme-accent-active"
-							onclick="switchTab('account')">アカウント</a></li>
-						<li class="settings-item" id="tab-notifications"><a href="#" class="custom-theme-accent-active"
+						<li class="settings-item active" id="tab-general"><a href="#"
+							class="custom-theme-accent-active" onclick="switchTab('general')">一般</a></li>
+						<li class="settings-item" id="tab-account"><a href="#"
+							class="custom-theme-accent-active" onclick="switchTab('account')">アカウント</a></li>
+						<li class="settings-item" id="tab-organization"><a href="#"
+							onclick="switchTab('organization')">所属</a></li>
+						<li class="settings-item" id="tab-notifications"><a href="#"
+							class="custom-theme-accent-active"
 							onclick="switchTab('notifications')">通知</a></li>
 					</ul>
 				</aside>
@@ -234,34 +238,75 @@ if (currentTheme == null) {
 								placeholder="現在のパスワード"><br> <input type="password"
 								class="setting-input" placeholder="新しいパスワード"
 								style="margin-top: 10px;"><br>
-							<button class="setting-btn custom-theme-accent" style="margin-top: 15px;">変更を保存</button>
+							<button class="setting-btn custom-theme-accent"
+								style="margin-top: 15px;">変更を保存</button>
 						</div>
 					</div>
+					<div id="content-organization" class="setting-section">
 
-					<div id="content-notifications" class="setting-section">
-						<h2>通知設定</h2>
+						<h2>所属管理</h2>
 						<br>
 
 						<div class="setting-group">
-							<label class="checkbox-label main-checkbox"> <input
-								type="checkbox" id="allowAllNotifications" checked> 通知許可
-							</label>
-							<hr
-								style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+							<h3>所属団体</h3>
 
-							<div class="checkbox-list">
-								<label class="checkbox-label"><input type="checkbox"
-									checked> メンション強制</label> <label class="checkbox-label"><input
-									type="checkbox" checked> プロジェクトの更新</label> <label
-									class="checkbox-label"><input type="checkbox" checked>
-									タスクの追加・変更</label> <label class="checkbox-label"><input
-									type="checkbox" checked> コメントの追加</label> <label
-									class="checkbox-label"><input type="checkbox" checked>
-									担当者の割り当て</label>
+							<c:forEach var="org" items="${orgList}">
+
+								<div class="org-card">
+
+									<div class="org-name">
+										<c:out value="${org.orgName}" />
+									</div>
+
+									<div class="org-role">
+
+										<c:choose>
+
+											<c:when test="${org.orgRole == 'admin'}">
+                    管理者
+                </c:when>
+
+											<c:otherwise>
+                    メンバー
+                </c:otherwise>
+
+										</c:choose>
+
+									</div>
+
+								</div>
+
+							</c:forEach>
+
+							<button class="setting-btn custom-theme-accent"
+								onclick="location.href='organization_create.jsp'">＋
+								新しい団体を作成</button>
+
+						</div>
+						<div id="content-notifications" class="setting-section">
+							<h2>通知設定</h2>
+							<br>
+
+							<div class="setting-group">
+								<label class="checkbox-label main-checkbox"> <input
+									type="checkbox" id="allowAllNotifications" checked>
+									通知許可
+								</label>
+								<hr
+									style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+								<div class="checkbox-list">
+									<label class="checkbox-label"><input type="checkbox"
+										checked> メンション強制</label> <label class="checkbox-label"><input
+										type="checkbox" checked> プロジェクトの更新</label> <label
+										class="checkbox-label"><input type="checkbox" checked>
+										タスクの追加・変更</label> <label class="checkbox-label"><input
+										type="checkbox" checked> コメントの追加</label> <label
+										class="checkbox-label"><input type="checkbox" checked>
+										担当者の割り当て</label>
+								</div>
 							</div>
 						</div>
-					</div>
-
 				</section>
 			</div>
 
