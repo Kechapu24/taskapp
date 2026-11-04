@@ -1,46 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="true"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="java.util.*"%>
-<%@ include file="common/mode.jsp" %>
-
-<%!
-    // JavaScriptへ文字列を安全に渡すためのエスケープ
-    private String jsEscape(String value) {
-        if (value == null) return "";
-        return value.replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\r", "")
-                    .replace("\n", "\\n")
-                    .replace("\u2028", "\\u2028")
-                    .replace("\u2029", "\\u2029");
-    }
-
-    // HTMLのoption内に文字列を表示するためのエスケープ
-    private String htmlEscape(String value) {
-        if (value == null) return "";
-        return value.replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                    .replace("\"", "&quot;")
-                    .replace("'", "&#39;");
-    }
-%>
-
 <%
     request.setCharacterEncoding("UTF-8");
     request.setAttribute("currentPage", "calendar");
 
-    // common/mode.jspで定義された変数を利用する。
-    // personalMode == true  : p.user_id = loginUserId
-    // personalMode == false : p.org_id = activeOrgId
-    String scopeCondition;
-    if (personalMode) {
-        scopeCondition = "p.user_id = ? ";
-    } else {
-        scopeCondition = "p.org_id = ? ";
-    }
+    String loginUserName = (String) session.getAttribute("userName");
+    if (loginUserName == null) loginUserName = "";
 
-    // このカレンダーページで使用するデータベース接続設定
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
     String dbPassword = "taskpass";
@@ -48,31 +15,15 @@
     List<Map<String, String>> projList = new ArrayList<>();
     List<Map<String, String>> userList = new ArrayList<>();
     List<Map<String, String>> taskList = new ArrayList<>();
-    String calendarLoadError = null;
 
     Connection conn = null;
-    PreparedStatement pStmt = null;
-    PreparedStatement uStmt = null;
-    PreparedStatement tStmt = null;
-    ResultSet pRs = null;
-    ResultSet uRs = null;
-    ResultSet tRs = null;
-
     try {
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト一覧：個人／団体モードに応じて取得する。
-        String projectSql =
-            "SELECT p.project_id, p.project_name " +
-            "FROM project p " +
-            "WHERE " + scopeCondition +
-            "ORDER BY p.project_id ASC";
-
-        pStmt = conn.prepareStatement(projectSql);
-        pStmt.setInt(1, scopeId);
-        pRs = pStmt.executeQuery();
-
+        // 1. プロジェクト情報の取得
+        Statement pStmt = conn.createStatement();
+        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project ORDER BY project_id ASC");
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
@@ -83,22 +34,17 @@
             Map<String, String> m = new HashMap<>();
             m.put("id", "proj-" + id);
             m.put("rawId", String.valueOf(id));
-            m.put("name", name);
+            m.put("name", name.replace("\"", "\\\"").replace("'", "\\'"));
             m.put("color", colors[cIdx % colors.length]);
             projList.add(m);
             cIdx++;
         }
         pRs.close();
-        pRs = null;
         pStmt.close();
-        pStmt = null;
 
-        // 2. 担当者候補。
-        // usersテーブルに団体所属を示す列が提示されていないため、候補は全ユーザーを取得する。
-        // プロジェクト選択肢は上のSQLで現在のモードに絞り込んでいる。
-        String userSql = "SELECT user_id, user_name FROM users ORDER BY user_id ASC";
-        uStmt = conn.prepareStatement(userSql);
-        uRs = uStmt.executeQuery();
+        // 2. ユーザー情報の取得
+        Statement uStmt = conn.createStatement();
+        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
             int id = uRs.getInt("user_id");
             String name = uRs.getString("user_name");
@@ -106,30 +52,16 @@
 
             Map<String, String> m = new HashMap<>();
             m.put("id", String.valueOf(id));
-            m.put("name", name);
+            m.put("name", name.replace("\"", "\\\"").replace("'", "\\'"));
             userList.add(m);
         }
         uRs.close();
-        uRs = null;
         uStmt.close();
-        uStmt = null;
 
-        // 3. タスク一覧：taskとprojectを結合し、個人／団体モード条件を適用する。
-        // 担当者本人かどうかは一覧取得条件に含めず、画面の担当者フィルターで絞り込む。
-        String taskSql =
-            "SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id " +
-            "FROM task t " +
-            "JOIN project p ON t.project_id = p.project_id " +
-            "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id " +
-            "LEFT JOIN users u ON ta.user_id = u.user_id " +
-            "WHERE " + scopeCondition +
-            "ORDER BY t.task_id ASC";
-
+        // 3. タスク情報の取得
+        Statement tStmt = conn.createStatement();
+        ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id ORDER BY t.task_id ASC");
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
-        tStmt = conn.prepareStatement(taskSql);
-        tStmt.setInt(1, scopeId);
-        tRs = tStmt.executeQuery();
-
         while (tRs.next()) {
             int tid = tRs.getInt("task_id");
             int pid = tRs.getInt("project_id");
@@ -145,57 +77,53 @@
 
             java.sql.Date sDate = tRs.getDate("start_date");
             java.sql.Date dDate = tRs.getDate("due_date");
+            
             String uName = tRs.getString("u_name");
             int uId = tRs.getInt("u_id");
-            boolean userIdIsNull = tRs.wasNull();
-            boolean hasAssignee = !userIdIsNull && uName != null && !uName.isEmpty();
 
             if (!tMapGroup.containsKey(tid)) {
                 Map<String, Object> tm = new HashMap<>();
                 tm.put("id", tid);
                 tm.put("rawProjectId", pid);
                 tm.put("projectId", "proj-" + pid);
-                tm.put("name", tName);
-                tm.put("description", description);
+                tm.put("name", tName.replace("\"", "\\\"").replace("'", "\\'"));
+                tm.put("description", description.replace("\"", "\\\"").replace("'", "\\'").replace("\r", "").replace("\n", "\\n"));
                 tm.put("priority", priority);
                 tm.put("status", status != null ? status : "");
                 tm.put("startDate", sDate != null ? sDate.toString() : "");
                 tm.put("dueDate", dDate != null ? dDate.toString() : "");
-
+                
                 List<String> assignees = new ArrayList<>();
                 List<Integer> assigneeIds = new ArrayList<>();
-                if (hasAssignee) {
+                if (uName != null && !uName.isEmpty()) {
                     assignees.add(uName);
                     assigneeIds.add(uId);
                 }
                 tm.put("assignees", assignees);
                 tm.put("assigneeIds", assigneeIds);
                 tMapGroup.put(tid, tm);
-            } else if (hasAssignee) {
-                @SuppressWarnings("unchecked")
-                List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
-                @SuppressWarnings("unchecked")
-                List<Integer> assigneeIds = (List<Integer>) tMapGroup.get(tid).get("assigneeIds");
-
-                // 表示名ではなくuser_idで重複を判定する。
-                if (!assigneeIds.contains(uId)) {
-                    assigneeIds.add(uId);
-                    assignees.add(uName);
+            } else {
+                if (uName != null && !uName.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
+                    @SuppressWarnings("unchecked")
+                    List<Integer> assigneeIds = (List<Integer>) tMapGroup.get(tid).get("assigneeIds");
+                    if (!assignees.contains(uName)) {
+                        assignees.add(uName);
+                        assigneeIds.add(uId);
+                    }
                 }
             }
         }
         tRs.close();
-        tRs = null;
         tStmt.close();
-        tStmt = null;
 
-        // JavaScriptに渡す形式に変換する。
         for (Map<String, Object> tm : tMapGroup.values()) {
             @SuppressWarnings("unchecked")
             List<String> assignees = (List<String>) tm.get("assignees");
             @SuppressWarnings("unchecked")
             List<Integer> assigneeIds = (List<Integer>) tm.get("assigneeIds");
-
+            
             String assigneeStr = assignees.isEmpty() ? "未設定" : String.join(", ", assignees);
 
             Map<String, String> fm = new HashMap<>();
@@ -208,30 +136,22 @@
             fm.put("status", (String) tm.get("status"));
             fm.put("startDate", (String) tm.get("startDate"));
             fm.put("dueDate", (String) tm.get("dueDate"));
-            fm.put("assignee", assigneeStr);
-
+            fm.put("assignee", assigneeStr.replace("\"", "\\\"").replace("'", "\\'"));
+            
             StringBuilder idsSb = new StringBuilder();
             for (int i = 0; i < assigneeIds.size(); i++) {
                 if (i > 0) idsSb.append(",");
                 idsSb.append(assigneeIds.get(i));
             }
             fm.put("assigneeIds", idsSb.toString());
+
             taskList.add(fm);
         }
 
     } catch (Exception e) {
-        // DB・SQLエラーをEclipseのConsoleとTomcatのアプリケーションログへ記録する。
         e.printStackTrace();
-        application.log("Calendar page data loading failed", e);
-        calendarLoadError = e.getClass().getSimpleName() + ": " + e.getMessage();
     } finally {
-        if (pRs != null) { try { pRs.close(); } catch (SQLException ex) { application.log("pRs close failed", ex); } }
-        if (uRs != null) { try { uRs.close(); } catch (SQLException ex) { application.log("uRs close failed", ex); } }
-        if (tRs != null) { try { tRs.close(); } catch (SQLException ex) { application.log("tRs close failed", ex); } }
-        if (pStmt != null) { try { pStmt.close(); } catch (SQLException ex) { application.log("pStmt close failed", ex); } }
-        if (uStmt != null) { try { uStmt.close(); } catch (SQLException ex) { application.log("uStmt close failed", ex); } }
-        if (tStmt != null) { try { tStmt.close(); } catch (SQLException ex) { application.log("tStmt close failed", ex); } }
-        if (conn != null) { try { conn.close(); } catch (SQLException ex) { application.log("DB connection close failed", ex); } }
+        if (conn != null) { try { conn.close(); } catch (SQLException ex) {} }
     }
 %>
 <jsp:include page="common/theme.jsp" />
@@ -414,12 +334,6 @@
 
 			<div class="content-body" style="padding: 0;">
 				<div class="calendar-container">
-                    <% if (calendarLoadError != null) { %>
-                    <div style="margin:10px 0;padding:10px 14px;border:1px solid #dc2626;background:#fef2f2;color:#991b1b;border-radius:6px;">
-                        カレンダーのデータ取得に失敗しました。Tomcatのログも確認してください。
-                        <div style="font-size:0.85rem;margin-top:4px;"><%= htmlEscape(calendarLoadError) %></div>
-                    </div>
-                    <% } %>
 					<div class="calendar-header">
 						<div class="filter-section">
 							<!-- 1行目: 案件フィルター と 右側に「+ 新規タスク作成」ボタン -->
@@ -526,7 +440,7 @@
                             <label>プロジェクト</label>
                             <select id="editProjectId" name="projectId" class="form-control">
                                 <% for (Map<String, String> p : projList) { %>
-                                    <option value="<%= p.get("rawId") %>"><%= htmlEscape(p.get("name")) %></option>
+                                    <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
                                 <% } %>
                             </select>
                         </div>
@@ -626,7 +540,7 @@
                         <select name="userId" class="form-control">
                             <option value="">未設定</option>
                             <% for (Map<String, String> u : userList) { %>
-                                <option value="<%= u.get("id") %>"><%= htmlEscape(u.get("name")) %></option>
+                                <option value="<%= u.get("id") %>"><%= u.get("name") %></option>
                             <% } %>
                         </select>
                     </div>
@@ -636,7 +550,7 @@
                         <label>プロジェクト</label>
                         <select name="projectId" class="form-control" required>
                             <% for (Map<String, String> p : projList) { %>
-                                <option value="<%= p.get("rawId") %>"><%= htmlEscape(p.get("name")) %></option>
+                                <option value="<%= p.get("rawId") %>"><%= p.get("name") %></option>
                             <% } %>
                         </select>
                     </div>
@@ -672,14 +586,14 @@
     const projects = [
         <% for (int i = 0; i < projList.size(); i++) {
             Map<String, String> p = projList.get(i); %>
-            { id: "<%= p.get("id") %>", rawId: "<%= p.get("rawId") %>", name: "<%= jsEscape(p.get("name")) %>", color: "<%= p.get("color") %>" }<%= (i < projList.size() - 1) ? "," : "" %>
+            { id: "<%= p.get("id") %>", rawId: "<%= p.get("rawId") %>", name: "<%= p.get("name") %>", color: "<%= p.get("color") %>" }<%= (i < projList.size() - 1) ? "," : "" %>
         <% } %>
     ];
 
     const users = [
         <% for (int i = 0; i < userList.size(); i++) {
             Map<String, String> u = userList.get(i); %>
-            { id: "<%= u.get("id") %>", name: "<%= jsEscape(u.get("name")) %>" }<%= (i < userList.size() - 1) ? "," : "" %>
+            { id: "<%= u.get("id") %>", name: "<%= u.get("name") %>" }<%= (i < userList.size() - 1) ? "," : "" %>
         <% } %>
     ];
 
@@ -690,12 +604,11 @@
                 id: "<%= t.get("id") %>",
                 rawProjectId: "<%= t.get("rawProjectId") %>",
                 projectId: "<%= t.get("projectId") %>",
-                name: "<%= jsEscape(t.get("name")) %>",
-                description: "<%= jsEscape(t.get("description")) %>",
-                priority: "<%= jsEscape(t.get("priority")) %>",
-                status: "<%= jsEscape(t.get("status")) %>",
-                assignee: "<%= jsEscape(t.get("assignee")) %>",
-                assigneeIds: [<%= t.get("assigneeIds") %>],
+                name: "<%= t.get("name") %>",
+                description: "<%= t.get("description") %>",
+                priority: "<%= t.get("priority") %>",
+                status: "<%= t.get("status") %>",
+                assignee: "<%= t.get("assignee") %>",
                 startDate: "<%= t.get("startDate") %>",
                 dueDate: "<%= t.get("dueDate") %>",
                 isCompleted: <%= "完了".equals(t.get("status")) %>
@@ -703,13 +616,13 @@
         <% } %>
     ];
     
-    const loginUserId = <%= loginUserId %>;
+    const loginUserName = "<%= loginUserName %>";
     const actualToday = new Date();
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
     let activeProjectId = null; 
-    let activeAssigneeId = null;  
+    let activeAssignee = null;  
 
     // 新規作成モーダル制御
     function openCreateModal() {
@@ -733,10 +646,11 @@
     }
 
     function toggleMyTask() {
-        // ログイン中のユーザーIDが担当者に設定されたタスクだけを表示する。
-        activeAssigneeId = (activeAssigneeId === Number(loginUserId))
-            ? null
-            : Number(loginUserId);
+        if (!loginUserName) {
+            alert("ログインユーザー情報が見つかりません。");
+            return;
+        }
+        activeAssignee = (activeAssignee === loginUserName) ? null : loginUserName;
         renderAll();
     }
 
@@ -770,9 +684,8 @@
         renderAll();
     }
 
-    function toggleAssigneeFilter(assigneeId) {
-        const selectedId = Number(assigneeId);
-        activeAssigneeId = activeAssigneeId === selectedId ? null : selectedId;
+    function toggleAssigneeFilter(assigneeName) {
+        activeAssignee = activeAssignee === assigneeName ? null : assigneeName;
         renderAll();
     }
 
@@ -802,7 +715,7 @@
 
         const myTaskBtn = document.getElementById('myTaskBtn');
         if (myTaskBtn) {
-            if (activeAssigneeId === Number(loginUserId)) {
+            if (loginUserName && activeAssignee === loginUserName) {
                 myTaskBtn.classList.add('active');
             } else {
                 myTaskBtn.classList.remove('active');
@@ -812,11 +725,8 @@
         const assigneeContainer = document.getElementById('assigneeLegends');
         if (assigneeContainer) {
             assigneeContainer.innerHTML = users.map(u => {
-                const userId = Number(u.id);
-                const stateClass = activeAssigneeId !== null
-                    ? (activeAssigneeId === userId ? 'active' : 'inactive')
-                    : '';
-                return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(' + userId + ')">' +
+                const stateClass = activeAssignee ? (activeAssignee === u.name ? 'active' : 'inactive') : '';
+                return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(\'' + u.name + '\')">' +
                             '<span>' + u.name + '</span>' +
                         '</div>';
             }).join('');
@@ -843,9 +753,7 @@
     function getFilteredTasks() {
         return tasks.filter(task => {
             const matchProj = activeProjectId ? task.projectId === activeProjectId : true;
-            const matchAssignee = activeAssigneeId !== null
-                ? task.assigneeIds.includes(activeAssigneeId)
-                : true;
+            const matchAssignee = activeAssignee ? task.assignee.includes(activeAssignee) : true;
             return matchProj && matchAssignee;
         });
     }
