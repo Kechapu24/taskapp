@@ -33,28 +33,15 @@
 
 			<div class="content-body">
 
-				<%
-				User loginUser = (User) session.getAttribute("loginUser");
-				if (loginUser == null) {
-					response.sendRedirect(request.getContextPath() + "/login.jsp");
-					return;
-				}
-				int loginUserId = loginUser.getUserId();
-				Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
-				boolean personalMode = (activeOrgId == null);
-				%>
+				<%@ include file="common/mode.jsp"%>
 
 				<%
 				String scopeCondition;
-				int scopeId;
+
 				if (personalMode) {
-					// 個人モード
 					scopeCondition = "p.user_id = ? ";
-					scopeId = loginUserId;
 				} else {
-					// 団体モード
 					scopeCondition = "p.org_id = ? ";
-					scopeId = activeOrgId;
 				}
 				%>
 
