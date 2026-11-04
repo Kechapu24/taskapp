@@ -50,6 +50,8 @@
 				String filterUserId = request.getParameter("user_id");
 				String filterPriority = request.getParameter("priority");
 				String filterDeadline = request.getParameter("deadline");
+				String filterTagId = request.getParameter("tag_id");
+				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
 
 				int todoCount = 0;
@@ -64,12 +66,86 @@
 					Class.forName("org.postgresql.Driver");
 					Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-					String countSql = "SELECT t.status, COUNT(*) AS task_count " + "FROM task t "
-					+ "JOIN project p ON t.project_id = p.project_id " + "WHERE " + scopeCondition + "GROUP BY t.status";
+					String countSql =
+						      "SELECT t.status, COUNT(DISTINCT t.task_id) AS task_count "
+						    + "FROM task t "
+						    + "JOIN project p ON t.project_id = p.project_id "
+						    + "WHERE " + scopeCondition;
 
-					PreparedStatement countStmt = countConn.prepareStatement(countSql);
+						// タスク名検索
+						if (keyword != null && !keyword.trim().isEmpty()) {
+						    countSql += "AND t.task_name ILIKE ? ";
+						}
 
-					countStmt.setInt(1, scopeId);
+						// プロジェクト絞り込み
+						if (filterProjectId != null && !filterProjectId.isEmpty()) {
+						    countSql += "AND t.project_id = ? ";
+						}
+
+						// 担当者絞り込み
+						if (filterUserId != null && !filterUserId.isEmpty()) {
+						    countSql +=
+						          "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_assignee ta2 "
+						        + "WHERE ta2.task_id = t.task_id "
+						        + "AND ta2.user_id = ?"
+						        + ") ";
+						}
+
+						// 優先度絞り込み
+						if (filterPriority != null && !filterPriority.isEmpty()) {
+						    countSql += "AND t.priority = ? ";
+						}
+
+						// 期限絞り込み
+						if ("overdue".equals(filterDeadline)) {
+						    countSql += "AND t.due_date < CURRENT_DATE ";
+						} else if ("today".equals(filterDeadline)) {
+						    countSql += "AND t.due_date = CURRENT_DATE ";
+						} else if ("week".equals(filterDeadline)) {
+						    countSql +=
+						          "AND t.due_date BETWEEN CURRENT_DATE "
+						        + "AND CURRENT_DATE + INTERVAL '7 days' ";
+						}
+
+						countSql += "GROUP BY t.status";
+
+						PreparedStatement countStmt =
+						        countConn.prepareStatement(countSql);
+
+						int countParam = 1;
+
+						// 個人モードならuser_id、団体モードならorg_id
+						countStmt.setInt(countParam++, scopeId);
+
+						if (keyword != null && !keyword.trim().isEmpty()) {
+						    countStmt.setString(
+						        countParam++,
+						        "%" + keyword.trim() + "%"
+						    );
+						}
+
+						if (filterProjectId != null && !filterProjectId.isEmpty()) {
+						    countStmt.setInt(
+						        countParam++,
+						        Integer.parseInt(filterProjectId)
+						    );
+						}
+
+						if (filterUserId != null && !filterUserId.isEmpty()) {
+						    countStmt.setInt(
+						        countParam++,
+						        Integer.parseInt(filterUserId)
+						    );
+						}
+
+						if (filterPriority != null && !filterPriority.isEmpty()) {
+						    countStmt.setString(
+						        countParam++,
+						        filterPriority
+						    );
+						}
 
 					ResultSet countRs = countStmt.executeQuery();
 
