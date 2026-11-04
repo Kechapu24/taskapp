@@ -24,4 +24,3 @@ boolean personalMode =
 int scopeId =
  personalMode ? loginUserId : activeOrgId;
 %>
-%>
