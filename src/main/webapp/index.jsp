@@ -1,12 +1,32 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="true"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="java.util.*"%>
+<%@ page import="model.User"%>
 <%
     request.setCharacterEncoding("UTF-8");
     request.setAttribute("currentPage", "calendar");
 
-    String loginUserName = (String) session.getAttribute("userName");
-    if (loginUserName == null) loginUserName = "";
+    // タスクボードと同じログインユーザー情報を取得する。
+    // 共通ヘッダー等のJSP内変数との重複を避けるため、変数名にcalendarを付ける。
+    User calendarLoginUserObj = (User) session.getAttribute("loginUser");
+    if (calendarLoginUserObj == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
+
+    int calendarLoginUserId = calendarLoginUserObj.getUserId();
+    Integer calendarActiveOrgId = (Integer) session.getAttribute("activeOrgId");
+    boolean calendarPersonalMode = (calendarActiveOrgId == null);
+
+    String calendarScopeCondition;
+    int calendarScopeId;
+    if (calendarPersonalMode) {
+        calendarScopeCondition = "p.user_id = ? ";
+        calendarScopeId = calendarLoginUserId;
+    } else {
+        calendarScopeCondition = "p.org_id = ? ";
+        calendarScopeId = calendarActiveOrgId;
+    }
 
     String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
     String dbUser = "taskuser";
@@ -21,9 +41,12 @@
         Class.forName("org.postgresql.Driver");
         conn = DriverManager.getConnection(url, dbUser, dbPassword);
 
-        // 1. プロジェクト情報の取得
-        Statement pStmt = conn.createStatement();
-        ResultSet pRs = pStmt.executeQuery("SELECT * FROM project ORDER BY project_id ASC");
+        // 1. ログインユーザーの個人／団体モードに応じたプロジェクト情報の取得
+        String calendarProjectSql = "SELECT p.* FROM project p WHERE " + calendarScopeCondition
+                + "ORDER BY p.project_id ASC";
+        PreparedStatement calendarProjectStmt = conn.prepareStatement(calendarProjectSql);
+        calendarProjectStmt.setInt(1, calendarScopeId);
+        ResultSet pRs = calendarProjectStmt.executeQuery();
         String[] colors = {"#1b6ef3", "#20c997", "#fd7e14", "#6f42c1", "#e83e8c"};
         int cIdx = 0;
         while (pRs.next()) {
@@ -40,11 +63,11 @@
             cIdx++;
         }
         pRs.close();
-        pStmt.close();
+        calendarProjectStmt.close();
 
         // 2. ユーザー情報の取得
         Statement uStmt = conn.createStatement();
-        ResultSet uRs = uStmt.executeQuery("SELECT * FROM users ORDER BY user_id ASC");
+        ResultSet uRs = uStmt.executeQuery("SELECT user_id, user_name FROM users ORDER BY user_id ASC");
         while (uRs.next()) {
             int id = uRs.getInt("user_id");
             String name = uRs.getString("user_name");
@@ -58,9 +81,17 @@
         uRs.close();
         uStmt.close();
 
-        // 3. タスク情報の取得
-        Statement tStmt = conn.createStatement();
-        ResultSet tRs = tStmt.executeQuery("SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id LEFT JOIN users u ON ta.user_id = u.user_id ORDER BY t.task_id ASC");
+        // 3. ログインユーザーの個人／団体モードに応じたタスク情報の取得
+        String calendarTaskSql = "SELECT t.*, u.user_name AS u_name, ta.user_id AS u_id "
+                + "FROM task t "
+                + "JOIN project p ON t.project_id = p.project_id "
+                + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
+                + "LEFT JOIN users u ON ta.user_id = u.user_id "
+                + "WHERE " + calendarScopeCondition
+                + "ORDER BY t.task_id ASC";
+        PreparedStatement calendarTaskStmt = conn.prepareStatement(calendarTaskSql);
+        calendarTaskStmt.setInt(1, calendarScopeId);
+        ResultSet tRs = calendarTaskStmt.executeQuery();
         Map<Integer, Map<String, Object>> tMapGroup = new LinkedHashMap<>();
         while (tRs.next()) {
             int tid = tRs.getInt("task_id");
@@ -108,15 +139,17 @@
                     List<String> assignees = (List<String>) tMapGroup.get(tid).get("assignees");
                     @SuppressWarnings("unchecked")
                     List<Integer> assigneeIds = (List<Integer>) tMapGroup.get(tid).get("assigneeIds");
-                    if (!assignees.contains(uName)) {
-                        assignees.add(uName);
+                    if (!assigneeIds.contains(uId)) {
                         assigneeIds.add(uId);
+                        if (!assignees.contains(uName)) {
+                            assignees.add(uName);
+                        }
                     }
                 }
             }
         }
         tRs.close();
-        tStmt.close();
+        calendarTaskStmt.close();
 
         for (Map<String, Object> tm : tMapGroup.values()) {
             @SuppressWarnings("unchecked")
@@ -609,6 +642,7 @@
                 priority: "<%= t.get("priority") %>",
                 status: "<%= t.get("status") %>",
                 assignee: "<%= t.get("assignee") %>",
+                assigneeIds: [<%= t.get("assigneeIds") %>],
                 startDate: "<%= t.get("startDate") %>",
                 dueDate: "<%= t.get("dueDate") %>",
                 isCompleted: <%= "完了".equals(t.get("status")) %>
@@ -616,13 +650,13 @@
         <% } %>
     ];
     
-    const loginUserName = "<%= loginUserName %>";
+    const calendarLoginUserId = <%= calendarLoginUserId %>;
     const actualToday = new Date();
     
     let baseDate = new Date(actualToday);
     let currentView = 'month';
     let activeProjectId = null; 
-    let activeAssignee = null;  
+    let activeAssigneeId = null;
 
     // 新規作成モーダル制御
     function openCreateModal() {
@@ -646,11 +680,8 @@
     }
 
     function toggleMyTask() {
-        if (!loginUserName) {
-            alert("ログインユーザー情報が見つかりません。");
-            return;
-        }
-        activeAssignee = (activeAssignee === loginUserName) ? null : loginUserName;
+        const myId = Number(calendarLoginUserId);
+        activeAssigneeId = (activeAssigneeId === myId) ? null : myId;
         renderAll();
     }
 
@@ -684,8 +715,9 @@
         renderAll();
     }
 
-    function toggleAssigneeFilter(assigneeName) {
-        activeAssignee = activeAssignee === assigneeName ? null : assigneeName;
+    function toggleAssigneeFilter(assigneeId) {
+        const selectedId = Number(assigneeId);
+        activeAssigneeId = activeAssigneeId === selectedId ? null : selectedId;
         renderAll();
     }
 
@@ -715,7 +747,7 @@
 
         const myTaskBtn = document.getElementById('myTaskBtn');
         if (myTaskBtn) {
-            if (loginUserName && activeAssignee === loginUserName) {
+            if (activeAssigneeId === Number(calendarLoginUserId)) {
                 myTaskBtn.classList.add('active');
             } else {
                 myTaskBtn.classList.remove('active');
@@ -725,8 +757,11 @@
         const assigneeContainer = document.getElementById('assigneeLegends');
         if (assigneeContainer) {
             assigneeContainer.innerHTML = users.map(u => {
-                const stateClass = activeAssignee ? (activeAssignee === u.name ? 'active' : 'inactive') : '';
-                return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(\'' + u.name + '\')">' +
+                const userId = Number(u.id);
+                const stateClass = activeAssigneeId !== null
+                    ? (activeAssigneeId === userId ? 'active' : 'inactive')
+                    : '';
+                return '<div class="assignee-item ' + stateClass + '" onclick="toggleAssigneeFilter(' + userId + ')">' +
                             '<span>' + u.name + '</span>' +
                         '</div>';
             }).join('');
@@ -753,7 +788,9 @@
     function getFilteredTasks() {
         return tasks.filter(task => {
             const matchProj = activeProjectId ? task.projectId === activeProjectId : true;
-            const matchAssignee = activeAssignee ? task.assignee.includes(activeAssignee) : true;
+            const matchAssignee = activeAssigneeId !== null
+                ? task.assigneeIds.includes(activeAssigneeId)
+                : true;
             return matchProj && matchAssignee;
         });
     }
