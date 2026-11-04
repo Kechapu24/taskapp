@@ -27,53 +27,61 @@ import model.User;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
-    private final OrgDAO orgDAO = new OrgDAO();
+	private final UserDAO userDAO = new UserDAO();
+	private final OrgDAO orgDAO = new OrgDAO();
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 
-        String email = request.getParameter("email");
-        String inputPassword = request.getParameter("password");
+		String email = request.getParameter("email");
+		String inputPassword = request.getParameter("password");
 
-        User user = userDAO.findByEmail(email);
+		User user = userDAO.findByEmail(email);
 
-        // emailが存在しない、またはパスワードが一致しない場合は認証失敗
-        if (user == null || !user.getPassword().equals(inputPassword)) {
-            request.setAttribute("errorMessage", "メールアドレスまたはパスワードが違います");
-            request.setAttribute("email", email); // login.jspで入力欄に戻すため
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
-            return;
-        }
+		// emailが存在しない、またはパスワードが一致しない場合は認証失敗
+		if (user == null || !user.getPassword().equals(inputPassword)) {
+			request.setAttribute("errorMessage", "メールアドレスまたはパスワードが違います");
+			request.setAttribute("email", email); // login.jspで入力欄に戻すため
+			request.getRequestDispatcher("/login.jsp").forward(request, response);
+			return;
+		}
 
-        // 認証成功: セッションにユーザー情報を保存
-        HttpSession session = request.getSession();
-        session.setAttribute("loginUser", user);
+		// 認証成功: セッションにユーザー情報を保存
+		HttpSession session = request.getSession();
+		session.setAttribute("loginUser", user);
 
-        // このユーザーが所属する団体一覧を取得してセッションに保存
-        List<Organization> orgList = orgDAO.getOrganizationsForUser(user.getUserId());
-        session.setAttribute("orgList", orgList);
+		// このユーザーが所属する団体一覧を取得してセッションに保存
+		List<Organization> orgList = orgDAO.getOrganizationsForUser(user.getUserId());
+		session.setAttribute("orgList", orgList);
 
-        // 初期状態: 所属団体があれば先頭を選択、無ければ個人モード(null)
-        if (!orgList.isEmpty()) {
-            session.setAttribute("activeOrgId", orgList.get(0).getOrgId());
-        } else {
-            session.setAttribute("activeOrgId", null);
-        }
+		// 最後に選択していた団体IDをDBから取得
+		Integer lastOrgId = userDAO.findLastOrgId(user.getUserId());
 
-        // role に応じて遷移先を分岐
-        if (user.isAdmin()) {
-            response.sendRedirect(request.getContextPath() + "/admin.jsp");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
-        }
-    }
+		// 前回選択していた団体に現在も所属しているか確認
+		if (lastOrgId != null &&
+				orgDAO.isUserMemberOfOrg(user.getUserId(), lastOrgId)) {
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        // ログインフォームの表示のみ
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
-    }
+			// 前回の団体モードを復元
+			session.setAttribute("activeOrgId", lastOrgId);
+
+		} else {
+
+			// 初回ログイン、前回が個人モード、または団体から脱退した場合
+			session.setAttribute("activeOrgId", null);
+		}
+		// role に応じて遷移先を分岐
+		if (user.isAdmin()) {
+			response.sendRedirect(request.getContextPath() + "/admin.jsp");
+		} else {
+			response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
+		}
+	}
+
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		// ログインフォームの表示のみ
+		request.getRequestDispatcher("/login.jsp").forward(request, response);
+	}
 }

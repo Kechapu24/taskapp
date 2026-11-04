@@ -3,7 +3,6 @@
 <%@ page import="java.sql.*"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
-<%@ page import="model.User"%>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">
@@ -33,28 +32,15 @@
 
 			<div class="content-body">
 
-				<%
-				User loginUser = (User) session.getAttribute("loginUser");
-				if (loginUser == null) {
-					response.sendRedirect(request.getContextPath() + "/login.jsp");
-					return;
-				}
-				int loginUserId = loginUser.getUserId();
-				Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
-				boolean personalMode = (activeOrgId == null);
-				%>
+				<%@ include file="common/mode.jsp"%>
 
 				<%
 				String scopeCondition;
-				int scopeId;
+
 				if (personalMode) {
-					// 個人モード
 					scopeCondition = "p.user_id = ? ";
-					scopeId = loginUserId;
 				} else {
-					// 団体モード
 					scopeCondition = "p.org_id = ? ";
-					scopeId = activeOrgId;
 				}
 				%>
 
@@ -64,6 +50,8 @@
 				String filterUserId = request.getParameter("user_id");
 				String filterPriority = request.getParameter("priority");
 				String filterDeadline = request.getParameter("deadline");
+				String filterTagId = request.getParameter("tag_id");
+				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
 
 				int todoCount = 0;
@@ -78,12 +66,86 @@
 					Class.forName("org.postgresql.Driver");
 					Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-					String countSql = "SELECT t.status, COUNT(*) AS task_count " + "FROM task t "
-					+ "JOIN project p ON t.project_id = p.project_id " + "WHERE " + scopeCondition + "GROUP BY t.status";
+					String countSql =
+						      "SELECT t.status, COUNT(DISTINCT t.task_id) AS task_count "
+						    + "FROM task t "
+						    + "JOIN project p ON t.project_id = p.project_id "
+						    + "WHERE " + scopeCondition;
 
-					PreparedStatement countStmt = countConn.prepareStatement(countSql);
+						// タスク名検索
+						if (keyword != null && !keyword.trim().isEmpty()) {
+						    countSql += "AND t.task_name ILIKE ? ";
+						}
 
-					countStmt.setInt(1, scopeId);
+						// プロジェクト絞り込み
+						if (filterProjectId != null && !filterProjectId.isEmpty()) {
+						    countSql += "AND t.project_id = ? ";
+						}
+
+						// 担当者絞り込み
+						if (filterUserId != null && !filterUserId.isEmpty()) {
+						    countSql +=
+						          "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_assignee ta2 "
+						        + "WHERE ta2.task_id = t.task_id "
+						        + "AND ta2.user_id = ?"
+						        + ") ";
+						}
+
+						// 優先度絞り込み
+						if (filterPriority != null && !filterPriority.isEmpty()) {
+						    countSql += "AND t.priority = ? ";
+						}
+
+						// 期限絞り込み
+						if ("overdue".equals(filterDeadline)) {
+						    countSql += "AND t.due_date < CURRENT_DATE ";
+						} else if ("today".equals(filterDeadline)) {
+						    countSql += "AND t.due_date = CURRENT_DATE ";
+						} else if ("week".equals(filterDeadline)) {
+						    countSql +=
+						          "AND t.due_date BETWEEN CURRENT_DATE "
+						        + "AND CURRENT_DATE + INTERVAL '7 days' ";
+						}
+
+						countSql += "GROUP BY t.status";
+
+						PreparedStatement countStmt =
+						        countConn.prepareStatement(countSql);
+
+						int countParam = 1;
+
+						// 個人モードならuser_id、団体モードならorg_id
+						countStmt.setInt(countParam++, scopeId);
+
+						if (keyword != null && !keyword.trim().isEmpty()) {
+						    countStmt.setString(
+						        countParam++,
+						        "%" + keyword.trim() + "%"
+						    );
+						}
+
+						if (filterProjectId != null && !filterProjectId.isEmpty()) {
+						    countStmt.setInt(
+						        countParam++,
+						        Integer.parseInt(filterProjectId)
+						    );
+						}
+
+						if (filterUserId != null && !filterUserId.isEmpty()) {
+						    countStmt.setInt(
+						        countParam++,
+						        Integer.parseInt(filterUserId)
+						    );
+						}
+
+						if (filterPriority != null && !filterPriority.isEmpty()) {
+						    countStmt.setString(
+						        countParam++,
+						        filterPriority
+						    );
+						}
 
 					ResultSet countRs = countStmt.executeQuery();
 
@@ -989,45 +1051,87 @@
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										販売管理システム</option>
+									<%
+									String projectFilterSql = "SELECT p.project_id, p.project_name " + "FROM project p " + "WHERE " + scopeCondition
+											+ "ORDER BY p.project_name";
 
-									<option value="2"
-										<%="2".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										在庫管理システム</option>
+									try (Connection projectFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-									<option value="3"
-										<%="3".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										社内ポータルサイト</option>
+											PreparedStatement projectFilterStmt = projectFilterConn.prepareStatement(projectFilterSql)) {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										勤怠管理システム</option>
+										projectFilterStmt.setInt(1, scopeId);
+
+										try (ResultSet projectFilterRs = projectFilterStmt.executeQuery()) {
+
+											while (projectFilterRs.next()) {
+
+										int projectId = projectFilterRs.getInt("project_id");
+
+										String projectName = projectFilterRs.getString("project_name");
+									%>
+
+									<option value="<%=projectId%>"
+										<%=String.valueOf(projectId).equals(filterProjectId) ? "selected" : ""%>>
+										<%=projectName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									%>
 
 								</select> <label>担当者</label> <select name="user_id">
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										伊藤</option>
+									<%
+									if (personalMode) {
+									%>
 
-									<option value="2"
-										<%="2".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										高橋</option>
+									<option value="<%=loginUserId%>"
+										<%=String.valueOf(loginUserId).equals(filterUserId) ? "selected" : ""%>>
+										自分（<%=loginUser.getUserName()%>）
+									</option>
 
-									<option value="3"
-										<%="3".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										中村</option>
+									<%
+									} else {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										小林</option>
+									String memberFilterSql = "SELECT u.user_id, u.user_name " + "FROM org_member om "
+											+ "JOIN users u ON om.user_id = u.user_id " + "WHERE om.org_id = ? " + "ORDER BY u.user_name";
 
-									<option value="5"
-										<%="5".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										加藤</option>
+									try (Connection memberFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
+
+											PreparedStatement memberFilterStmt = memberFilterConn.prepareStatement(memberFilterSql)) {
+
+										memberFilterStmt.setInt(1, activeOrgId);
+
+										try (ResultSet memberFilterRs = memberFilterStmt.executeQuery()) {
+
+											while (memberFilterRs.next()) {
+
+										int memberUserId = memberFilterRs.getInt("user_id");
+
+										String memberUserName = memberFilterRs.getString("user_name");
+									%>
+
+									<option value="<%=memberUserId%>"
+										<%=String.valueOf(memberUserId).equals(filterUserId) ? "selected" : ""%>>
+										<%=memberUserName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									}
+									%>
 
 								</select> <label>優先度</label> <select name="priority">
 									<option value="">すべて</option>

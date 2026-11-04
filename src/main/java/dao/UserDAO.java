@@ -129,4 +129,71 @@ public class UserDAO {
             throw new RuntimeException("アイコンの取得中にDBエラーが発生しました", e);
         }
     }
+    
+
+    /**
+     * 最後に選択した団体IDを取得する
+     * nullの場合は個人モード
+     */
+    public Integer findLastOrgId(int userId) {
+
+        String sql =
+            "SELECT last_org_id FROM users WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    int orgId = rs.getInt("last_org_id");
+
+                    if (rs.wasNull()) {
+                        return null;
+                    }
+
+                    return orgId;
+                }
+            }
+
+            return null;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "最終選択モードの取得に失敗しました", e
+            );
+        }
+    }
+
+    /**
+     * 最後に選択した団体IDを保存する
+     * nullの場合は個人モードとして保存
+     */
+    public void saveLastOrgId(int userId, Integer orgId) {
+
+        String sql =
+            "UPDATE users SET last_org_id = ? WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            if (orgId == null) {
+                stmt.setNull(1, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(1, orgId);
+            }
+
+            stmt.setInt(2, userId);
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "最終選択モードの保存に失敗しました", e
+            );
+        }
+    }
+
 }
