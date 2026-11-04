@@ -1,0 +1,33 @@
+.log-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.log-tab {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.log-tab.active {
+    background: #4CAF50;
+    color: white;
+}
+
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.log-table th,
+.log-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+}
+
+.log-table th {
+    background: #f5f5f5;
+}
