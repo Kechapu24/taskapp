@@ -144,4 +144,5 @@
 	    window.addEventListener('resize', placeCard);
 	})();
 	</script>
+	<jsp:include page="/common/icon_modal.jsp" />
 </c:if>

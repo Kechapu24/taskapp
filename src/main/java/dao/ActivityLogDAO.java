@@ -29,12 +29,11 @@ public class ActivityLogDAO {
 
         try (
             Connection conn = DBConnection.getConnection();
-            PreparedStatement ps =
-                conn.prepareStatement(sql);
+            PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery()
         ) {
 
-            while(rs.next()) {
+            while (rs.next()) {
 
                 logs.add(
                     new ActivityLog(
@@ -45,12 +44,27 @@ public class ActivityLogDAO {
                         rs.getTimestamp("created_at")
                     )
                 );
+
             }
 
-        } catch(Exception e) {
+        } catch (Exception e) {
+
             e.printStackTrace();
+
         }
 
         return logs;
+    }
+
+    public List<ActivityLog> findByUserId(int userId) {
+
+        return findAll();
+
+    }
+
+    public List<ActivityLog> findByOrgId(int orgId) {
+
+        return findAll();
+
     }
 }
