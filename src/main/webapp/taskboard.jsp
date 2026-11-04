@@ -3,7 +3,6 @@
 <%@ page import="java.sql.*"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
-<%@ page import="model.User"%>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">
@@ -976,45 +975,87 @@
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										販売管理システム</option>
+									<%
+									String projectFilterSql = "SELECT p.project_id, p.project_name " + "FROM project p " + "WHERE " + scopeCondition
+											+ "ORDER BY p.project_name";
 
-									<option value="2"
-										<%="2".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										在庫管理システム</option>
+									try (Connection projectFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-									<option value="3"
-										<%="3".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										社内ポータルサイト</option>
+											PreparedStatement projectFilterStmt = projectFilterConn.prepareStatement(projectFilterSql)) {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										勤怠管理システム</option>
+										projectFilterStmt.setInt(1, scopeId);
+
+										try (ResultSet projectFilterRs = projectFilterStmt.executeQuery()) {
+
+											while (projectFilterRs.next()) {
+
+										int projectId = projectFilterRs.getInt("project_id");
+
+										String projectName = projectFilterRs.getString("project_name");
+									%>
+
+									<option value="<%=projectId%>"
+										<%=String.valueOf(projectId).equals(filterProjectId) ? "selected" : ""%>>
+										<%=projectName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									%>
 
 								</select> <label>担当者</label> <select name="user_id">
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										伊藤</option>
+									<%
+									if (personalMode) {
+									%>
 
-									<option value="2"
-										<%="2".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										高橋</option>
+									<option value="<%=loginUserId%>"
+										<%=String.valueOf(loginUserId).equals(filterUserId) ? "selected" : ""%>>
+										自分（<%=loginUser.getUserName()%>）
+									</option>
 
-									<option value="3"
-										<%="3".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										中村</option>
+									<%
+									} else {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										小林</option>
+									String memberFilterSql = "SELECT u.user_id, u.user_name " + "FROM org_member om "
+											+ "JOIN users u ON om.user_id = u.user_id " + "WHERE om.org_id = ? " + "ORDER BY u.user_name";
 
-									<option value="5"
-										<%="5".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										加藤</option>
+									try (Connection memberFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
+
+											PreparedStatement memberFilterStmt = memberFilterConn.prepareStatement(memberFilterSql)) {
+
+										memberFilterStmt.setInt(1, activeOrgId);
+
+										try (ResultSet memberFilterRs = memberFilterStmt.executeQuery()) {
+
+											while (memberFilterRs.next()) {
+
+										int memberUserId = memberFilterRs.getInt("user_id");
+
+										String memberUserName = memberFilterRs.getString("user_name");
+									%>
+
+									<option value="<%=memberUserId%>"
+										<%=String.valueOf(memberUserId).equals(filterUserId) ? "selected" : ""%>>
+										<%=memberUserName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									}
+									%>
 
 								</select> <label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
