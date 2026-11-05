@@ -1,0 +1,1 @@
+ALTER TABLE activity_log ADD COLUMN org_id INT NULL;

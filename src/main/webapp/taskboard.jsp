@@ -3,7 +3,11 @@
 <%@ page import="java.sql.*"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
-<%@ page import="model.User"%>
+<%@ page import="dao.TaskDAO"%>
+<%@ page import="model.TaskFilter"%>
+<%@ page import="java.util.ArrayList"%>
+<%@ page import="java.util.List"%>
+<%@ page import="java.util.Map"%>
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">
@@ -33,28 +37,15 @@
 
 			<div class="content-body">
 
-				<%
-				User loginUser = (User) session.getAttribute("loginUser");
-				if (loginUser == null) {
-					response.sendRedirect(request.getContextPath() + "/login.jsp");
-					return;
-				}
-				int loginUserId = loginUser.getUserId();
-				Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
-				boolean personalMode = (activeOrgId == null);
-				%>
+				<%@ include file="common/mode.jsp"%>
 
 				<%
 				String scopeCondition;
-				int scopeId;
+
 				if (personalMode) {
-					// 個人モード
 					scopeCondition = "p.user_id = ? ";
-					scopeId = loginUserId;
 				} else {
-					// 団体モード
 					scopeCondition = "p.org_id = ? ";
-					scopeId = activeOrgId;
 				}
 				%>
 
@@ -64,900 +55,95 @@
 				String filterUserId = request.getParameter("user_id");
 				String filterPriority = request.getParameter("priority");
 				String filterDeadline = request.getParameter("deadline");
+				String filterTagId = request.getParameter("tag_id");
+				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
-
-				int todoCount = 0;
-				int doingCount = 0;
-				int doneCount = 0;
 
 				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 				String countUser = "taskuser";
 				String countPassword = "taskpass";
 
-				try {
-					Class.forName("org.postgresql.Driver");
-					Connection countConn = DriverManager.getConnection(countUrl, countUser, countPassword);
-
-					String countSql = "SELECT t.status, COUNT(*) AS task_count " + "FROM task t "
-					+ "JOIN project p ON t.project_id = p.project_id " + "WHERE " + scopeCondition + "GROUP BY t.status";
-
-					PreparedStatement countStmt = countConn.prepareStatement(countSql);
-
-					countStmt.setInt(1, scopeId);
-
-					ResultSet countRs = countStmt.executeQuery();
-
-					while (countRs.next()) {
-						String status = countRs.getString("status");
-						int count = countRs.getInt("task_count");
-
-						if ("未着手".equals(status)) {
-					todoCount = count;
-						} else if ("進行中".equals(status)) {
-					doingCount = count;
-						} else if ("完了".equals(status)) {
-					doneCount = count;
-						}
-					}
-
-					countRs.close();
-					countStmt.close();
-					countConn.close();
-
-				} catch (Exception e) {
 				%>
-				<p style="color: red;">
-					件数取得エラー:
-					<%=e.getMessage()%></p>
+
 				<%
+				TaskFilter taskFilter = new TaskFilter();
+
+				taskFilter.setKeyword(keyword);
+				taskFilter.setProjectId(filterProjectId);
+				taskFilter.setUserId(filterUserId);
+				taskFilter.setPriority(filterPriority);
+				taskFilter.setDeadline(filterDeadline);
+				taskFilter.setTagId(filterTagId);
+				taskFilter.setTagKeyword(filterTagKeyword);
+				taskFilter.setSort(sort);
+
+				TaskDAO taskDAO = new TaskDAO();
+
+				List<Map<String, Object>> allTasks = taskDAO.getTasksForBoard(loginUserId, activeOrgId, taskFilter);
+
+				List<Map<String, Object>> todoTasks = new ArrayList<>();
+
+				List<Map<String, Object>> doingTasks = new ArrayList<>();
+
+				List<Map<String, Object>> doneTasks = new ArrayList<>();
+
+				for (Map<String, Object> task : allTasks) {
+
+					String taskStatus = (String) task.get("status");
+
+					if ("未着手".equals(taskStatus)) {
+
+						todoTasks.add(task);
+
+					} else if ("進行中".equals(taskStatus)) {
+
+						doingTasks.add(task);
+
+					} else if ("完了".equals(taskStatus)) {
+
+						doneTasks.add(task);
+					}
 				}
+
 				%>
 
 				<div class="task-board-wrapper">
 
 					<div class="task-board">
 
-						<div class="task-column status-todo">
-							<div class="column-header">
-								<h2>
-									未着手（<%=todoCount%>）
-								</h2>
+						<%
+						request.setAttribute("columnTitle", "未着手");
 
-								<button class="add-task-btn-small custom-theme-accent"
-									onclick="openAddTaskModal('未着手')">＋</button>
-							</div>
+						request.setAttribute("columnStatus", "未着手");
 
-							<%
-							String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-							String user = "taskuser";
-							String password = "taskpass";
+						request.setAttribute("columnTasks", todoTasks);
+						%>
 
-							try {
-								Class.forName("org.postgresql.Driver");
-								Connection conn = DriverManager.getConnection(url, user, password);
+						<jsp:include page="/task/taskColumn.jsp" />
 
-								String sql = "SELECT " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name, "
-								+ "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
-								+ "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
-								+ "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
-								+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags " + "FROM task t "
-								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
-								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
-								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
 
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									sql += "AND t.task_name ILIKE ? ";
-								}
+						<%
+						request.setAttribute("columnTitle", "進行中");
 
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									sql += "AND t.project_id = ? ";
-								}
+						request.setAttribute("columnStatus", "進行中");
 
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
-									+ "AND ta2.user_id = ?" + ") ";
-								}
+						request.setAttribute("columnTasks", doingTasks);
+						%>
 
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									sql += "AND t.priority = ? ";
-								}
+						<jsp:include page="/task/taskColumn.jsp" />
 
-								if ("overdue".equals(filterDeadline)) {
-									sql += "AND t.due_date < CURRENT_DATE ";
-								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date = CURRENT_DATE ";
-								} else if ("week".equals(filterDeadline)) {
-									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
-								}
 
-								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
+						<%
+						request.setAttribute("columnTitle", "完了");
 
-								if ("due_desc".equals(sort)) {
+						request.setAttribute("columnStatus", "完了");
 
-									sql += "ORDER BY t.due_date DESC NULLS LAST";
+						request.setAttribute("columnTasks", doneTasks);
+						%>
 
-								} else if ("priority".equals(sort)) {
-
-									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
-									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
-
-								} else if ("name".equals(sort)) {
-
-									sql += "ORDER BY t.task_name ASC";
-
-								} else {
-
-									sql += "ORDER BY t.due_date ASC NULLS LAST";
-								}
-
-								PreparedStatement stmt = conn.prepareStatement(sql);
-
-								int param = 1;
-
-								stmt.setString(param++, "未着手");
-
-								// 個人ならuser_id、団体ならorg_id
-								stmt.setInt(param++, scopeId);
-
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									stmt.setString(param++, "%" + keyword.trim() + "%");
-								}
-
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterProjectId));
-								}
-
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterUserId));
-								}
-
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									stmt.setString(param++, filterPriority);
-								}
-
-								ResultSet rs = stmt.executeQuery();
-
-								while (rs.next()) {
-
-									String deadlineClass = "";
-
-									java.sql.Date dueDateSql = rs.getDate("due_date");
-
-									if (dueDateSql != null) {
-								LocalDate today = LocalDate.now();
-								LocalDate dueDate = dueDateSql.toLocalDate();
-
-								long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
-
-								if (daysLeft < 0) {
-									deadlineClass = "overdue";
-								} else if (daysLeft <= 1) {
-									deadlineClass = "deadline-red";
-								} else if (daysLeft <= 3) {
-									deadlineClass = "deadline-yellow";
-								}
-									}
-							%>
-
-							<div class="task-card <%=deadlineClass%>"
-								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
-
-								<div class="task-card-header">
-									<h3><%=rs.getString("task_name")%></h3>
-
-									<div class="task-menu">
-										<button class="menu-button"
-											onclick="toggleTaskMenu(event, 'menu-<%=rs.getInt("task_id")%>')">⋯</button>
-
-										<div class="menu-dropdown" id="menu-<%=rs.getInt("task_id")%>">
-											<button
-												onclick="openModalFromElement('詳細', 'detail-<%=rs.getInt("task_id")%>')">詳細</button>
-											<button
-												onclick="openModalFromElement('編集', 'edit-<%=rs.getInt("task_id")%>')">編集</button>
-											<button class="delete-menu-button"
-												onclick="openModalFromElement('タスク削除', 'delete-<%=rs.getInt("task_id")%>')">
-												削除</button>
-										</div>
-									</div>
-								</div>
-
-								<p>
-									<%=rs.getString("project_name")%></p>
-								<p>
-									<%=rs.getString("assignees")%></p>
-
-								<div class="task-card-bottom">
-									<p>
-										<%=rs.getDate("due_date")%></p>
-
-									<div class="task-card-actions">
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-											💬</button>
-
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-											📎</button>
-									</div>
-								</div>
-
-								<!-- 詳細ポップアップ用の中身 -->
-								<div id="detail-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong>タスク名：</strong><%=rs.getString("task_name")%></p>
-									<p>
-										<strong>プロジェクト：</strong><%=rs.getString("project_name")%></p>
-									<p>
-										<strong>説明：</strong><%=rs.getString("description")%></p>
-									<p>
-										<strong>担当者：</strong><%=rs.getString("assignees")%></p>
-									<p>
-										<strong>タグ：</strong><%=rs.getString("tags")%></p>
-									<p>
-										<strong>状態：</strong><%=rs.getString("status")%></p>
-									<p>
-										<strong>優先度：</strong><%=rs.getString("priority")%></p>
-									<p>
-										<strong>開始日：</strong><%=rs.getDate("start_date")%></p>
-									<p>
-										<strong>期限：</strong><%=rs.getDate("due_date")%></p>
-								</div>
-
-								<!-- 編集ポップアップ用の中身 -->
-								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
-
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
-										<input type="text" name="task_name"
-											value="<%=rs.getString("task_name")%>" required> <label>状態</label>
-										<select name="status">
-											<option value="未着手"
-												<%="未着手".equals(rs.getString("status")) ? "selected" : ""%>>未着手</option>
-											<option value="進行中"
-												<%="進行中".equals(rs.getString("status")) ? "selected" : ""%>>進行中</option>
-											<option value="完了"
-												<%="完了".equals(rs.getString("status")) ? "selected" : ""%>>完了</option>
-										</select> <label>優先度</label> <select name="priority">
-											<option value="低"
-												<%="低".equals(rs.getString("priority")) ? "selected" : ""%>>低</option>
-											<option value="中"
-												<%="中".equals(rs.getString("priority")) ? "selected" : ""%>>中</option>
-											<option value="高"
-												<%="高".equals(rs.getString("priority")) ? "selected" : ""%>>高</option>
-										</select> <label>開始日</label> <input type="date" name="start_date"
-											value="<%=rs.getDate("start_date")%>"><label>期限</label>
-										<input type="date" name="due_date"
-											value="<%=rs.getDate("due_date")%>"> <label>説明</label>
-										<textarea name="description"><%=rs.getString("description") == null ? "" : rs.getString("description")%></textarea>
-
-										<label>担当者</label> <select name="user_id">
-											<option value="1">伊藤</option>
-											<option value="2">高橋</option>
-											<option value="3">中村</option>
-											<option value="4">小林</option>
-											<option value="5">加藤</option>
-										</select>
-
-										<button type="submit"
-											class="modal-submit-btn custom-theme-accent">保存</button>
-									</form>
-								</div>
-
-								<!-- 削除ポップアップ用の中身 -->
-								<div id="delete-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong><%=rs.getString("task_name")%></strong> を削除してもよろしいですか？
-									</p>
-
-									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
-
-									<form action="taskDelete.jsp" method="post" class="delete-form">
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>">
-
-										<div class="delete-actions">
-											<button type="button" class="cancel-button"
-												onclick="closeModal()">キャンセル</button>
-											<button type="submit" class="delete-button">削除する</button>
-										</div>
-									</form>
-								</div>
-
-								<!-- コメントポップアップ用の中身 -->
-								<div id="comment-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p><%=rs.getString("comments")%></p>
-								</div>
-
-								<!-- 添付ファイルポップアップ用の中身 -->
-								<div id="file-<%=rs.getInt("task_id")%>" style="display: none;">
-									<p><%=rs.getString("files")%></p>
-								</div>
-
-							</div>
-
-							<%
-							}
-
-							rs.close();
-							stmt.close();
-							conn.close();
-
-							} catch (Exception e) {
-							%>
-							<p style="color: red;">
-								エラー:
-								<%=e.getMessage()%></p>
-							<%
-							}
-							%>
-
-						</div>
-
-						<div class="task-column status-doing">
-							<div class="column-header">
-								<h2>
-									進行中（<%=doingCount%>）
-								</h2>
-								<button class="add-task-btn-small custom-theme-accent"
-									onclick="openAddTaskModal('進行中')">＋</button>
-							</div>
-
-							<%
-							try {
-								Class.forName("org.postgresql.Driver");
-								Connection conn = DriverManager.getConnection(url, user, password);
-
-								String sql = "SELECT " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name, "
-								+ "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
-								+ "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
-								+ "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
-								+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags " + "FROM task t "
-								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
-								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
-								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
-
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									sql += "AND t.task_name ILIKE ? ";
-								}
-
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									sql += "AND t.project_id = ? ";
-								}
-
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
-									+ "AND ta2.user_id = ?" + ") ";
-								}
-
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									sql += "AND t.priority = ? ";
-								}
-
-								if ("overdue".equals(filterDeadline)) {
-									sql += "AND t.due_date < CURRENT_DATE ";
-								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date = CURRENT_DATE ";
-								} else if ("week".equals(filterDeadline)) {
-									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
-								}
-
-								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
-
-								if ("due_desc".equals(sort)) {
-
-									sql += "ORDER BY t.due_date DESC NULLS LAST";
-
-								} else if ("priority".equals(sort)) {
-
-									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
-									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
-
-								} else if ("name".equals(sort)) {
-
-									sql += "ORDER BY t.task_name ASC";
-
-								} else {
-
-									sql += "ORDER BY t.due_date ASC NULLS LAST";
-								}
-
-								PreparedStatement stmt = conn.prepareStatement(sql);
-
-								int param = 1;
-
-								stmt.setString(param++, "進行中");
-
-								// 個人ならuser_id、団体ならorg_id
-								stmt.setInt(param++, scopeId);
-
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									stmt.setString(param++, "%" + keyword.trim() + "%");
-								}
-
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterProjectId));
-								}
-
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterUserId));
-								}
-
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									stmt.setString(param++, filterPriority);
-								}
-
-								ResultSet rs = stmt.executeQuery();
-
-								while (rs.next()) {
-
-									String deadlineClass = "";
-
-									java.sql.Date dueDateSql = rs.getDate("due_date");
-
-									if (dueDateSql != null) {
-								LocalDate today = LocalDate.now();
-								LocalDate dueDate = dueDateSql.toLocalDate();
-
-								long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
-
-								if (daysLeft < 0) {
-									deadlineClass = "overdue";
-								} else if (daysLeft <= 1) {
-									deadlineClass = "deadline-red";
-								} else if (daysLeft <= 3) {
-									deadlineClass = "deadline-yellow";
-								}
-									}
-							%>
-
-							<div class="task-card <%=deadlineClass%>"
-								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
-
-								<div class="task-card-header">
-									<h3><%=rs.getString("task_name")%></h3>
-
-									<div class="task-menu">
-										<button class="menu-button"
-											onclick="toggleTaskMenu(event, 'menu-<%=rs.getInt("task_id")%>')">⋯</button>
-
-										<div class="menu-dropdown" id="menu-<%=rs.getInt("task_id")%>">
-											<button
-												onclick="openModalFromElement('詳細', 'detail-<%=rs.getInt("task_id")%>')">詳細</button>
-											<button
-												onclick="openModalFromElement('編集', 'edit-<%=rs.getInt("task_id")%>')">編集</button>
-											<button class="delete-menu-button"
-												onclick="openModalFromElement('タスク削除', 'delete-<%=rs.getInt("task_id")%>')">
-												削除</button>
-										</div>
-									</div>
-								</div>
-
-								<p>
-									<%=rs.getString("project_name")%></p>
-								<p>
-									<%=rs.getString("assignees")%></p>
-
-								<div class="task-card-bottom">
-									<p>
-										<%=rs.getDate("due_date")%></p>
-
-									<div class="task-card-actions">
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-											💬</button>
-
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-											📎</button>
-									</div>
-								</div>
-
-								<!-- 詳細ポップアップ用の中身 -->
-								<div id="detail-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong>タスク名：</strong><%=rs.getString("task_name")%></p>
-									<p>
-										<strong>プロジェクト：</strong><%=rs.getString("project_name")%></p>
-									<p>
-										<strong>説明：</strong><%=rs.getString("description")%></p>
-									<p>
-										<strong>担当者：</strong><%=rs.getString("assignees")%></p>
-									<p>
-										<strong>タグ：</strong><%=rs.getString("tags")%></p>
-									<p>
-										<strong>状態：</strong><%=rs.getString("status")%></p>
-									<p>
-										<strong>優先度：</strong><%=rs.getString("priority")%></p>
-									<p>
-										<strong>開始日：</strong><%=rs.getDate("start_date")%></p>
-									<p>
-										<strong>期限：</strong><%=rs.getDate("due_date")%></p>
-								</div>
-
-								<!-- 編集ポップアップ用の中身 -->
-								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
-
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
-										<input type="text" name="task_name"
-											value="<%=rs.getString("task_name")%>" required> <label>状態</label>
-										<select name="status">
-											<option value="未着手"
-												<%="未着手".equals(rs.getString("status")) ? "selected" : ""%>>未着手</option>
-											<option value="進行中"
-												<%="進行中".equals(rs.getString("status")) ? "selected" : ""%>>進行中</option>
-											<option value="完了"
-												<%="完了".equals(rs.getString("status")) ? "selected" : ""%>>完了</option>
-										</select> <label>優先度</label> <select name="priority">
-											<option value="低"
-												<%="低".equals(rs.getString("priority")) ? "selected" : ""%>>低</option>
-											<option value="中"
-												<%="中".equals(rs.getString("priority")) ? "selected" : ""%>>中</option>
-											<option value="高"
-												<%="高".equals(rs.getString("priority")) ? "selected" : ""%>>高</option>
-										</select> <label>開始日</label> <input type="date" name="start_date"
-											value="<%=rs.getDate("start_date")%>"> <label>期限</label>
-										<input type="date" name="due_date"
-											value="<%=rs.getDate("due_date")%>"> <label>説明</label>
-										<textarea name="description"><%=rs.getString("description") == null ? "" : rs.getString("description")%></textarea>
-
-										<label>担当者</label> <select name="user_id">
-											<option value="1">伊藤</option>
-											<option value="2">高橋</option>
-											<option value="3">中村</option>
-											<option value="4">小林</option>
-											<option value="5">加藤</option>
-										</select>
-
-										<button type="submit"
-											class="modal-submit-btn custom-theme-accent">保存</button>
-									</form>
-								</div>
-
-								<!-- 削除ポップアップ用の中身 -->
-								<div id="delete-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong><%=rs.getString("task_name")%></strong> を削除してもよろしいですか？
-									</p>
-
-									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
-
-									<form action="taskDelete.jsp" method="post" class="delete-form">
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>">
-
-										<div class="delete-actions">
-											<button type="button" class="cancel-button"
-												onclick="closeModal()">キャンセル</button>
-											<button type="submit" class="delete-button">削除する</button>
-										</div>
-									</form>
-								</div>
-
-								<!-- コメントポップアップ用の中身 -->
-								<div id="comment-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p><%=rs.getString("comments")%></p>
-								</div>
-
-								<!-- 添付ファイルポップアップ用の中身 -->
-								<div id="file-<%=rs.getInt("task_id")%>" style="display: none;">
-									<p><%=rs.getString("files")%></p>
-								</div>
-
-							</div>
-
-							<%
-							}
-
-							rs.close();
-							stmt.close();
-							conn.close();
-
-							} catch (Exception e) {
-							%>
-							<p style="color: red;">
-								エラー:
-								<%=e.getMessage()%></p>
-							<%
-							}
-							%>
-
-						</div>
-
-						<div class="task-column status-done">
-							<div class="column-header">
-								<h2>
-									完了（<%=doneCount%>）
-								</h2>
-								<button class="add-task-btn-small custom-theme-accent"
-									onclick="openAddTaskModal('完了')">＋</button>
-							</div>
-
-							<%
-							try {
-								Class.forName("org.postgresql.Driver");
-								Connection conn = DriverManager.getConnection(url, user, password);
-
-								String sql = "SELECT " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name, "
-								+ "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
-								+ "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
-								+ "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
-								+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags " + "FROM task t "
-								+ "JOIN project p ON t.project_id = p.project_id " + "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
-								+ "LEFT JOIN users u ON ta.user_id = u.user_id " + "LEFT JOIN comment c ON t.task_id = c.task_id "
-								+ "LEFT JOIN attachment a ON t.task_id = a.task_id " + "LEFT JOIN task_tag tt ON t.task_id = tt.task_id "
-								+ "LEFT JOIN tag tg ON tt.tag_id = tg.tag_id " + "WHERE t.status = ? " + "AND " + scopeCondition;
-
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									sql += "AND t.task_name ILIKE ? ";
-								}
-
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									sql += "AND t.project_id = ? ";
-								}
-
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									sql += "AND EXISTS (" + "SELECT 1 " + "FROM task_assignee ta2 " + "WHERE ta2.task_id = t.task_id "
-									+ "AND ta2.user_id = ?" + ") ";
-								}
-
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									sql += "AND t.priority = ? ";
-								}
-
-								if ("overdue".equals(filterDeadline)) {
-									sql += "AND t.due_date < CURRENT_DATE ";
-								} else if ("today".equals(filterDeadline)) {
-									sql += "AND t.due_date = CURRENT_DATE ";
-								} else if ("week".equals(filterDeadline)) {
-									sql += "AND t.due_date BETWEEN CURRENT_DATE " + "AND CURRENT_DATE + INTERVAL '7 days' ";
-								}
-
-								sql += "GROUP BY " + "t.task_id, " + "t.task_name, " + "t.description, " + "t.status, " + "t.priority, "
-								+ "t.start_date, " + "t.due_date, " + "p.project_name ";
-
-								if ("due_desc".equals(sort)) {
-
-									sql += "ORDER BY t.due_date DESC NULLS LAST";
-
-								} else if ("priority".equals(sort)) {
-
-									sql += "ORDER BY CASE t.priority " + "WHEN '高' THEN 1 " + "WHEN '中' THEN 2 " + "WHEN '低' THEN 3 "
-									+ "ELSE 4 END, " + "t.due_date ASC NULLS LAST";
-
-								} else if ("name".equals(sort)) {
-
-									sql += "ORDER BY t.task_name ASC";
-
-								} else {
-
-									sql += "ORDER BY t.due_date ASC NULLS LAST";
-								}
-
-								PreparedStatement stmt = conn.prepareStatement(sql);
-
-								int param = 1;
-
-								stmt.setString(param++, "完了");
-
-								// 個人ならuser_id、団体ならorg_id
-								stmt.setInt(param++, scopeId);
-
-								if (keyword != null && !keyword.trim().isEmpty()) {
-									stmt.setString(param++, "%" + keyword.trim() + "%");
-								}
-
-								if (filterProjectId != null && !filterProjectId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterProjectId));
-								}
-
-								if (filterUserId != null && !filterUserId.isEmpty()) {
-									stmt.setInt(param++, Integer.parseInt(filterUserId));
-								}
-
-								if (filterPriority != null && !filterPriority.isEmpty()) {
-									stmt.setString(param++, filterPriority);
-								}
-
-								ResultSet rs = stmt.executeQuery();
-
-								while (rs.next()) {
-
-									String deadlineClass = "";
-
-									java.sql.Date dueDateSql = rs.getDate("due_date");
-
-									if (dueDateSql != null) {
-								LocalDate today = LocalDate.now();
-								LocalDate dueDate = dueDateSql.toLocalDate();
-
-								long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
-
-								if (daysLeft < 0) {
-									deadlineClass = "overdue";
-								} else if (daysLeft <= 1) {
-									deadlineClass = "deadline-red";
-								} else if (daysLeft <= 3) {
-									deadlineClass = "deadline-yellow";
-								}
-									}
-							%>
-
-							<div class="task-card <%=deadlineClass%>"
-								onclick="showTaskDetail('detail-<%=rs.getInt("task_id")%>', this)">
-
-								<div class="task-card-header">
-									<h3><%=rs.getString("task_name")%></h3>
-
-									<div class="task-menu">
-										<button class="menu-button"
-											onclick="toggleTaskMenu(event, 'menu-<%=rs.getInt("task_id")%>')">⋯</button>
-
-										<div class="menu-dropdown" id="menu-<%=rs.getInt("task_id")%>">
-											<button
-												onclick="openModalFromElement('詳細', 'detail-<%=rs.getInt("task_id")%>')">詳細</button>
-											<button
-												onclick="openModalFromElement('編集', 'edit-<%=rs.getInt("task_id")%>')">編集</button>
-											<button class="delete-menu-button"
-												onclick="openModalFromElement('タスク削除', 'delete-<%=rs.getInt("task_id")%>')">
-												削除</button>
-										</div>
-									</div>
-								</div>
-
-								<p>
-									<%=rs.getString("project_name")%></p>
-								<p>
-									<%=rs.getString("assignees")%></p>
-
-								<div class="task-card-bottom">
-									<p>
-										<%=rs.getDate("due_date")%></p>
-
-									<div class="task-card-actions">
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('コメント', 'comment-<%=rs.getInt("task_id")%>')">
-											💬</button>
-
-										<button class="icon-button"
-											onclick="event.stopPropagation(); openModalFromElement('添付ファイル', 'file-<%=rs.getInt("task_id")%>')">
-											📎</button>
-									</div>
-								</div>
-
-								<!-- 詳細ポップアップ用の中身 -->
-								<div id="detail-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong>タスク名：</strong><%=rs.getString("task_name")%></p>
-									<p>
-										<strong>プロジェクト：</strong><%=rs.getString("project_name")%></p>
-									<p>
-										<strong>説明：</strong><%=rs.getString("description")%></p>
-									<p>
-										<strong>担当者：</strong><%=rs.getString("assignees")%></p>
-									<p>
-										<strong>タグ：</strong><%=rs.getString("tags")%></p>
-									<p>
-										<strong>状態：</strong><%=rs.getString("status")%></p>
-									<p>
-										<strong>優先度：</strong><%=rs.getString("priority")%></p>
-									<p>
-										<strong>開始日：</strong><%=rs.getDate("start_date")%></p>
-									<p>
-										<strong>期限：</strong><%=rs.getDate("due_date")%></p>
-								</div>
-
-								<!-- 編集ポップアップ用の中身 -->
-								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
-
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
-										<input type="text" name="task_name"
-											value="<%=rs.getString("task_name")%>" required> <label>状態</label>
-										<select name="status">
-											<option value="未着手"
-												<%="未着手".equals(rs.getString("status")) ? "selected" : ""%>>未着手</option>
-											<option value="進行中"
-												<%="進行中".equals(rs.getString("status")) ? "selected" : ""%>>進行中</option>
-											<option value="完了"
-												<%="完了".equals(rs.getString("status")) ? "selected" : ""%>>完了</option>
-										</select> <label>優先度</label> <select name="priority">
-											<option value="低"
-												<%="低".equals(rs.getString("priority")) ? "selected" : ""%>>低</option>
-											<option value="中"
-												<%="中".equals(rs.getString("priority")) ? "selected" : ""%>>中</option>
-											<option value="高"
-												<%="高".equals(rs.getString("priority")) ? "selected" : ""%>>高</option>
-										</select> <label>開始日</label> <input type="date" name="start_date"
-											value="<%=rs.getDate("start_date")%>"> <label>期限</label>
-										<input type="date" name="due_date"
-											value="<%=rs.getDate("due_date")%>"> <label>説明</label>
-										<textarea name="description"><%=rs.getString("description") == null ? "" : rs.getString("description")%></textarea>
-
-										<label>担当者</label> <select name="user_id">
-											<option value="1">伊藤</option>
-											<option value="2">高橋</option>
-											<option value="3">中村</option>
-											<option value="4">小林</option>
-											<option value="5">加藤</option>
-										</select>
-
-										<button type="submit"
-											class="modal-submit-btn custom-theme-accent">保存</button>
-									</form>
-								</div>
-
-								<!-- 削除ポップアップ用の中身 -->
-								<div id="delete-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p>
-										<strong><%=rs.getString("task_name")%></strong> を削除してもよろしいですか？
-									</p>
-
-									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
-
-									<form action="taskDelete.jsp" method="post" class="delete-form">
-										<input type="hidden" name="task_id"
-											value="<%=rs.getInt("task_id")%>">
-
-										<div class="delete-actions">
-											<button type="button" class="cancel-button"
-												onclick="closeModal()">キャンセル</button>
-											<button type="submit" class="delete-button">削除する</button>
-										</div>
-									</form>
-								</div>
-
-								<!-- コメントポップアップ用の中身 -->
-								<div id="comment-<%=rs.getInt("task_id")%>"
-									style="display: none;">
-									<p><%=rs.getString("comments")%></p>
-								</div>
-
-								<!-- 添付ファイルポップアップ用の中身 -->
-								<div id="file-<%=rs.getInt("task_id")%>" style="display: none;">
-									<p><%=rs.getString("files")%></p>
-								</div>
-
-							</div>
-
-							<%
-							}
-
-							rs.close();
-							stmt.close();
-							conn.close();
-
-							} catch (Exception e) {
-							%>
-							<p style="color: red;">
-								エラー:
-								<%=e.getMessage()%></p>
-							<%
-							}
-							%>
-
-						</div>
+						<jsp:include page="/task/taskColumn.jsp" />
 
 					</div>
-
 
 					<!-- 右：サイドパネル -->
 					<div class="sidepanel" id="sidepanel">
@@ -989,45 +175,87 @@
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										販売管理システム</option>
+									<%
+									String projectFilterSql = "SELECT p.project_id, p.project_name " + "FROM project p " + "WHERE " + scopeCondition
+											+ "ORDER BY p.project_name";
 
-									<option value="2"
-										<%="2".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										在庫管理システム</option>
+									try (Connection projectFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
 
-									<option value="3"
-										<%="3".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										社内ポータルサイト</option>
+											PreparedStatement projectFilterStmt = projectFilterConn.prepareStatement(projectFilterSql)) {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("project_id")) ? "selected" : ""%>>
-										勤怠管理システム</option>
+										projectFilterStmt.setInt(1, scopeId);
+
+										try (ResultSet projectFilterRs = projectFilterStmt.executeQuery()) {
+
+											while (projectFilterRs.next()) {
+
+										int projectId = projectFilterRs.getInt("project_id");
+
+										String projectName = projectFilterRs.getString("project_name");
+									%>
+
+									<option value="<%=projectId%>"
+										<%=String.valueOf(projectId).equals(filterProjectId) ? "selected" : ""%>>
+										<%=projectName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									%>
 
 								</select> <label>担当者</label> <select name="user_id">
 
 									<option value="">すべて</option>
 
-									<option value="1"
-										<%="1".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										伊藤</option>
+									<%
+									if (personalMode) {
+									%>
 
-									<option value="2"
-										<%="2".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										高橋</option>
+									<option value="<%=loginUserId%>"
+										<%=String.valueOf(loginUserId).equals(filterUserId) ? "selected" : ""%>>
+										自分（<%=loginUser.getUserName()%>）
+									</option>
 
-									<option value="3"
-										<%="3".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										中村</option>
+									<%
+									} else {
 
-									<option value="4"
-										<%="4".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										小林</option>
+									String memberFilterSql = "SELECT u.user_id, u.user_name " + "FROM org_member om "
+											+ "JOIN users u ON om.user_id = u.user_id " + "WHERE om.org_id = ? " + "ORDER BY u.user_name";
 
-									<option value="5"
-										<%="5".equals(request.getParameter("user_id")) ? "selected" : ""%>>
-										加藤</option>
+									try (Connection memberFilterConn = DriverManager.getConnection(countUrl, countUser, countPassword);
+
+											PreparedStatement memberFilterStmt = memberFilterConn.prepareStatement(memberFilterSql)) {
+
+										memberFilterStmt.setInt(1, activeOrgId);
+
+										try (ResultSet memberFilterRs = memberFilterStmt.executeQuery()) {
+
+											while (memberFilterRs.next()) {
+
+										int memberUserId = memberFilterRs.getInt("user_id");
+
+										String memberUserName = memberFilterRs.getString("user_name");
+									%>
+
+									<option value="<%=memberUserId%>"
+										<%=String.valueOf(memberUserId).equals(filterUserId) ? "selected" : ""%>>
+										<%=memberUserName%>
+									</option>
+
+									<%
+									}
+									}
+
+									} catch (Exception e) {
+									e.printStackTrace();
+									}
+									}
+									%>
 
 								</select> <label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
@@ -1275,7 +503,7 @@
 	</div>
 
 	<div id="task-add-form" style="display: none;">
-		<form class="edit-form" action="taskAdd.jsp" method="post">
+		<form class="edit-form" action="task/taskAdd.jsp" method="post">
 
 			<input type="hidden" name="status" id="addTaskStatus"> <label>プロジェクト</label>
 			<select name="project_id" required>

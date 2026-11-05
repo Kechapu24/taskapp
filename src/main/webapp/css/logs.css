@@ -1,0 +1,153 @@
+@charset "UTF-8";
+ 
+/* =========================================
+   見出し
+   ========================================= */
+.log-title {
+    margin-bottom: 4px;
+}
+ 
+.log-count {
+    margin-bottom: 12px;
+    color: var(--ui-muted);
+}
+ 
+/* =========================================
+   タブ
+   ========================================= */
+.log-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+ 
+.log-tab {
+    padding: 8px 16px;
+    border: 1px solid var(--ui-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font: inherit;
+    transition: 0.2s;
+ 
+    background-color: var(--ui-card);
+    color: var(--ui-text);
+}
+ 
+.log-tab:hover {
+    background-color: var(--ui-hover);
+}
+ 
+/* 標準・ダーク：プロジェクト一覧と同じ青 */
+.log-tab.active {
+    background-color: #1a6cf0;
+    border-color: #1a6cf0;
+    color: #ffffff;
+}
+ 
+/* カスタムテーマ：ユーザーが選んだ色 */
+body.custom-theme .log-tab.active {
+    background-color: var(--custom-bg-color);
+    border-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+ 
+body.custom-theme .log-tab:not(.active):hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 20%,
+        #ffffff 80%
+    );
+}
+ 
+/* =========================================
+   テーブル
+   ========================================= */
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--ui-card);
+}
+ 
+.log-table th,
+.log-table td {
+    padding: 12px;
+    border: 1px solid var(--ui-border);
+}
+ 
+.log-table th {
+    background-color: var(--ui-hover);
+    color: var(--ui-text);
+    text-align: left;
+}
+ 
+/* td にも背景と文字色を明示（見えなくなる問題の対策） */
+.log-table td {
+    background-color: var(--ui-card);
+    color: var(--ui-text);
+}
+ 
+.log-row:hover td {
+    background-color: var(--ui-hover);
+}
+ 
+/* カスタムテーマ：見出し行をヘッダーと同系色に */
+body.custom-theme .log-table th {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 50%,
+        #ffffff 50%
+    );
+    color: color-mix(
+        in srgb,
+        var(--custom-text-color) 50%,
+        #000000 50%
+    );
+}
+ 
+/* =========================================
+   列設定
+   ========================================= */
+.log-table td.log-date {
+    width: 180px;
+    color: var(--ui-muted);
+    font-size: 13px;
+}
+ 
+.log-table td.log-user {
+    width: 100px;
+    font-weight: bold;
+}
+ 
+.log-table td.log-action {
+    width: 140px;
+}
+ 
+.log-table td.log-detail {
+    line-height: 1.6;
+}
+ 
+/* =========================================
+   操作ラベル
+   ========================================= */
+.log-action-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: var(--ui-selected);
+    border: 1px solid var(--ui-border);
+    color: var(--ui-text);
+    font-size: 12px;
+    font-weight: bold;
+}
+ 
+body.custom-theme .log-action-badge {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 20%,
+        #ffffff 80%
+    );
+    border-color: var(--custom-bg-color);
+    color: #333333;
+}
+ 
+

@@ -3,7 +3,17 @@
 <aside class="sidebar">
 	<div class="sidebar-brand">タスク管理</div>
 
+	<%
+	boolean isLogin = session.getAttribute("loginUser") != null;
+	%>
+
+
 	<ul class="sidebar-menu">
+
+		<%
+		if (isLogin) {
+		%>
+
 		<li class="menu-item ${currentPage == 'index' ? 'active' : ''}">
 			<a href="index.jsp">ダッシュボード</a>
 		</li>
@@ -31,8 +41,18 @@
 
 		<li class="menu-item ${currentPage == 'logs' ? 'active' : ''}"><a
 			href="logs.jsp">ログ</a></li>
-	</ul>
 
+		<%
+		} else {
+		%>
+
+		<li class="menu-item"><a href="login.jsp">ログイン</a></li>
+
+		<%
+		}
+		%>
+
+	</ul>
 
 	<!-- 開発情報メニュー -->
 	<div class="sidebar-dev">
