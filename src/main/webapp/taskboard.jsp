@@ -683,7 +683,7 @@
 
 								<!-- 編集ポップアップ用の中身 -->
 								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
+									<form class="edit-form" action="task/taskUpdate.jsp" method="post">
 
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
@@ -731,7 +731,7 @@
 
 									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
 
-									<form action="taskDelete.jsp" method="post" class="delete-form">
+									<form action="task/taskDelete.jsp" method="post" class="delete-form">
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>">
 
@@ -961,7 +961,7 @@
 
 								<!-- 編集ポップアップ用の中身 -->
 								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
+									<form class="edit-form" action="task/taskUpdate.jsp" method="post">
 
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
@@ -1009,7 +1009,7 @@
 
 									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
 
-									<form action="taskDelete.jsp" method="post" class="delete-form">
+									<form action="task/taskDelete.jsp" method="post" class="delete-form">
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>">
 
