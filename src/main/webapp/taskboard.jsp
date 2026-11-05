@@ -92,6 +92,26 @@
 						        + "AND ta2.user_id = ?"
 						        + ") ";
 						}
+						
+						// タグ絞り込み
+						if (filterTagId != null && !filterTagId.isEmpty()) {
+						    sql += "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_tag tt2 "
+						        + "WHERE tt2.task_id = t.task_id "
+						        + "AND tt2.tag_id = ?"
+						        + ") ";
+						}
+
+						if (filterTagKeyword != null && !filterTagKeyword.trim().isEmpty()) {
+						    sql += "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_tag tt3 "
+						        + "JOIN tag tg3 ON tt3.tag_id = tg3.tag_id "
+						        + "WHERE tt3.task_id = t.task_id "
+						        + "AND tg3.tag_name ILIKE ?"
+						        + ") ";
+						}
 
 						// 優先度絞り込み
 						if (filterPriority != null && !filterPriority.isEmpty()) {
@@ -137,6 +157,20 @@
 						    countStmt.setInt(
 						        countParam++,
 						        Integer.parseInt(filterUserId)
+						    );
+						}
+						
+						if (filterTagId != null && !filterTagId.isEmpty()) {
+						    stmt.setInt(
+						        param++,
+						        Integer.parseInt(filterTagId)
+						    );
+						}
+
+						if (filterTagKeyword != null && !filterTagKeyword.trim().isEmpty()) {
+						    stmt.setString(
+						        param++,
+						        "%" + filterTagKeyword.trim() + "%"
 						    );
 						}
 
@@ -371,7 +405,7 @@
 
 								<!-- 編集ポップアップ用の中身 -->
 								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
+									<form class="edit-form" action="task/taskUpdate.jsp" method="post">
 
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
@@ -419,7 +453,7 @@
 
 									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
 
-									<form action="taskDelete.jsp" method="post" class="delete-form">
+									<form action="task/taskDelete.jsp" method="post" class="delete-form">
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>">
 
@@ -649,7 +683,7 @@
 
 								<!-- 編集ポップアップ用の中身 -->
 								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
+									<form class="edit-form" action="task/taskUpdate.jsp" method="post">
 
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
@@ -697,7 +731,7 @@
 
 									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
 
-									<form action="taskDelete.jsp" method="post" class="delete-form">
+									<form action="task/taskDelete.jsp" method="post" class="delete-form">
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>">
 
@@ -927,7 +961,7 @@
 
 								<!-- 編集ポップアップ用の中身 -->
 								<div id="edit-<%=rs.getInt("task_id")%>" style="display: none;">
-									<form class="edit-form" action="taskUpdate.jsp" method="post">
+									<form class="edit-form" action="task/taskUpdate.jsp" method="post">
 
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>"> <label>タスク名</label>
@@ -975,7 +1009,7 @@
 
 									<p style="color: #777; margin-top: 8px;">この操作は取り消せません。</p>
 
-									<form action="taskDelete.jsp" method="post" class="delete-form">
+									<form action="task/taskDelete.jsp" method="post" class="delete-form">
 										<input type="hidden" name="task_id"
 											value="<%=rs.getInt("task_id")%>">
 
@@ -1379,7 +1413,7 @@
 	</div>
 
 	<div id="task-add-form" style="display: none;">
-		<form class="edit-form" action="taskAdd.jsp" method="post">
+		<form class="edit-form" action="task/taskAdd.jsp" method="post">
 
 			<input type="hidden" name="status" id="addTaskStatus"> <label>プロジェクト</label>
 			<select name="project_id" required>
