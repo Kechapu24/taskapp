@@ -59,15 +59,10 @@
 				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
 
-				int todoCount = 0;
-				int doingCount = 0;
-				int doneCount = 0;
-
 				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 				String countUser = "taskuser";
 				String countPassword = "taskpass";
 
-				
 				%>
 
 				<%
@@ -110,11 +105,6 @@
 					}
 				}
 
-				int todoCount = todoTasks.size();
-
-				int doingCount = doingTasks.size();
-
-				int doneCount = doneTasks.size();
 				%>
 
 				<div class="task-board-wrapper">
