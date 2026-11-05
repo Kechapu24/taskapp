@@ -42,69 +42,48 @@
 			List<ActivityLog> logs;
 
 			if (personalMode) {
-
-				logs = dao.findAll();
-
+				logs = dao.findByUserId(loginUserId);
 			} else {
-
-				logs = dao.findAll();
-
+				logs = dao.findByOrgId(activeOrgId);
 			}
 			%>
-
 			<div class="content-body">
 
-				<h2>ログ管理</h2>
-				<p>テーブル表示テスト</p>
-				<p>
+				<h2 class="log-title"><%= personalMode ? "ログ管理（個人）" : "ログ管理（団体）" %></h2>
+				<p class="log-count">
 					件数:
 					<%=logs.size()%></p>
 
 				<div class="log-tabs">
-					<button class="log-tab active">操作ログ</button>
-					<button class="log-tab">監査ログ</button>
-					<button class="log-tab">ログイン履歴</button>
-					<button class="log-tab">通知履歴</button>
+					<button type="button" class="log-tab active">操作ログ</button>
+					<button type="button" class="log-tab">監査ログ</button>
+					<button type="button" class="log-tab">ログイン履歴</button>
+					<button type="button" class="log-tab">通知履歴</button>
 				</div>
 
 				<table class="log-table">
-					<tr>
-						<th>日時</th>
-						<th>ユーザー</th>
-						<th>操作</th>
-						<th>詳細</th>
-					</tr>
-
-					<%
-					for (ActivityLog log : logs) {
-					%>
-
-					<tr class="log-row">
-
-    <td class="log-date">
-        <%= log.getCreatedAt() %>
-    </td>
-
-    <td class="log-user">
-        <%= log.getUserName() %>
-    </td>
-
-    <td class="log-action">
-        <span class="log-action-badge">
-            <%= log.getAction() %>
-        </span>
-    </td>
-
-    <td class="log-detail">
-        <%= log.getDetail() %>
-    </td>
-
-</tr>
-
-					<%
-					}
-					%>
-
+					<thead>
+						<tr>
+							<th>日時</th>
+							<th>ユーザー</th>
+							<th>操作</th>
+							<th>詳細</th>
+						</tr>
+					</thead>
+					<tbody>
+						<%
+						for (ActivityLog log : logs) {
+						%>
+						<tr class="log-row">
+							<td class="log-date"><%=log.getCreatedAt()%></td>
+							<td class="log-user"><%=log.getUserName()%></td>
+							<td class="log-action"><span class="log-action-badge"><%=log.getAction()%></span></td>
+							<td class="log-detail"><%=log.getDetail()%></td>
+						</tr>
+						<%
+						}
+						%>
+					</tbody>
 				</table>
 
 			</div>
