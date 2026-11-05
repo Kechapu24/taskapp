@@ -92,6 +92,26 @@
 						        + "AND ta2.user_id = ?"
 						        + ") ";
 						}
+						
+						// タグ絞り込み
+						if (filterTagId != null && !filterTagId.isEmpty()) {
+						    sql += "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_tag tt2 "
+						        + "WHERE tt2.task_id = t.task_id "
+						        + "AND tt2.tag_id = ?"
+						        + ") ";
+						}
+
+						if (filterTagKeyword != null && !filterTagKeyword.trim().isEmpty()) {
+						    sql += "AND EXISTS ("
+						        + "SELECT 1 "
+						        + "FROM task_tag tt3 "
+						        + "JOIN tag tg3 ON tt3.tag_id = tg3.tag_id "
+						        + "WHERE tt3.task_id = t.task_id "
+						        + "AND tg3.tag_name ILIKE ?"
+						        + ") ";
+						}
 
 						// 優先度絞り込み
 						if (filterPriority != null && !filterPriority.isEmpty()) {
@@ -137,6 +157,20 @@
 						    countStmt.setInt(
 						        countParam++,
 						        Integer.parseInt(filterUserId)
+						    );
+						}
+						
+						if (filterTagId != null && !filterTagId.isEmpty()) {
+						    stmt.setInt(
+						        param++,
+						        Integer.parseInt(filterTagId)
+						    );
+						}
+
+						if (filterTagKeyword != null && !filterTagKeyword.trim().isEmpty()) {
+						    stmt.setString(
+						        param++,
+						        "%" + filterTagKeyword.trim() + "%"
 						    );
 						}
 
