@@ -80,6 +80,23 @@
 
 				List<Map<String, Object>> tagOptions = taskDAO.getTagOptionsForBoard(loginUserId, activeOrgId);
 
+				String selectedTagName = "";
+
+				if (filterTagId != null && !filterTagId.isEmpty()) {
+
+					for (Map<String, Object> tag : tagOptions) {
+
+						int tagId = (Integer) tag.get("tagId");
+
+						if (String.valueOf(tagId).equals(filterTagId)) {
+
+					selectedTagName = (String) tag.get("tagName");
+
+					break;
+						}
+					}
+				}
+
 				List<Map<String, Object>> todoTasks = new ArrayList<>();
 
 				List<Map<String, Object>> doingTasks = new ArrayList<>();
@@ -255,56 +272,53 @@
 									}
 									%>
 
-								</select> <label>タグ</label> <input type="text" class="filter-input"
-									placeholder="タグ名で候補を検索"
-									oninput="filterTagSelect(
-        this,
-        document.getElementById('tagFilterSelect')
-    )">
+								</select> <label>タグ</label>
 
-								<select name="tag_id" id="tagFilterSelect">
+								<div class="tag-combobox" id="tagFilterCombobox">
 
-									<option value="">すべて</option>
+									<div class="tag-combobox-control">
 
-									<%
-									for (Map<String, Object> tag : tagOptions) {
+										<input type="text" id="tagFilterInput"
+											class="tag-combobox-input" placeholder="すべて"
+											autocomplete="off" value="<%=selectedTagName%>"
+											onfocus="openTagFilter()" oninput="filterTagOptions()">
 
-										int tagId = (Integer) tag.get("tagId");
+										<button type="button" class="tag-combobox-toggle"
+											onclick="toggleTagFilter()">▼</button>
 
-										String tagName = (String) tag.get("tagName");
-									%>
+									</div>
 
-									<option value="<%=tagId%>" data-tag-name="<%=tagName%>"
-										<%=String.valueOf(tagId).equals(filterTagId) ? "selected" : ""%>>
-										<%=tagName%>
-									</option>
+									<input type="hidden" name="tag_id" id="tagFilterValue"
+										value="<%=filterTagId == null ? "" : filterTagId%>">
 
-									<%
-									}
-									%>
+									<div class="tag-combobox-menu" id="tagFilterMenu">
 
-								</select>
+										<button type="button" class="tag-combobox-option"
+											data-tag-name="" onclick="selectTagFilter('', '')">
+											すべて</button>
 
-								<option value="">すべて</option>
+										<%
+										for (Map<String, Object> tag : tagOptions) {
 
-								<%
-								for (Map<String, Object> tag : tagOptions) {
+											int tagId = (Integer) tag.get("tagId");
 
-									int tagId = (Integer) tag.get("tagId");
+											String tagName = (String) tag.get("tagName");
+										%>
 
-									String tagName = (String) tag.get("tagName");
-								%>
+										<button type="button" class="tag-combobox-option"
+											data-tag-name="<%=tagName%>"
+											onclick="selectTagFilter('<%=tagId%>','<%=tagName%>')">
+											<%=tagName%>
+										</button>
 
-								<option value="<%=tagId%>"
-									<%=String.valueOf(tagId).equals(filterTagId) ? "selected" : ""%>>
-									<%=tagName%>
-								</option>
+										<%
+										}
+										%>
 
-								<%
-								}
-								%>
+									</div>
 
-								</select> <label>優先度</label> <select name="priority">
+								</div>
+								<label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
 
 									<option value="高"
@@ -536,35 +550,90 @@
 			</script>
 
 			<script>
-				function filterTagSelect(input, select) {
+				function openTagFilter() {
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					menu.classList.add("open");
+				}
+
+				function toggleTagFilter() {
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					menu.classList.toggle("open");
+				}
+
+				function filterTagOptions() {
+
+					const input = document.getElementById("tagFilterInput");
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					const hidden = document.getElementById("tagFilterValue");
 
 					const keyword = input.value.trim().toLowerCase();
 
-					const options = Array.from(select.options);
+					// 文字を書き換えた時点で
+					// 前の選択状態は解除
+					hidden.value = "";
 
-					options
-							.forEach(function(option, index) {
+					const options = menu
+							.querySelectorAll(".tag-combobox-option");
 
-								// 「すべて」は常に表示
-								if (index === 0) {
-									option.hidden = false;
-									return;
-								}
+					options.forEach(function(option) {
 
-								const tagName = (option.dataset.tagName || option.textContent)
-										.toLowerCase();
+						const tagName = (option.dataset.tagName || "")
+								.toLowerCase();
 
-								option.hidden = keyword !== ""
-										&& !tagName.includes(keyword);
-							});
+						// 「すべて」は常に表示
+						if (tagName === "") {
 
-					// 現在選択中のタグが検索候補から消えたら解除
-					const selected = select.options[select.selectedIndex];
+							option.style.display = "";
 
-					if (selected && selected.hidden) {
-						select.value = "";
-					}
+							return;
+						}
+
+						if (keyword === "" || tagName.includes(keyword)) {
+
+							option.style.display = "";
+
+						} else {
+
+							option.style.display = "none";
+						}
+					});
+
+					menu.classList.add("open");
 				}
+
+				function selectTagFilter(tagId, tagName) {
+
+					const input = document.getElementById("tagFilterInput");
+
+					const hidden = document.getElementById("tagFilterValue");
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					hidden.value = tagId;
+
+					input.value = tagName;
+
+					menu.classList.remove("open");
+				}
+
+				// 外側をクリックしたら閉じる
+				document.addEventListener("click", function(event) {
+
+					const combobox = document
+							.getElementById("tagFilterCombobox");
+
+					if (combobox && !combobox.contains(event.target)) {
+
+						document.getElementById("tagFilterMenu").classList
+								.remove("open");
+					}
+				});
 			</script>
 		</main>
 
