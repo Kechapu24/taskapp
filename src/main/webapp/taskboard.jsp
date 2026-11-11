@@ -56,7 +56,6 @@
 				String filterPriority = request.getParameter("priority");
 				String filterDeadline = request.getParameter("deadline");
 				String filterTagId = request.getParameter("tag_id");
-				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
 
 				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
@@ -73,7 +72,6 @@
 				taskFilter.setPriority(filterPriority);
 				taskFilter.setDeadline(filterDeadline);
 				taskFilter.setTagId(filterTagId);
-				taskFilter.setTagKeyword(filterTagKeyword);
 				taskFilter.setSort(sort);
 
 				TaskDAO taskDAO = new TaskDAO();
@@ -257,11 +255,14 @@
 									}
 									%>
 
-								</select> <label>タグ検索</label> <input type="text" name="tag_keyword"
-									class="filter-input" placeholder="タグ名を検索"
-									value="<%=filterTagKeyword == null ? "" : filterTagKeyword%>">
+								</select> <label>タグ</label> <input type="text" class="filter-input"
+									placeholder="タグ名で候補を検索"
+									oninput="filterTagSelect(
+        this,
+        document.getElementById('tagFilterSelect')
+    )">
 
-								<label>タグ</label> <select name="tag_id">
+								<select name="tag_id" id="tagFilterSelect">
 
 									<option value="">すべて</option>
 
@@ -273,7 +274,7 @@
 										String tagName = (String) tag.get("tagName");
 									%>
 
-									<option value="<%=tagId%>"
+									<option value="<%=tagId%>" data-tag-name="<%=tagName%>"
 										<%=String.valueOf(tagId).equals(filterTagId) ? "selected" : ""%>>
 										<%=tagName%>
 									</option>
@@ -282,7 +283,28 @@
 									}
 									%>
 
-								</select> </select> <label>優先度</label> <select name="priority">
+								</select>
+
+								<option value="">すべて</option>
+
+								<%
+								for (Map<String, Object> tag : tagOptions) {
+
+									int tagId = (Integer) tag.get("tagId");
+
+									String tagName = (String) tag.get("tagName");
+								%>
+
+								<option value="<%=tagId%>"
+									<%=String.valueOf(tagId).equals(filterTagId) ? "selected" : ""%>>
+									<%=tagName%>
+								</option>
+
+								<%
+								}
+								%>
+
+								</select> <label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
 
 									<option value="高"
@@ -509,6 +531,38 @@
 						if (detailTab) {
 							detailTab.classList.add("active");
 						}
+					}
+				}
+			</script>
+
+			<script>
+				function filterTagSelect(input, select) {
+
+					const keyword = input.value.trim().toLowerCase();
+
+					const options = Array.from(select.options);
+
+					options
+							.forEach(function(option, index) {
+
+								// 「すべて」は常に表示
+								if (index === 0) {
+									option.hidden = false;
+									return;
+								}
+
+								const tagName = (option.dataset.tagName || option.textContent)
+										.toLowerCase();
+
+								option.hidden = keyword !== ""
+										&& !tagName.includes(keyword);
+							});
+
+					// 現在選択中のタグが検索候補から消えたら解除
+					const selected = select.options[select.selectedIndex];
+
+					if (selected && selected.hidden) {
+						select.value = "";
 					}
 				}
 			</script>

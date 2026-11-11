@@ -12,7 +12,6 @@ public class TaskFilter {
     private String projectId;
     private String userId;
     private String tagId;
-    private String tagKeyword;
     private String priority;
     private String deadline;
     private String sort;
@@ -47,14 +46,6 @@ public class TaskFilter {
 
     public void setTagId(String tagId) {
         this.tagId = tagId;
-    }
-
-    public String getTagKeyword() {
-        return tagKeyword;
-    }
-
-    public void setTagKeyword(String tagKeyword) {
-        this.tagKeyword = tagKeyword;
     }
 
     public String getPriority() {

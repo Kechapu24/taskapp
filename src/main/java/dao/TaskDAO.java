@@ -113,20 +113,6 @@ public class TaskDAO {
 			params.add(tagId);
 		}
 
-		// タグ名検索
-		if (hasText(filter.getTagKeyword())) {
-			sql.append(
-					"AND EXISTS ("
-							+ "SELECT 1 "
-							+ "FROM task_tag tt3 "
-							+ "JOIN tag tg3 ON tt3.tag_id = tg3.tag_id "
-							+ "WHERE tt3.task_id = t.task_id "
-							+ "AND tg3.tag_name ILIKE ?"
-							+ ") ");
-
-			params.add("%" + filter.getTagKeyword().trim() + "%");
-		}
-
 		// 優先度
 		if (hasText(filter.getPriority())) {
 			sql.append("AND t.priority = ? ");
