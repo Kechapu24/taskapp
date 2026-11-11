@@ -40,7 +40,7 @@
 		</li>
 
 		<li class="menu-item ${currentPage == 'logs' ? 'active' : ''}"><a
-			href="logs.jsp">ログ</a></li>
+			href="logs.jsp">設定</a></li>
 
 		<%
 		} else {

@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import dao.ActivityLogDAO;
 import dao.OrgDAO;
 import dao.UserDAO;
 import model.Organization;
@@ -50,6 +51,15 @@ public class LoginServlet extends HttpServlet {
 		// 認証成功: セッションにユーザー情報を保存
 		HttpSession session = request.getSession();
 		session.setAttribute("loginUser", user);
+		
+		//ログイン情報を保持させる
+		new ActivityLogDAO().insert(
+			    user.getUserId(),
+			    null,
+			    "LOGIN",
+			    "ログインしました");
+		System.out.println("LOGIN LOG INSERT");
+		
 
 		// このユーザーが所属する団体一覧を取得してセッションに保存
 		List<Organization> orgList = orgDAO.getOrganizationsForUser(user.getUserId());
