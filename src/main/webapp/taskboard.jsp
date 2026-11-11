@@ -62,7 +62,6 @@
 				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 				String countUser = "taskuser";
 				String countPassword = "taskpass";
-
 				%>
 
 				<%
@@ -80,6 +79,8 @@
 				TaskDAO taskDAO = new TaskDAO();
 
 				List<Map<String, Object>> allTasks = taskDAO.getTasksForBoard(loginUserId, activeOrgId, taskFilter);
+
+				List<Map<String, Object>> tagOptions = taskDAO.getTagOptionsForBoard(loginUserId, activeOrgId);
 
 				List<Map<String, Object>> todoTasks = new ArrayList<>();
 
@@ -104,7 +105,6 @@
 						doneTasks.add(task);
 					}
 				}
-
 				%>
 
 				<div class="task-board-wrapper">
@@ -257,7 +257,32 @@
 									}
 									%>
 
-								</select> <label>優先度</label> <select name="priority">
+								</select> <label>タグ検索</label> <input type="text" name="tag_keyword"
+									class="filter-input" placeholder="タグ名を検索"
+									value="<%=filterTagKeyword == null ? "" : filterTagKeyword%>">
+
+								<label>タグ</label> <select name="tag_id">
+
+									<option value="">すべて</option>
+
+									<%
+									for (Map<String, Object> tag : tagOptions) {
+
+										int tagId = (Integer) tag.get("tagId");
+
+										String tagName = (String) tag.get("tagName");
+									%>
+
+									<option value="<%=tagId%>"
+										<%=String.valueOf(tagId).equals(filterTagId) ? "selected" : ""%>>
+										<%=tagName%>
+									</option>
+
+									<%
+									}
+									%>
+
+								</select> </select> <label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
 
 									<option value="高"
