@@ -548,12 +548,4 @@ public class NotificationDAO {
 		    type,
 		    message
 		);
-		notificationDAO.notifyTaskAssignees(
-			    taskId,
-			    projectId,
-			    loginUserId,
-			    "COMMENT_ADDED",
-			    "担当タスク「" + taskName
-			        + "」に新しいコメントが追加されました。"
-			);
 }

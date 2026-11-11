@@ -56,13 +56,11 @@
 				String filterPriority = request.getParameter("priority");
 				String filterDeadline = request.getParameter("deadline");
 				String filterTagId = request.getParameter("tag_id");
-				String filterTagKeyword = request.getParameter("tag_keyword");
 				String sort = request.getParameter("sort");
 
 				String countUrl = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 				String countUser = "taskuser";
 				String countPassword = "taskpass";
-
 				%>
 
 				<%
@@ -74,12 +72,30 @@
 				taskFilter.setPriority(filterPriority);
 				taskFilter.setDeadline(filterDeadline);
 				taskFilter.setTagId(filterTagId);
-				taskFilter.setTagKeyword(filterTagKeyword);
 				taskFilter.setSort(sort);
 
 				TaskDAO taskDAO = new TaskDAO();
 
 				List<Map<String, Object>> allTasks = taskDAO.getTasksForBoard(loginUserId, activeOrgId, taskFilter);
+
+				List<Map<String, Object>> tagOptions = taskDAO.getTagOptionsForBoard(loginUserId, activeOrgId);
+
+				String selectedTagName = "";
+
+				if (filterTagId != null && !filterTagId.isEmpty()) {
+
+					for (Map<String, Object> tag : tagOptions) {
+
+						int tagId = (Integer) tag.get("tagId");
+
+						if (String.valueOf(tagId).equals(filterTagId)) {
+
+					selectedTagName = (String) tag.get("tagName");
+
+					break;
+						}
+					}
+				}
 
 				List<Map<String, Object>> todoTasks = new ArrayList<>();
 
@@ -104,7 +120,6 @@
 						doneTasks.add(task);
 					}
 				}
-
 				%>
 
 				<div class="task-board-wrapper">
@@ -257,7 +272,53 @@
 									}
 									%>
 
-								</select> <label>優先度</label> <select name="priority">
+								</select> <label>タグ</label>
+
+								<div class="tag-combobox" id="tagFilterCombobox">
+
+									<div class="tag-combobox-control">
+
+										<input type="text" id="tagFilterInput"
+											class="tag-combobox-input" placeholder="すべて"
+											autocomplete="off" value="<%=selectedTagName%>"
+											onfocus="openTagFilter()" oninput="filterTagOptions()">
+
+										<button type="button" class="tag-combobox-toggle"
+											onclick="toggleTagFilter()">▼</button>
+
+									</div>
+
+									<input type="hidden" name="tag_id" id="tagFilterValue"
+										value="<%=filterTagId == null ? "" : filterTagId%>">
+
+									<div class="tag-combobox-menu" id="tagFilterMenu">
+
+										<button type="button" class="tag-combobox-option"
+											data-tag-name="" onclick="selectTagFilter('', '')">
+											すべて</button>
+
+										<%
+										for (Map<String, Object> tag : tagOptions) {
+
+											int tagId = (Integer) tag.get("tagId");
+
+											String tagName = (String) tag.get("tagName");
+										%>
+
+										<button type="button" class="tag-combobox-option"
+											data-tag-name="<%=tagName%>"
+											onclick="selectTagFilter('<%=tagId%>','<%=tagName%>')">
+											<%=tagName%>
+										</button>
+
+										<%
+										}
+										%>
+
+									</div>
+
+								</div>
+								<label>優先度</label> <select name="priority">
 									<option value="">すべて</option>
 
 									<option value="高"
@@ -486,6 +547,93 @@
 						}
 					}
 				}
+			</script>
+
+			<script>
+				function openTagFilter() {
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					menu.classList.add("open");
+				}
+
+				function toggleTagFilter() {
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					menu.classList.toggle("open");
+				}
+
+				function filterTagOptions() {
+
+					const input = document.getElementById("tagFilterInput");
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					const hidden = document.getElementById("tagFilterValue");
+
+					const keyword = input.value.trim().toLowerCase();
+
+					// 文字を書き換えた時点で
+					// 前の選択状態は解除
+					hidden.value = "";
+
+					const options = menu
+							.querySelectorAll(".tag-combobox-option");
+
+					options.forEach(function(option) {
+
+						const tagName = (option.dataset.tagName || "")
+								.toLowerCase();
+
+						// 「すべて」は常に表示
+						if (tagName === "") {
+
+							option.style.display = "";
+
+							return;
+						}
+
+						if (keyword === "" || tagName.includes(keyword)) {
+
+							option.style.display = "";
+
+						} else {
+
+							option.style.display = "none";
+						}
+					});
+
+					menu.classList.add("open");
+				}
+
+				function selectTagFilter(tagId, tagName) {
+
+					const input = document.getElementById("tagFilterInput");
+
+					const hidden = document.getElementById("tagFilterValue");
+
+					const menu = document.getElementById("tagFilterMenu");
+
+					hidden.value = tagId;
+
+					input.value = tagName;
+
+					menu.classList.remove("open");
+				}
+
+				// 外側をクリックしたら閉じる
+				document.addEventListener("click", function(event) {
+
+					const combobox = document
+							.getElementById("tagFilterCombobox");
+
+					if (combobox && !combobox.contains(event.target)) {
+
+						document.getElementById("tagFilterMenu").classList
+								.remove("open");
+					}
+				});
 			</script>
 		</main>
 

@@ -579,6 +579,85 @@
     background-color: var(--ui-hover);
 }
 
+/* タグ検索付きプルダウン */
+.tag-combobox {
+    position: relative;
+    width: 100%;
+}
+
+.tag-combobox-control {
+    display: flex;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    overflow: hidden;
+}
+
+.tag-combobox-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+}
+
+.tag-combobox-toggle {
+    width: 34px;
+    border: none;
+    border-left: 1px solid #ddd;
+    background: transparent;
+    cursor: pointer;
+    color: #666;
+}
+
+.tag-combobox-menu {
+    display: none;
+
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+
+    max-height: 180px;
+    overflow-y: auto;
+
+    background: var(--ui-surface, white);
+    border: 1px solid var(--ui-border, #ccc);
+    border-radius: 6px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(0, 0, 0, 0.15);
+
+    z-index: 50;
+}
+
+.tag-combobox-menu.open {
+    display: block;
+}
+
+.tag-combobox-option {
+    display: block;
+    width: 100%;
+
+    padding: 8px 10px;
+
+    border: none;
+    background: transparent;
+
+    text-align: left;
+    cursor: pointer;
+
+    color: var(--ui-text, #333);
+}
+
+.tag-combobox-option:hover {
+    background:
+        var(--ui-selected, #f0f4f8);
+}
 
 /* =========================================
    ダークモード
