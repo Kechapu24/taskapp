@@ -579,138 +579,114 @@
     background-color: var(--ui-hover);
 }
 
-/* タグ検索付きプルダウン */
-.tag-combobox {
+
+/* =========================================
+   タグUI：共通デザイン
+   ========================================= */
+
+
+/* タグ検索・編集プルダウンの配置 */
+.tag-combobox,
+.tag-editor-combobox {
     position: relative;
     width: 100%;
 }
 
-.tag-combobox-control {
-    display: flex;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: white;
-    overflow: hidden;
-}
-
-.tag-combobox-input {
-    flex: 1;
-    min-width: 0;
-    padding: 8px 10px;
-    border: none;
-    outline: none;
-    background: transparent;
-    color: inherit;
-}
-
-.tag-combobox-toggle {
-    width: 34px;
-    border: none;
-    border-left: 1px solid #ddd;
-    background: transparent;
-    cursor: pointer;
-    color: #666;
-}
-
-.tag-combobox-menu {
-    display: none;
-
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-
-    max-height: 180px;
-    overflow-y: auto;
-
-    background: var(--ui-surface, white);
-    border: 1px solid var(--ui-border, #ccc);
-    border-radius: 6px;
-
-    box-shadow:
-        0 4px 12px
-        rgba(0, 0, 0, 0.15);
-
-    z-index: 50;
-}
-
-.tag-combobox-menu.open {
-    display: block;
-}
-
-.tag-combobox-option {
-    display: block;
-    width: 100%;
-
-    padding: 8px 10px;
-
-    border: none;
-    background: transparent;
-
-    text-align: left;
-    cursor: pointer;
-
-    color: var(--ui-text, #333);
-}
-
-.tag-combobox-option:hover {
-    background:
-        var(--ui-selected, #f0f4f8);
-}
-
-/* タスク追加・編集用タグUI */
 .tag-editor {
     margin-top: 12px;
 }
 
-.tag-editor-combobox {
-    position: relative;
-}
-
+/* 入力欄の外枠 */
+.tag-combobox-control,
 .tag-editor-control {
     display: flex;
-    border: 1px solid #ccc;
+    align-items: center;
+    width: 100%;
+    height: 36px;
+    background-color: var(--ui-input);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
     border-radius: 6px;
     overflow: hidden;
-    background: var(--ui-surface, white);
 }
 
-.tag-editor-search {
+/* 入力部分 */
+.tag-combobox-input,
+.edit-form .tag-editor-search {
     flex: 1;
     min-width: 0;
-    border: none !important;
-    margin: 0 !important;
-    outline: none;
-}
-
-.tag-editor-toggle {
-    width: 36px;
+    width: auto;
+    padding: 8px 10px;
+    margin: 0;
     border: none;
-    border-left: 1px solid #ddd;
+    outline: none;
     background: transparent;
-    cursor: pointer;
+    color: var(--ui-text);
+    font-size: 14px;
 }
 
+/* プレースホルダー */
+.tag-combobox-input::placeholder,
+.tag-editor-search::placeholder {
+    color: var(--ui-muted);
+}
+
+
+/* ▼ボタン */
+.tag-combobox-toggle,
+.tag-editor-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    align-self: stretch;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--ui-text);
+    cursor: pointer;
+    font-size: 0;
+}
+
+/* ブラウザ標準のselectに近い矢印 */
+.tag-combobox-toggle::after,
+.tag-editor-toggle::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+}
+
+
+
+/* 候補一覧 */
+.tag-combobox-menu,
 .tag-editor-menu {
     display: none;
     position: absolute;
+    top: calc(100% + 4px);
     left: 0;
     right: 0;
-    top: calc(100% + 4px);
     max-height: 180px;
     overflow-y: auto;
-    background: var(--ui-surface, white);
-    border: 1px solid var(--ui-border, #ccc);
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
     border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 100;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
 }
 
+/* 開いた状態 */
+.tag-combobox-menu.open,
 .tag-editor-menu.open {
     display: block;
 }
 
+/* 候補項目 */
+.tag-combobox-option,
 .tag-editor-option {
     display: flex;
     align-items: center;
@@ -719,15 +695,18 @@
     padding: 8px 10px;
     border: none;
     background: transparent;
-    color: var(--ui-text, #333);
+    color: var(--ui-text);
     text-align: left;
     cursor: pointer;
+    font-size: 14px;
 }
 
+.tag-combobox-option:hover,
 .tag-editor-option:hover {
-    background: var(--ui-selected, #eee);
+    background-color: var(--ui-hover);
 }
 
+/* タグの色表示 */
 .tag-color-dot {
     width: 12px;
     height: 12px;
@@ -735,6 +714,7 @@
     flex-shrink: 0;
 }
 
+/* 選択済みタグ */
 .selected-tags {
     display: flex;
     flex-wrap: wrap;
@@ -760,25 +740,68 @@
     padding: 0;
 }
 
+.selected-tag button:hover {
+    opacity: 0.7;
+}
+
+/* 新しいタグの追加 */
 .new-tag-row {
     display: flex;
-    gap: 8px;
     align-items: center;
+    gap: 8px;
 }
 
 .new-tag-row .new-tag-name {
     flex: 1;
+    min-width: 0;
+    width: auto;
+    height: 36px;
+    margin-top: 0;
 }
 
 .new-tag-row .new-tag-color {
+    flex: 0 0 44px;
     width: 44px;
     height: 36px;
     padding: 2px;
+    margin-top: 0;
 }
 
+/* 追加ボタン */
 .new-tag-row button {
+    height: 36px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 6px;
+    background-color: #3498db;
+    color: white;
+    cursor: pointer;
     white-space: nowrap;
 }
+
+.new-tag-row button:hover {
+    background-color: #2980b9;
+}
+
+/* カスタムテーマへの対応 */
+body.custom-theme .new-tag-row button {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+
+body.custom-theme .new-tag-row button:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 80%,
+        var(--custom-text-color) 20%
+    );
+}
+
+body.custom-theme .tag-combobox-control:focus-within,
+body.custom-theme .tag-editor-control:focus-within {
+    border-color: var(--custom-bg-color);
+}
+
 
 /* =========================================
    ダークモード
