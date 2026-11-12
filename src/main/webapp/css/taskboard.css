@@ -185,11 +185,11 @@
 
 /* 選択 */
 .task-card {
-    cursor: pointer;
+	cursor: pointer;
 }
 
 .task-card.selected {
-    background: #f8fbff;
+	background: #f8fbff;
 }
 
 /* 三点リーダーメニュー */
@@ -352,115 +352,142 @@
 /* タスクボード右サイドパネル */
 
 .sidepanel-tabs {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-    margin: -20px -20px 20px -20px;
+	display: flex;
+	border-bottom: 1px solid #ddd;
+	margin: -20px -20px 20px -20px;
 }
 
 .sidepanel-tab {
-    flex: 1;
-    padding: 12px 5px;
-    border: none;
-    background: #f5f5f5;
-    cursor: pointer;
-    font-size: 13px;
-    color: #555;
-    border-bottom: 3px solid transparent;
+	flex: 1;
+	padding: 12px 5px;
+	border: none;
+	background: #f5f5f5;
+	cursor: pointer;
+	font-size: 13px;
+	color: #555;
+	border-bottom: 3px solid transparent;
 }
 
 .sidepanel-tab:first-child {
-    border-top-left-radius: 10px;
+	border-top-left-radius: 10px;
 }
 
 .sidepanel-tab:last-child {
-    border-top-right-radius: 10px;
+	border-top-right-radius: 10px;
 }
 
 .sidepanel-tab:hover {
-    background: #eeeeee;
+	background: #eeeeee;
 }
 
 .sidepanel-tab.active {
-    background: white;
-    color: #3498db;
-    border-bottom-color: #3498db;
-    font-weight: bold;
+	background: white;
+	color: #3498db;
+	border-bottom-color: #3498db;
+	font-weight: bold;
 }
 
 
 /* タブの中身 */
 .sidepanel-content {
-    display: none;
+	display: none;
 }
 
 .sidepanel-content.active {
-    display: block;
+	display: block;
 }
 
 .sidepanel-content h3 {
-    margin-bottom: 15px;
-    font-size: 17px;
-    color: #2c3e50;
+	margin-bottom: 15px;
+	font-size: 17px;
+	color: #2c3e50;
 }
 
 
 /* 検索・絞り込みフォーム */
 .filter-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
 .filter-form label {
-    margin-top: 6px;
-    font-size: 13px;
-    font-weight: bold;
-    color: #555;
+	margin-top: 6px;
+	font-size: 13px;
+	font-weight: bold;
+	color: #555;
 }
 
+
+/* 検索フォーム共通 */
+.filter-input,
+.filter-form select,
+.tag-combobox-control,
+.tag-editor-control {
+	width: 100%;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	background: white;
+}
+
+/* 通常の入力欄・selectの余白 */
 .filter-input,
 .filter-form select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: white;
+	padding: 8px 10px;
 }
 
+/* selectとタグボックスの高さを統一 */
+.filter-form select,
+.tag-combobox-control,
+.tag-editor-control {
+	height: 35px;
+}
+
+/* フォーカス時の強調表示を統一 */
+.filter-input:focus,
+.filter-form select:focus,
+.tag-combobox-control:focus-within,
+.tag-editor-control:focus-within {
+	outline: 1px auto;
+	outline-color: var(--ui-text);
+	outline-offset: 0;
+}
+
+
 .filter-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
 }
 
 .filter-submit {
-    flex: 1;
-    padding: 9px;
-    border: none;
-    border-radius: 6px;
-    background: #3498db;
-    color: white;
-    cursor: pointer;
+	flex: 1;
+	padding: 9px;
+	border: none;
+	border-radius: 6px;
+	background: #3498db;
+	color: white;
+	cursor: pointer;
 }
 
 .filter-submit:hover {
-    background: #2980b9;
+	background: #2980b9;
 }
 
 .filter-reset {
-    flex: 1;
-    padding: 9px;
-    border-radius: 6px;
-    background: #ecf0f1;
-    color: #555;
-    text-decoration: none;
-    text-align: center;
+	flex: 1;
+	padding: 9px;
+	border-radius: 6px;
+	background: #ecf0f1;
+	color: #555;
+	text-decoration: none;
+	text-align: center;
 }
 
 /* タスクコラムと右サイドパネルの枠線 */
 .task-column,
 .sidepanel {
-    border: 1px solid var(--ui-border);
+	border: 1px solid var(--ui-border);
 }
 
 /* =========================================
@@ -469,84 +496,84 @@
 
 /* タスクコラム */
 .task-column {
-    background-color: var(--ui-column);
-    color: var(--ui-text);
+	background-color: var(--ui-column);
+	color: var(--ui-text);
 }
 
 .task-column h2 {
-    color: var(--ui-text);
+	color: var(--ui-text);
 }
 
 /* タスクカード */
 .task-card {
-    background-color: var(--ui-surface);
-    color: var(--ui-text);
+	background-color: var(--ui-surface);
+	color: var(--ui-text);
 }
 
 .task-card.selected {
-    background-color: var(--ui-selected);
+	background-color: var(--ui-selected);
 }
 
 .task-card p {
-    color: var(--ui-muted);
+	color: var(--ui-muted);
 }
 
 /* 右サイドパネル */
 .sidepanel {
-    background-color: var(--ui-surface);
-    color: var(--ui-text);
+	background-color: var(--ui-surface);
+	color: var(--ui-text);
 }
 
 .sidepanel-content h3 {
-    color: var(--ui-text);
+	color: var(--ui-text);
 }
 
 .sidepanel-tabs {
-    border-bottom-color: var(--ui-border);
+	border-bottom-color: var(--ui-border);
 }
 
 .sidepanel-tab {
-    background-color: var(--ui-column);
-    color: var(--ui-muted);
+	background-color: var(--ui-column);
+	color: var(--ui-muted);
 }
 
 .sidepanel-tab:hover {
-    background-color: var(--ui-hover);
+	background-color: var(--ui-hover);
 }
 
 .sidepanel-tab.active {
-    background-color: var(--ui-surface);
-    color: #3498db;
+	background-color: var(--ui-surface);
+	color: #3498db;
 }
 
 /* 三点メニュー */
 .menu-button,
 .icon-button {
-    color: var(--ui-text);
+	color: var(--ui-text);
 }
 
 .menu-dropdown {
-    background-color: var(--ui-surface);
-    border-color: var(--ui-border);
+	background-color: var(--ui-surface);
+	border-color: var(--ui-border);
 }
 
 .menu-dropdown button {
-    background-color: var(--ui-surface);
-    color: var(--ui-text);
+	background-color: var(--ui-surface);
+	color: var(--ui-text);
 }
 
 .menu-dropdown button:hover {
-    background-color: var(--ui-hover);
+	background-color: var(--ui-hover);
 }
 
 /* モーダル */
 .modal-content {
-    background-color: var(--ui-surface);
-    color: var(--ui-text);
+	background-color: var(--ui-surface);
+	color: var(--ui-text);
 }
 
 .modal-close {
-    color: var(--ui-text);
+	color: var(--ui-text);
 }
 
 /* 入力フォーム */
@@ -554,29 +581,31 @@
 .edit-form textarea,
 .edit-form select,
 .filter-input,
-.filter-form select {
-    background-color: var(--ui-input);
-    color: var(--ui-text);
-    border-color: var(--ui-border);
+.filter-form select,
+.tag-combobox-control,
+.tag-editor-control {
+	background-color: var(--ui-input);
+	color: var(--ui-text);
+	border-color: var(--ui-border);
 }
 
 .edit-form input::placeholder,
 .edit-form textarea::placeholder,
 .filter-input::placeholder {
-    color: var(--ui-muted);
+	color: var(--ui-muted);
 }
 
 .filter-form label {
-    color: var(--ui-text);
+	color: var(--ui-text);
 }
 
 .filter-reset {
-    background-color: var(--ui-column);
-    color: var(--ui-text);
+	background-color: var(--ui-column);
+	color: var(--ui-text);
 }
 
 .filter-reset:hover {
-    background-color: var(--ui-hover);
+	background-color: var(--ui-hover);
 }
 
 
@@ -588,76 +617,70 @@
 /* タグ検索・編集プルダウンの配置 */
 .tag-combobox,
 .tag-editor-combobox {
-    position: relative;
-    width: 100%;
+	position: relative;
+	width: 100%;
 }
 
 .tag-editor {
-    margin-top: 12px;
+	margin-top: 12px;
 }
 
-/* 入力欄の外枠 */
+/* 入力欄のレイアウト */
 .tag-combobox-control,
 .tag-editor-control {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 36px;
-    background-color: var(--ui-input);
-    color: var(--ui-text);
-    border: 1px solid var(--ui-border);
-    border-radius: 6px;
-    overflow: hidden;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
 }
 
 /* 入力部分 */
 .tag-combobox-input,
 .edit-form .tag-editor-search {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    padding: 8px 10px;
-    margin: 0;
-    border: none;
-    outline: none;
-    background: transparent;
-    color: var(--ui-text);
-    font-size: 14px;
+	flex: 1;
+	min-width: 0;
+	width: auto;
+	padding: 8px 10px;
+	margin: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--ui-text);
 }
 
 /* プレースホルダー */
 .tag-combobox-input::placeholder,
 .tag-editor-search::placeholder {
-    color: var(--ui-muted);
+	color: var(--ui-muted);
 }
 
 
 /* ▼ボタン */
 .tag-combobox-toggle,
 .tag-editor-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 36px;
-    width: 36px;
-    align-self: stretch;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--ui-text);
-    cursor: pointer;
-    font-size: 0;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex: 0 0 36px;
+	width: 36px;
+	align-self: stretch;
+	padding: 0 6px 0 0;
+	border: none;
+	background: transparent;
+	color: var(--ui-text);
+	cursor: pointer;
+	font-size: 0;
 }
+
 
 /* ブラウザ標準のselectに近い矢印 */
 .tag-combobox-toggle::after,
 .tag-editor-toggle::after {
-    content: "";
-    width: 7px;
-    height: 7px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(45deg) translateY(-2px);
+	content: "";
+	width: 5px;
+	height: 5px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg) translateY(-1px);
 }
 
 
@@ -665,141 +688,134 @@
 /* 候補一覧 */
 .tag-combobox-menu,
 .tag-editor-menu {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    max-height: 180px;
-    overflow-y: auto;
-    background-color: var(--ui-surface);
-    border: 1px solid var(--ui-border);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 100;
+	display: none;
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 180px;
+	overflow-y: auto;
+	background-color: var(--ui-surface);
+	border: 1px solid var(--ui-border);
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	z-index: 100;
 }
 
 /* 開いた状態 */
 .tag-combobox-menu.open,
 .tag-editor-menu.open {
-    display: block;
+	display: block;
 }
 
 /* 候補項目 */
 .tag-combobox-option,
 .tag-editor-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 8px 10px;
-    border: none;
-    background: transparent;
-    color: var(--ui-text);
-    text-align: left;
-    cursor: pointer;
-    font-size: 14px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 10px;
+	border: none;
+	background: transparent;
+	color: var(--ui-text);
+	text-align: left;
+	cursor: pointer;
+	font-size: 14px;
 }
 
 .tag-combobox-option:hover,
 .tag-editor-option:hover {
-    background-color: var(--ui-hover);
+	background-color: var(--ui-hover);
 }
 
 /* タグの色表示 */
 .tag-color-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 /* 選択済みタグ */
 .selected-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
 }
 
 .selected-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    color: white;
-    font-size: 12px;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 4px 8px;
+	border-radius: 12px;
+	color: white;
+	font-size: 12px;
 }
 
 .selected-tag button {
-    border: none;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	padding: 0;
 }
 
 .selected-tag button:hover {
-    opacity: 0.7;
+	opacity: 0.7;
 }
 
 /* 新しいタグの追加 */
 .new-tag-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .new-tag-row .new-tag-name {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    height: 36px;
-    margin-top: 0;
+	flex: 1;
+	min-width: 0;
+	width: auto;
+	height: 36px;
+	margin-top: 0;
 }
 
 .new-tag-row .new-tag-color {
-    flex: 0 0 44px;
-    width: 44px;
-    height: 36px;
-    padding: 2px;
-    margin-top: 0;
+	flex: 0 0 44px;
+	width: 44px;
+	height: 36px;
+	padding: 2px;
+	margin-top: 0;
 }
 
 /* 追加ボタン */
 .new-tag-row button {
-    height: 36px;
-    padding: 0 14px;
-    border: none;
-    border-radius: 6px;
-    background-color: #3498db;
-    color: white;
-    cursor: pointer;
-    white-space: nowrap;
+	height: 36px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 6px;
+	background-color: #3498db;
+	color: white;
+	cursor: pointer;
+	white-space: nowrap;
 }
 
 .new-tag-row button:hover {
-    background-color: #2980b9;
+	background-color: #2980b9;
 }
 
 /* カスタムテーマへの対応 */
 body.custom-theme .new-tag-row button {
-    background-color: var(--custom-bg-color);
-    color: var(--custom-text-color);
+	background-color: var(--custom-bg-color);
+	color: var(--custom-text-color);
 }
 
 body.custom-theme .new-tag-row button:hover {
-    background-color: color-mix(
-        in srgb,
-        var(--custom-bg-color) 80%,
-        var(--custom-text-color) 20%
-    );
-}
-
-body.custom-theme .tag-combobox-control:focus-within,
-body.custom-theme .tag-editor-control:focus-within {
-    border-color: var(--custom-bg-color);
+	background-color: color-mix(in srgb,
+			var(--custom-bg-color) 80%,
+			var(--custom-text-color) 20%);
 }
 
 
@@ -808,7 +824,7 @@ body.custom-theme .tag-editor-control:focus-within {
    ========================================= */
 /* サイドパネルのタブ */
 body.dark-theme .sidepanel-tab.active {
-    color: #8bc4ff;
+	color: #8bc4ff;
 }
 
 /* =========================================
@@ -816,15 +832,12 @@ body.dark-theme .sidepanel-tab.active {
    ========================================= */
 /* カスタムテーマ：サイドパネルタブ用 */
 body.custom-theme .custom-theme-accent-active.active {
-	border-bottom-color: color-mix(
-        in srgb,
-        var(--custom-bg-color) 80%,
-        var(--custom-text-color) 20%
-    );
+	border-bottom-color: color-mix(in srgb,
+			var(--custom-bg-color) 80%,
+			var(--custom-text-color) 20%);
 }
 
 /* 削除メニューの赤色を維持 */
 .menu-dropdown .delete-menu-button {
-    color: #d9534f;
+	color: #d9534f;
 }
-
