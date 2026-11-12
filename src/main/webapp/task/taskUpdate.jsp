@@ -1,11 +1,26 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*"%>
-<%@ page import="dao.TaskDAO"%>
+    pageEncoding="UTF-8" %>
+
+<%@ page import="java.sql.*" %>
+<%@ page import="dao.TaskDAO" %>
+<%@ page import="util.DBConnection" %>
 
 <%
 request.setCharacterEncoding("UTF-8");
 
+// 戻り先を判定
+String returnTo = request.getParameter("return_to");
+
+String returnPath = "mytasks".equals(returnTo)
+    ? "/mytasks.jsp"
+    : "/taskboard.jsp";
+
+String returnLabel = "mytasks".equals(returnTo)
+    ? "マイタスクへ戻る"
+    : "タスクボードへ戻る";
+
+
+// フォームから受け取る値
 String taskIdStr = request.getParameter("task_id");
 String taskName = request.getParameter("task_name");
 String description = request.getParameter("description");
@@ -14,117 +29,195 @@ String priority = request.getParameter("priority");
 String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
 String userIdStr = request.getParameter("user_id");
+
 String[] tagIds = request.getParameterValues("tag_ids");
 String[] newTagNames = request.getParameterValues("new_tag_names");
 String[] newTagColors = request.getParameterValues("new_tag_colors");
 
-String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
-String user = "taskuser";
-String password = "taskpass";
-
 Connection conn = null;
-PreparedStatement taskStmt = null;
-PreparedStatement deleteAssigneeStmt = null;
-PreparedStatement insertAssigneeStmt = null;
 
 try {
-	Class.forName("org.postgresql.Driver");
-	conn = DriverManager.getConnection(url, user, password);
 
-	conn.setAutoCommit(false);
+    // 入力チェック
+    if (taskIdStr == null || taskIdStr.trim().isEmpty()) {
+        throw new IllegalArgumentException("タスクIDが指定されていません。");
+    }
 
-	String taskSql = "UPDATE task "
-	+ "SET task_name = ?, "
-	+ "description = ?, "
-	+ "status = ?, "
-	+ "priority = ?, "
-	+ "start_date = ?, "
-	+ "due_date = ? "
-	+ "WHERE task_id = ?";
+    if (taskName == null || taskName.trim().isEmpty()) {
+        throw new IllegalArgumentException("タスク名を入力してください。");
+    }
 
-	taskStmt = conn.prepareStatement(taskSql);
+    if (userIdStr == null || userIdStr.trim().isEmpty()) {
+        throw new IllegalArgumentException("担当者を選択してください。");
+    }
 
-	taskStmt.setString(1, taskName);
-	taskStmt.setString(2, description);
-	taskStmt.setString(3, status);
-	taskStmt.setString(4, priority);
+    int taskId = Integer.parseInt(taskIdStr);
+    int userId = Integer.parseInt(userIdStr);
 
-	if (startDate == null || startDate.isEmpty()) {
-		taskStmt.setNull(5, java.sql.Types.DATE);
-	} else {
-		taskStmt.setDate(5, java.sql.Date.valueOf(startDate));
-	}
 
-	if (dueDate == null || dueDate.isEmpty()) {
-		taskStmt.setNull(6, java.sql.Types.DATE);
-	} else {
-		taskStmt.setDate(6, java.sql.Date.valueOf(dueDate));
-	}
+    Class.forName("org.postgresql.Driver");
 
-	taskStmt.setInt(7, Integer.parseInt(taskIdStr));
+    conn = DBConnection.getConnection();
 
-	taskStmt.executeUpdate();
+    conn.setAutoCommit(false);
 
-	/*
-	 * 担当者の更新
-	 * 今回はシンプルに、
-	 * 既存担当者を一度消す
-	 * ↓
-	 * 新しい担当者を登録
-	 * という形にする
-	 */
-	String deleteAssigneeSql = "DELETE FROM task_assignee WHERE task_id = ?";
-	deleteAssigneeStmt = conn.prepareStatement(deleteAssigneeSql);
-	deleteAssigneeStmt.setInt(1, Integer.parseInt(taskIdStr));
-	deleteAssigneeStmt.executeUpdate();
 
-	String insertAssigneeSql = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
-	insertAssigneeStmt = conn.prepareStatement(insertAssigneeSql);
-	insertAssigneeStmt.setInt(1, Integer.parseInt(taskIdStr));
-	insertAssigneeStmt.setInt(2, Integer.parseInt(userIdStr));
-	insertAssigneeStmt.executeUpdate();
-	TaskDAO taskDAO = new TaskDAO();
-		taskDAO.replaceTaskTags(
-				conn,Integer.parseInt(taskIdStr),tagIds,newTagNames,newTagColors);
+    // ======================================
+    // ① タスク本体を更新
+    // ======================================
 
-	conn.commit();
+    String taskSql =
+        "UPDATE task "
+        + "SET task_name = ?, "
+        + "description = ?, "
+        + "status = ?, "
+        + "priority = ?, "
+        + "start_date = ?, "
+        + "due_date = ? "
+        + "WHERE task_id = ?";
 
-	response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
+    try (PreparedStatement taskStmt = conn.prepareStatement(taskSql)) {
+
+        taskStmt.setString(1, taskName.trim());
+        taskStmt.setString(2, description == null ? "" : description);
+        taskStmt.setString(3, status);
+        taskStmt.setString(4, priority);
+
+        if (startDate == null || startDate.isEmpty()) {
+            taskStmt.setNull(5, java.sql.Types.DATE);
+        } else {
+            taskStmt.setDate(5, java.sql.Date.valueOf(startDate));
+        }
+
+        if (dueDate == null || dueDate.isEmpty()) {
+            taskStmt.setNull(6, java.sql.Types.DATE);
+        } else {
+            taskStmt.setDate(6, java.sql.Date.valueOf(dueDate));
+        }
+
+        taskStmt.setInt(7, taskId);
+
+        int updatedRows = taskStmt.executeUpdate();
+
+        if (updatedRows == 0) {
+            throw new SQLException("更新対象のタスクが見つかりません。");
+        }
+    }
+
+
+    // ======================================
+    // ② 担当者を更新
+    // ======================================
+
+    String deleteAssigneeSql =
+        "DELETE FROM task_assignee WHERE task_id = ?";
+
+    try (PreparedStatement deleteAssigneeStmt =
+            conn.prepareStatement(deleteAssigneeSql)) {
+
+        deleteAssigneeStmt.setInt(1, taskId);
+        deleteAssigneeStmt.executeUpdate();
+    }
+
+
+    String insertAssigneeSql =
+        "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
+
+    try (PreparedStatement insertAssigneeStmt =
+            conn.prepareStatement(insertAssigneeSql)) {
+
+        insertAssigneeStmt.setInt(1, taskId);
+        insertAssigneeStmt.setInt(2, userId);
+
+        insertAssigneeStmt.executeUpdate();
+    }
+
+
+    // ======================================
+    // ③ タグを更新
+    // ======================================
+
+    TaskDAO taskDAO = new TaskDAO();
+
+    taskDAO.replaceTaskTags(
+        conn,
+        taskId,
+        tagIds,
+        newTagNames,
+        newTagColors
+    );
+
+
+    // ======================================
+    // ④ DBへ確定
+    // ======================================
+
+    conn.commit();
+
+
+    // 編集元のページへ戻る
+    response.sendRedirect(
+        request.getContextPath() + returnPath
+    );
 
 } catch (Exception e) {
-	if (conn != null) {
-		try {
-	conn.rollback();
-		} catch (Exception rollbackError) {
-		}
-	}
+
+    // エラー時はロールバック
+    if (conn != null) {
+        try {
+            conn.rollback();
+        } catch (Exception rollbackError) {
+            application.log("タスク更新のロールバックに失敗しました。", rollbackError);
+        }
+    }
+
+    application.log("タスク更新エラー", e);
+
+    response.setStatus(500);
+
 %>
-<p style="color: red;">
-	タスク更新エラー：<%=e.getMessage()%></p>
-<p>
-	<a href="taskboard.jsp">タスクボードへ戻る</a>
-</p>
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>タスク更新エラー</title>
+</head>
+
+<body>
+
+    <h2>タスク更新エラー</h2>
+
+    <p>
+        タスクの更新に失敗しました。
+    </p>
+
+    <p>
+        <%= e.getMessage() == null ? "" : e.getMessage() %>
+    </p>
+
+    <p>
+        <a href="<%= request.getContextPath() + returnPath %>">
+            <%= returnLabel %>
+        </a>
+    </p>
+
+</body>
+</html>
+
 <%
+
 } finally {
-if (taskStmt != null)
-	try {
-		taskStmt.close();
-	} catch (Exception e) {
-	}
-if (deleteAssigneeStmt != null)
-	try {
-		deleteAssigneeStmt.close();
-	} catch (Exception e) {
-	}
-if (insertAssigneeStmt != null)
-	try {
-		insertAssigneeStmt.close();
-	} catch (Exception e) {
-	}
-if (conn != null)
-	try {
-		conn.close();
-	} catch (Exception e) {
-	}
+
+    if (conn != null) {
+        try {
+            conn.setAutoCommit(true);
+            conn.close();
+        } catch (Exception closeError) {
+            application.log("DB接続の終了に失敗しました。", closeError);
+        }
+    }
 }
+
 %>

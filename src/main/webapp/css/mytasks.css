@@ -1,369 +1,1276 @@
+@charset "UTF-8";
+
+/* ==========================================
+   共通レイアウト
+   ========================================== */
+
 .main-content {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	height: 100vh;
-	box-sizing: border-box;
-	overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .content-header {
-	flex-shrink: 0;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-	box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .mytasks-container {
-	display: flex;
-	gap: 20px;
-	flex: 1;
-	padding: 20px;
-	background-color: #f8f9fa;
-	overflow-y: auto;
-	box-sizing: border-box;
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    padding: 20px;
+    background-color: #f4f6f8;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
+
+/* ==========================================
+   左右のエリア
+   ========================================== */
+
 .left-column {
-	width: 45%;
-	background: #fff;
-	border: 1px solid #eaeaea;
-	border-radius: 10px;
-	padding: 20px;
-	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	color: #888;
-	font-size: 16px;
+    flex: 0 0 45%;
+    width: auto;
+    min-width: 0;
+
+    background: #fff;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    color: #333;
+    font-size: 16px;
+
+    overflow: hidden;
 }
 
 .right-column {
-	width: 55%;
-	background: #fff;
-	border: 1px solid #eaeaea;
-	border-radius: 10px;
-	padding: 20px;
-	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+
+    background: #fff;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
+
+
+/* ==========================================
+   見出し
+   ========================================== */
 
 .column-title {
-	font-size: 1.1rem;
-	font-weight: bold;
-	color: #333;
-	margin-top: 0;
-	margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 16px;
+    flex-shrink: 0;
 }
+
+
+/* ==========================================
+   左側：担当タスク一覧
+   ========================================== */
+
+.assigned-task-list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    min-height: 0;
+
+    padding: 2px 4px 8px 0;
+    box-sizing: border-box;
+}
+
+
+/* ==========================================
+   担当タスクカード
+   ========================================== */
+
+.assigned-task-card {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 12px 14px;
+    margin: 0;
+
+    box-sizing: border-box;
+
+    background: #f4f6f8;
+
+    border: 1px solid #e5eaf0;
+    border-left: 4px solid #3498db;
+
+    border-radius: 9px;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
+}
+
+
+/* 未着手：青 */
+.assigned-task-card.status-todo {
+    border-left-color: #3498db;
+}
+
+/* 進行中：黄色 */
+.assigned-task-card.status-doing {
+    border-left-color: #f1c40f;
+}
+
+/* 完了：緑 */
+.assigned-task-card.status-done {
+    border-left-color: #2ecc71;
+}
+
+
+/* ==========================================
+   カード上部
+   ========================================== */
+
+.assigned-task-card-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.assigned-task-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-width: 0;
+
+    margin: 0;
+}
+
+.assigned-project-name {
+    display: block;
+
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #64748b;
+    font-size: 12px;
+}
+
+
+/* ==========================================
+   タスク名
+   ========================================== */
+
+.assigned-task-name {
+    margin: 0;
+
+    color: #263246;
+
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================
+   担当者
+   ========================================== */
+
+.assigned-task-assignees {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 12px;
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================
+   カード下部
+   ========================================== */
+
+.assigned-task-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    min-height: 25px;
+
+    margin-top: 3px;
+}
+
+
+/* 期限 */
+.assigned-task-deadline {
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* 期限切れ */
+.assigned-task-deadline.assigned-deadline-overdue {
+    color: #c0392b;
+}
+
+/* 期限間近 */
+.assigned-task-deadline.assigned-deadline-soon {
+    color: #e74c3c;
+}
+
+
+/* ==========================================
+   担当タスク：三点メニュー
+   ========================================== */
+
+.assigned-task-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.assigned-menu-button {
+    border: none;
+    background: transparent;
+
+    color: #34495e;
+
+    cursor: pointer;
+
+    font-size: 22px;
+    padding: 2px 7px;
+    line-height: 1;
+}
+
+.assigned-menu-button:hover {
+    color: #3498db;
+}
+
+.assigned-menu-dropdown {
+    display: none;
+
+    position: absolute;
+    top: 28px;
+    right: 0;
+
+    min-width: 100px;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    z-index: 100;
+    overflow: hidden;
+}
+
+.assigned-menu-dropdown button {
+    display: block;
+    width: 100%;
+
+    padding: 9px 12px;
+
+    border: none;
+    background: #fff;
+
+    color: #333;
+
+    text-align: left;
+
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.assigned-menu-dropdown button:hover {
+    background: #f0f0f0;
+}
+
+.assigned-menu-dropdown .assigned-delete-menu-button {
+    color: #e74c3c;
+}
+
+
+/* ==========================================
+   担当タスク：コメント・添付
+   ========================================== */
+
+.assigned-task-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.assigned-icon-button {
+    padding: 3px 5px;
+
+    border: none;
+    border-radius: 4px;
+
+    background: transparent;
+    color: #34495e;
+
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.assigned-icon-button:hover {
+    background: #eeeeee;
+    color: #3498db;
+}
+
+.assigned-popup-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.7;
+}
+
+
+/* ==========================================
+   担当タスク：空・エラー表示
+   ========================================== */
+
+.assigned-task-empty,
+.assigned-task-error {
+    padding: 24px 12px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+
+    color: #718096;
+
+    font-size: 13px;
+    line-height: 1.7;
+
+    text-align: center;
+}
+
+.assigned-task-error {
+    border-color: #e7b4b4;
+    background: #fff8f8;
+    color: #a33;
+}
+
+
+/* ==========================================
+   担当タスク：専用モーダル
+   ========================================== */
+
+.assigned-task-modal-overlay {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    z-index: 2500;
+
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.assigned-task-modal-content {
+    width: 60%;
+    max-width: 800px;
+
+    max-height: 80vh;
+    overflow-y: auto;
+
+    background: #fff;
+    color: #333;
+
+    border: 1px solid #ddd;
+    border-radius: 10px;
+
+    padding: 24px;
+
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+
+    box-sizing: border-box;
+}
+
+.assigned-task-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 18px;
+}
+
+.assigned-task-modal-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.assigned-task-modal-close {
+    border: none;
+    background: transparent;
+
+    color: #333;
+
+    font-size: 26px;
+    cursor: pointer;
+}
+
+.assigned-task-modal-close:hover {
+    color: #3498db;
+}
+
+.assigned-task-modal-body {
+    color: #333;
+}
+
+.assigned-task-modal-body p {
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+
+
+/* ==========================================
+   担当タスク：編集フォーム
+   ========================================== */
+
+.assigned-task-modal-content .edit-form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+    color: #333;
+}
+
+.assigned-task-modal-content .edit-form input,
+.assigned-task-modal-content .edit-form textarea,
+.assigned-task-modal-content .edit-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    background: #fff;
+    color: #333;
+
+    box-sizing: border-box;
+}
+
+.assigned-task-modal-content .edit-form textarea {
+    height: 100px;
+}
+
+.assigned-task-modal-content .modal-submit-btn {
+    margin-top: 18px;
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #3498db;
+    color: #fff;
+
+    cursor: pointer;
+}
+
+.assigned-task-modal-content .modal-submit-btn:hover {
+    background: #2980b9;
+}
+
+
+/* ==========================================
+   担当タスク：タグ編集UI
+   ========================================== */
+
+.assigned-task-modal-content .tag-editor {
+    margin-top: 12px;
+}
+
+.assigned-task-modal-content .tag-editor-combobox {
+    position: relative;
+    width: 100%;
+}
+
+.assigned-task-modal-content .tag-editor-control {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    height: 36px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    background: #fff;
+
+    overflow: hidden;
+}
+
+.assigned-task-modal-content .edit-form .tag-editor-search {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+
+    padding: 8px 10px;
+    margin: 0;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+    color: #333;
+}
+
+.assigned-task-modal-content .tag-editor-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    background: transparent;
+
+    color: #333;
+    cursor: pointer;
+}
+
+.assigned-task-modal-content .tag-editor-menu {
+    display: none;
+
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+
+    max-height: 180px;
+    overflow-y: auto;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    z-index: 110;
+}
+
+.assigned-task-modal-content .tag-editor-menu.open {
+    display: block;
+}
+
+.assigned-task-modal-content .tag-editor-option {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    width: 100%;
+    padding: 8px 10px;
+
+    border: none;
+    background: transparent;
+
+    color: #333;
+
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.assigned-task-modal-content .tag-editor-option:hover {
+    background: #eeeeee;
+}
+
+.assigned-task-modal-content .tag-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.assigned-task-modal-content .selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    margin-top: 8px;
+}
+
+.assigned-task-modal-content .selected-tag {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 5px;
+    padding: 4px 8px;
+
+    border-radius: 12px;
+
+    color: #fff;
+    font-size: 12px;
+}
+
+.assigned-task-modal-content .selected-tag button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.assigned-task-modal-content .new-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assigned-task-modal-content .new-tag-row .new-tag-name {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+}
+
+.assigned-task-modal-content .new-tag-row .new-tag-color {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 36px;
+    padding: 2px;
+}
+
+.assigned-task-modal-content .new-tag-row button {
+    padding: 8px 12px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #3498db;
+    color: #fff;
+
+    cursor: pointer;
+}
+
+
+/* ==========================================
+   担当タスク：削除確認
+   ========================================== */
+
+.assigned-delete-warning {
+    color: #777;
+    margin-top: 8px;
+}
+
+.assigned-task-modal-content .delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    margin-top: 18px;
+}
+
+.assigned-task-modal-content .cancel-button,
+.assigned-task-modal-content .delete-button {
+    padding: 8px 14px;
+
+    border: none;
+    border-radius: 6px;
+
+    color: #fff;
+    cursor: pointer;
+}
+
+.assigned-task-modal-content .cancel-button {
+    background: #bdc3c7;
+}
+
+.assigned-task-modal-content .cancel-button:hover {
+    background: #95a5a6;
+}
+
+.assigned-task-modal-content .delete-button {
+    background: #e74c3c;
+}
+
+.assigned-task-modal-content .delete-button:hover {
+    background: #c0392b;
+}
+
+
+/* ==========================================
+   右側：個人タスク
+   ========================================== */
 
 .personal-task-list {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	flex: 1;
-	overflow-y: auto;
-	margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    flex: 1;
+
+    overflow-y: auto;
+    min-height: 0;
+
+    margin-bottom: 15px;
 }
 
+
+/* 個人タスクカード */
 .personal-task-item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	background: #fff;
-	border: 1px solid #eaeaea;
-	border-radius: 8px;
-	padding: 12px 16px;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: #f4f6f8;
+
+    border: 1px solid #e5eaf0;
+    border-radius: 8px;
+
+    padding: 12px 16px;
+
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
 }
+
+
+/* 個人タスクがない場合 */
+.personal-task-empty {
+    padding: 24px 12px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+
+    color: #718096;
+
+    font-size: 13px;
+    line-height: 1.7;
+
+    text-align: center;
+}
+
+
+/* ==========================================
+   個人タスク：左側
+   ========================================== */
 
 .pti-left {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	flex: 1;
-	min-width: 0;
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    flex: 1;
+    min-width: 0;
 }
 
 .task-check {
-	width: 16px;
-	height: 16px;
-	cursor: pointer;
-	accent-color: #1b6ef3;
+    width: 16px;
+    height: 16px;
+
+    cursor: pointer;
+
+    accent-color: #1b6ef3;
+
+    flex-shrink: 0;
 }
 
 .pti-name {
-	font-size: 16px;
-	color: #333;
-	font-weight: 500;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+    font-size: 16px;
+    color: #333;
+
+    font-weight: 500;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .completed-task {
-	text-decoration: line-through;
-	color: #888;
+    text-decoration: line-through;
+    color: #888;
 }
 
+
+/* ==========================================
+   個人タスク：右側
+   ========================================== */
+
 .pti-right {
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	flex-shrink: 0;
-	position: relative;
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    flex-shrink: 0;
+    position: relative;
 }
 
 .pti-info {
-	font-size: 13px;
-	color: #6c757d;
+    font-size: 13px;
+    color: #6c757d;
 }
 
+
+/* ==========================================
+   個人タスク：メニュー
+   ========================================== */
+
 .task-menu-trigger {
-	background: none;
-	border: none;
-	cursor: pointer;
-	font-size: 18px;
-	color: #6c757d;
-	padding: 0 4px;
+    background: none;
+    border: none;
+
+    cursor: pointer;
+
+    font-size: 18px;
+    color: #6c757d;
+
+    padding: 0 4px;
 }
 
 .task-menu-trigger:hover {
-	color: #333;
+    color: #333;
 }
 
 .task-dropdown-menu {
-	display: none;
-	position: absolute;
-	right: 0;
-	top: 25px;
-	background: #fff;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	z-index: 100;
-	min-width: 90px;
+    display: none;
+
+    position: absolute;
+
+    right: 0;
+    top: 25px;
+
+    background: #fff;
+
+    border: 1px solid #ccc;
+    border-radius: 4px;
+
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    z-index: 100;
+    min-width: 90px;
 }
 
 .task-dropdown-menu.open {
-	display: block;
+    display: block;
 }
 
 .dropdown-edit-item {
-	width: 100%;
-	padding: 6px 12px;
-	background: none;
-	border: none;
-	color: #333;
-	text-align: left;
-	cursor: pointer;
-	font-size: 13px;
-	border-bottom: 1px solid #f0f2f5;
+    width: 100%;
+    padding: 6px 12px;
+
+    background: none;
+    border: none;
+
+    color: #333;
+
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+
+    border-bottom: 1px solid #f0f2f5;
 }
 
 .dropdown-edit-item:hover {
-	background: #f8f9fa;
+    background: #f8f9fa;
 }
 
 .dropdown-delete-item {
-	width: 100%;
-	padding: 6px 12px;
-	background: none;
-	border: none;
-	color: #d9534f;
-	text-align: left;
-	cursor: pointer;
-	font-size: 13px;
+    width: 100%;
+    padding: 6px 12px;
+
+    background: none;
+    border: none;
+
+    color: #d9534f;
+
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
 }
 
 .dropdown-delete-item:hover {
-	background: #f8d7da;
+    background: #f8d7da;
 }
 
+
+/* ==========================================
+   個人タスク追加ボタン
+   ========================================== */
+
 .btn-add-personal {
-	width: 100%;
-	padding: 12px;
-	background: #1b6ef3;
-	color: #fff;
-	border: none;
-	border-radius: 8px;
-	font-weight: bold;
-	font-size: 16px;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 6px;
-	margin-top: auto;
+    width: 100%;
+    padding: 12px;
+
+    background: #1b6ef3;
+    color: #fff;
+
+    border: none;
+    border-radius: 8px;
+
+    font-weight: bold;
+    font-size: 16px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    margin-top: auto;
 }
 
 .btn-add-personal:hover {
-	background: #0f5bc4;
+    background: #0f5bc4;
 }
 
+
+/* ==========================================
+   個人タスク用モーダル
+   ========================================== */
+
 .modal-overlay {
-	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.5);
-	z-index: 2000;
-	justify-content: center;
-	align-items: center;
+    display: none;
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.5);
+
+    z-index: 2000;
+
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {
-	background: #fff;
-	padding: 30px;
-	border-radius: 10px;
-	width: 450px;
-	max-width: 95%;
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    background: #fff;
+
+    padding: 30px;
+
+    border-radius: 10px;
+
+    width: 450px;
+    max-width: 95%;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .modal-content h3 {
-	margin-top: 0;
-	margin-bottom: 20px;
-	font-size: 1.3rem;
-	border-bottom: 2px solid #f0f2f5;
-	padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+
+    font-size: 1.3rem;
+
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 10px;
 }
 
 .modal-form-group {
-	margin-bottom: 16px;
+    margin-bottom: 16px;
 }
 
 .modal-form-group label {
-	display: block;
-	margin-bottom: 6px;
-	font-size: 16px;
-	font-weight: bold;
-	color: #333;
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    color: #333;
 }
 
-.modal-form-group input[type="text"], .modal-form-group input[type="date"],
-	.modal-form-group select {
-	width: 100%;
-	padding: 10px;
-	box-sizing: border-box;
-	border: 1px solid #ccc;
-	border-radius: 6px;
-	font-size: 16px;
+.modal-form-group input[type="text"],
+.modal-form-group input[type="date"],
+.modal-form-group select {
+    width: 100%;
+
+    padding: 10px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    font-size: 16px;
 }
 
 .modal-actions {
-	text-align: right;
-	margin-top: 25px;
-	border-top: 1px solid #f0f2f5;
-	padding-top: 15px;
+    text-align: right;
+
+    margin-top: 25px;
+
+    border-top: 1px solid #f0f2f5;
+
+    padding-top: 15px;
 }
 
 .modal-actions button {
-	padding: 8px 16px;
-	margin-left: 10px;
-	cursor: pointer;
-	border: none;
-	border-radius: 6px;
-	font-size: 16px;
-	font-weight: bold;
+    padding: 8px 16px;
+
+    margin-left: 10px;
+
+    cursor: pointer;
+
+    border: none;
+    border-radius: 6px;
+
+    font-size: 16px;
+    font-weight: bold;
 }
 
 .btn-cancel {
-	background-color: #e0e0e0;
-	color: #333;
+    background-color: #e0e0e0;
+    color: #333;
 }
 
 .btn-cancel:hover {
-	background-color: #d0d0d0;
+    background-color: #d0d0d0;
 }
 
 .btn-save {
-	background-color: #1b6ef3;
-	color: white;
+    background-color: #1b6ef3;
+    color: #fff;
 }
 
 .btn-save:hover {
-	background-color: #0f5bc4;
+    background-color: #0f5bc4;
 }
 
 .delete-modal-content {
-	width: 380px;
-	text-align: center;
+    width: 380px;
+    text-align: center;
 }
 
 .delete-modal-content h3 {
-	color: #d9534f;
-	border-bottom: none;
+    color: #d9534f;
+    border-bottom: none;
+}
+
+.delete-message {
+    color: var(--ui-muted);
+    margin: 15px 0 25px;
+}
+
+.delete-modal-actions {
+    text-align: center;
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
 }
 
 .btn-delete-confirm {
-	background-color: #d9534f;
-	color: white;
+    background-color: #d9534f;
+    color: #fff;
 }
 
 .btn-delete-confirm:hover {
-	background-color: #c9302c;
+    background-color: #c9302c;
 }
 
-/* ==========================================
-	   ★ テーマスタイル適用（ダーク＆カスタム）
-	   ========================================== */
 
-/* マイタスク：ダークモード */
+/* ==========================================
+   フォントサイズ変更
+   ========================================== */
+
+body.font-small {
+    font-size: 14px;
+}
+
+body.font-small .pti-name {
+    font-size: 14px;
+}
+
+body.font-medium {
+    font-size: 16px;
+}
+
+body.font-medium .pti-name {
+    font-size: 16px;
+}
+
+body.font-large {
+    font-size: 18px;
+}
+
+body.font-large .pti-name {
+    font-size: 18px;
+}
+
+
+/* ==========================================
+   カスタムテーマ
+   ========================================== */
+
+body.custom-theme .task-check {
+    accent-color: var(--custom-bg-color);
+}
+
+
+/* ==========================================
+   ダークモード
+   ========================================== */
+
 body.dark-theme .mytasks-container {
-    background-color: var(--ui-bg);
+    background-color: #171717;
 }
 
 body.dark-theme .left-column,
 body.dark-theme .right-column {
-    background-color: var(--ui-surface);
+    background-color: #303030;
     color: var(--ui-text);
     border-color: var(--ui-border);
 }
 
+body.dark-theme .assigned-task-card,
 body.dark-theme .personal-task-item {
-    background-color: var(--ui-card);
+    background-color: #212121;
     color: var(--ui-text);
     border-color: var(--ui-border);
+}
+
+/* 状態色はダークモードでも維持 */
+body.dark-theme .assigned-task-card.status-todo {
+    border-left-color: #3498db;
+}
+
+body.dark-theme .assigned-task-card.status-doing {
+    border-left-color: #f1c40f;
+}
+
+body.dark-theme .assigned-task-card.status-done {
+    border-left-color: #2ecc71;
 }
 
 body.dark-theme .column-title,
-body.dark-theme .pti-name,
-body.dark-theme .dropdown-edit-item,
-body.dark-theme .modal-form-group label {
+body.dark-theme .assigned-task-name,
+body.dark-theme .pti-name {
     color: var(--ui-text);
 }
 
+body.dark-theme .assigned-project-name,
+body.dark-theme .assigned-task-assignees,
+body.dark-theme .assigned-task-deadline,
 body.dark-theme .pti-info,
 body.dark-theme .task-menu-trigger {
     color: var(--ui-muted);
 }
 
-body.dark-theme .task-dropdown-menu,
-body.dark-theme .modal-content {
-    background-color: var(--ui-surface);
+body.dark-theme .assigned-task-deadline.assigned-deadline-overdue {
+    color: #ff7777;
+}
+
+body.dark-theme .assigned-task-deadline.assigned-deadline-soon {
+    color: #ff9999;
+}
+
+body.dark-theme .assigned-menu-button,
+body.dark-theme .assigned-icon-button {
     color: var(--ui-text);
+}
+
+body.dark-theme .assigned-menu-dropdown,
+body.dark-theme .task-dropdown-menu {
+    background-color: var(--ui-surface);
     border-color: var(--ui-border);
 }
 
-body.dark-theme .dropdown-edit-item {
-    border-bottom-color: var(--ui-border);
+body.dark-theme .assigned-menu-dropdown button,
+body.dark-theme .dropdown-edit-item,
+body.dark-theme .dropdown-delete-item {
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
 }
 
+body.dark-theme .assigned-menu-dropdown button:hover,
 body.dark-theme .dropdown-edit-item:hover,
 body.dark-theme .dropdown-delete-item:hover {
     background-color: var(--ui-hover);
 }
 
+body.dark-theme .assigned-task-empty,
+body.dark-theme .assigned-task-error,
+body.dark-theme .personal-task-empty {
+    border-color: var(--ui-border);
+    color: var(--ui-muted);
+}
+
+body.dark-theme .modal-content,
+body.dark-theme .assigned-task-modal-content {
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+}
+
+body.dark-theme .modal-content h3,
+body.dark-theme .assigned-task-modal-header h2,
+body.dark-theme .assigned-task-modal-body,
+body.dark-theme .modal-form-group label,
+body.dark-theme .assigned-task-modal-content .edit-form label {
+    color: var(--ui-text);
+}
+
 body.dark-theme .modal-form-group input,
-body.dark-theme .modal-form-group select {
+body.dark-theme .modal-form-group select,
+body.dark-theme .assigned-task-modal-content .edit-form input,
+body.dark-theme .assigned-task-modal-content .edit-form textarea,
+body.dark-theme .assigned-task-modal-content .edit-form select {
     background-color: var(--ui-input);
     color: var(--ui-text);
     border-color: var(--ui-border);
+}
+
+body.dark-theme .assigned-task-modal-close {
+    color: var(--ui-text);
 }
 
 body.dark-theme .modal-content h3,
@@ -380,41 +1287,79 @@ body.dark-theme .btn-cancel:hover {
     background-color: var(--ui-hover);
 }
 
-
-/* 3. フォントサイズ変更 (.font-small, .font-medium, .font-large) */
-body.font-small {
-	font-size: 1④px;
-}
-
-body.font-small .pti-name {
-	font-size: 1４px;
-}
-
-body.font-medium {
-	font-size: 16px;
-}
-
-body.font-medium .pti-name {
-	font-size: 16px;
-}
-
-body.font-large {
-	font-size: 18px;
-}
-
-body.font-large .pti-name {
-	font-size: 18px;
-}
-
-/* カスタムテーマ：個人タスクのチェックボックス */
-body.custom-theme .task-check {
-    accent-color: var(--custom-bg-color);
-}
-
-#deleteMessage {
-    color: var(--ui-muted);
-}
-
 body.dark-theme .pti-name.completed-task {
     color: var(--ui-muted) !important;
+}
+
+
+/* ==========================================
+   タブレット・スマートフォン
+   ========================================== */
+
+@media (max-width: 900px) {
+
+    .mytasks-container {
+        flex-direction: column;
+    }
+
+    .left-column,
+    .right-column {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .left-column {
+        min-height: 320px;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .mytasks-container {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .left-column,
+    .right-column {
+        padding: 14px;
+    }
+
+    .assigned-task-card {
+        padding: 10px 11px;
+    }
+
+    .personal-task-item {
+        padding: 10px;
+    }
+
+    .pti-right {
+        gap: 8px;
+    }
+
+    .assigned-task-modal-content {
+        width: 100%;
+        padding: 18px;
+    }
+
+    .modal-content {
+        padding: 20px;
+    }
+
+}
+/* マイタスク：コメント・添付ファイルの表示調整 */
+.assigned-task-modal-body {
+    margin: 0;
+    padding-top: 0;
+    text-align: left;
+}
+
+.assigned-task-modal-body .assigned-popup-text {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    line-height: 1.6;
+    white-space: pre-line;
 }
