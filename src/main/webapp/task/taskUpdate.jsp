@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
+<%@ page import="dao.TaskDAO"%>
 
 <%
 request.setCharacterEncoding("UTF-8");
@@ -13,6 +14,9 @@ String priority = request.getParameter("priority");
 String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
 String userIdStr = request.getParameter("user_id");
+String[] tagIds = request.getParameterValues("tag_ids");
+String[] newTagNames = request.getParameterValues("new_tag_names");
+String[] newTagColors = request.getParameterValues("new_tag_colors");
 
 String url = "jdbc:postgresql://172.16.1.119:5432/taskapp";
 String user = "taskuser";
@@ -79,10 +83,13 @@ try {
 	insertAssigneeStmt.setInt(1, Integer.parseInt(taskIdStr));
 	insertAssigneeStmt.setInt(2, Integer.parseInt(userIdStr));
 	insertAssigneeStmt.executeUpdate();
+	TaskDAO taskDAO = new TaskDAO();
+		taskDAO.replaceTaskTags(
+				conn,Integer.parseInt(taskIdStr),tagIds,newTagNames,newTagColors);
 
 	conn.commit();
 
-	response.sendRedirect("taskboard.jsp");
+	response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
 
 } catch (Exception e) {
 	if (conn != null) {

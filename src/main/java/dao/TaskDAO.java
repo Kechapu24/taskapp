@@ -6,8 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import model.TaskFilter;
 import util.DBConnection;
@@ -49,7 +51,8 @@ public class TaskDAO {
 						+ "COALESCE(string_agg(DISTINCT u.user_name, ', '), '未設定') AS assignees, "
 						+ "COALESCE(string_agg(DISTINCT c.comment_text, '<br>'), 'コメントなし') AS comments, "
 						+ "COALESCE(string_agg(DISTINCT a.file_name, '<br>'), '添付なし') AS files, "
-						+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags "
+						+ "COALESCE(string_agg(DISTINCT tg.tag_name, ', '), 'タグなし') AS tags, "
+						+ "COALESCE(string_agg(DISTINCT tg.tag_id::text, ',' ORDER BY tg.tag_id::text), '') AS tag_ids "
 						+ "FROM task t "
 						+ "JOIN project p ON t.project_id = p.project_id "
 						+ "LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
@@ -244,6 +247,10 @@ public class TaskDAO {
 							"tags",
 							rs.getString("tags"));
 
+					task.put(
+							"tagIds",
+							rs.getString("tag_ids"));
+
 					result.add(task);
 				}
 			}
@@ -264,26 +271,29 @@ public class TaskDAO {
 
 		List<Map<String, Object>> result = new ArrayList<>();
 
-		StringBuilder sql = new StringBuilder();
-
-		sql.append(
-				"SELECT DISTINCT tg.tag_id, tg.tag_name "
-						+ "FROM tag tg "
-						+ "JOIN task_tag tt ON tg.tag_id = tt.tag_id "
-						+ "JOIN task t ON tt.task_id = t.task_id "
-						+ "JOIN project p ON t.project_id = p.project_id ");
+		String sql;
 
 		if (activeOrgId == null) {
-			sql.append("WHERE p.user_id = ? ");
-		} else {
-			sql.append("WHERE p.org_id = ? ");
-		}
 
-		sql.append("ORDER BY tg.tag_name");
+			sql = "SELECT tag_id, tag_name, color "
+					+ "FROM tag "
+					+ "WHERE user_id = ? "
+					+ "AND org_id IS NULL "
+					+ "ORDER BY tag_name";
+
+		} else {
+
+			sql = "SELECT tag_id, tag_name, color "
+					+ "FROM tag "
+					+ "WHERE org_id = ? "
+					+ "AND user_id IS NULL "
+					+ "ORDER BY tag_name";
+		}
 
 		try (
 				Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 			if (activeOrgId == null) {
 				stmt.setInt(1, loginUserId);
@@ -291,7 +301,8 @@ public class TaskDAO {
 				stmt.setInt(1, activeOrgId);
 			}
 
-			try (ResultSet rs = stmt.executeQuery()) {
+			try (
+					ResultSet rs = stmt.executeQuery()) {
 
 				while (rs.next()) {
 
@@ -305,6 +316,10 @@ public class TaskDAO {
 							"tagName",
 							rs.getString("tag_name"));
 
+					tag.put(
+							"color",
+							rs.getString("color"));
+
 					result.add(tag);
 				}
 			}
@@ -317,6 +332,240 @@ public class TaskDAO {
 		}
 
 		return result;
+	}
+
+	public void replaceTaskTags(
+			Connection conn,
+			int taskId,
+			String[] tagIds,
+			String[] newTagNames,
+			String[] newTagColors)
+			throws SQLException {
+
+		Integer scopeUserId = null;
+		Integer scopeOrgId = null;
+
+		// タスク自身の所属スコープを取得
+		String scopeSql = "SELECT p.user_id, p.org_id "
+				+ "FROM task t "
+				+ "JOIN project p "
+				+ "ON t.project_id = p.project_id "
+				+ "WHERE t.task_id = ?";
+
+		try (
+				PreparedStatement stmt = conn.prepareStatement(scopeSql)) {
+
+			stmt.setInt(1, taskId);
+
+			try (
+					ResultSet rs = stmt.executeQuery()) {
+
+				if (!rs.next()) {
+					throw new SQLException(
+							"対象タスクが見つかりません");
+				}
+
+				scopeUserId = (Integer) rs.getObject("user_id");
+
+				scopeOrgId = (Integer) rs.getObject("org_id");
+			}
+		}
+
+		Set<Integer> finalTagIds = new LinkedHashSet<>();
+
+		// 既存タグ
+		if (tagIds != null) {
+
+			for (String tagIdStr : tagIds) {
+
+				Integer tagId = parseInteger(tagIdStr);
+
+				if (tagId == null) {
+					continue;
+				}
+
+				if (!tagBelongsToScope(
+						conn,
+						tagId,
+						scopeUserId,
+						scopeOrgId)) {
+
+					throw new SQLException(
+							"現在の所属先では使用できないタグです");
+				}
+
+				finalTagIds.add(tagId);
+			}
+		}
+
+		// 新しいタグ
+		if (newTagNames != null) {
+
+			for (int i = 0; i < newTagNames.length; i++) {
+
+				String tagName = newTagNames[i];
+
+				if (!hasText(tagName)) {
+					continue;
+				}
+
+				String color = "#6B7280";
+
+				if (newTagColors != null
+						&& i < newTagColors.length
+						&& newTagColors[i] != null
+						&& newTagColors[i].matches(
+								"^#[0-9A-Fa-f]{6}$")) {
+
+					color = newTagColors[i];
+				}
+
+				int newTagId = getOrCreateTagId(
+						conn,
+						tagName.trim(),
+						color,
+						scopeUserId,
+						scopeOrgId);
+
+				finalTagIds.add(newTagId);
+			}
+		}
+
+		// 現在の関連付けを削除
+		String deleteSql = "DELETE FROM task_tag "
+				+ "WHERE task_id = ?";
+
+		try (
+				PreparedStatement stmt = conn.prepareStatement(deleteSql)) {
+
+			stmt.setInt(1, taskId);
+			stmt.executeUpdate();
+		}
+
+		// 新しい関連付けを保存
+		if (!finalTagIds.isEmpty()) {
+
+			String insertSql = "INSERT INTO task_tag "
+					+ "(task_id, tag_id) "
+					+ "VALUES (?, ?)";
+
+			try (
+					PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+
+				for (Integer tagId : finalTagIds) {
+
+					stmt.setInt(1, taskId);
+					stmt.setInt(2, tagId);
+
+					stmt.addBatch();
+				}
+
+				stmt.executeBatch();
+			}
+		}
+	}
+
+	private boolean tagBelongsToScope(
+			Connection conn,
+			int tagId,
+			Integer userId,
+			Integer orgId)
+			throws SQLException {
+
+		String sql;
+
+		if (orgId != null) {
+
+			sql = "SELECT 1 "
+					+ "FROM tag "
+					+ "WHERE tag_id = ? "
+					+ "AND org_id = ? "
+					+ "AND user_id IS NULL";
+
+		} else {
+
+			sql = "SELECT 1 "
+					+ "FROM tag "
+					+ "WHERE tag_id = ? "
+					+ "AND user_id = ? "
+					+ "AND org_id IS NULL";
+		}
+
+		try (
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, tagId);
+
+			if (orgId != null) {
+				stmt.setInt(2, orgId);
+			} else {
+				stmt.setInt(2, userId);
+			}
+
+			try (
+					ResultSet rs = stmt.executeQuery()) {
+
+				return rs.next();
+			}
+		}
+	}
+
+	private int getOrCreateTagId(
+			Connection conn,
+			String tagName,
+			String color,
+			Integer userId,
+			Integer orgId)
+			throws SQLException {
+
+		String sql;
+
+		if (orgId != null) {
+
+			sql = "INSERT INTO tag "
+					+ "(tag_name, color, user_id, org_id) "
+					+ "VALUES (?, ?, NULL, ?) "
+					+ "ON CONFLICT (org_id, tag_name) "
+					+ "WHERE org_id IS NOT NULL "
+					+ "DO UPDATE SET "
+					+ "tag_name = EXCLUDED.tag_name "
+					+ "RETURNING tag_id";
+
+		} else {
+
+			sql = "INSERT INTO tag "
+					+ "(tag_name, color, user_id, org_id) "
+					+ "VALUES (?, ?, ?, NULL) "
+					+ "ON CONFLICT (user_id, tag_name) "
+					+ "WHERE user_id IS NOT NULL "
+					+ "DO UPDATE SET "
+					+ "tag_name = EXCLUDED.tag_name "
+					+ "RETURNING tag_id";
+		}
+
+		try (
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, tagName);
+			stmt.setString(2, color);
+
+			if (orgId != null) {
+				stmt.setInt(3, orgId);
+			} else {
+				stmt.setInt(3, userId);
+			}
+
+			try (
+					ResultSet rs = stmt.executeQuery()) {
+
+				if (!rs.next()) {
+					throw new SQLException(
+							"タグの作成に失敗しました");
+				}
+
+				return rs.getInt("tag_id");
+			}
+		}
 	}
 
 	private boolean hasText(String value) {
