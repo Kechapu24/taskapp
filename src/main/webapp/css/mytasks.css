@@ -1363,3 +1363,23 @@ body.dark-theme .pti-name.completed-task {
     line-height: 1.6;
     white-space: pre-line;
 }
+/* ==========================================
+   マイタスクの背景色（反転配色）
+   ========================================== */
+
+/* 外側：白 */
+body:not(.dark-theme) .mytasks-container {
+    background-color: #ffffff !important;
+}
+
+/* 左右のパネル：薄いグレー */
+body:not(.dark-theme) .mytasks-container > .left-column,
+body:not(.dark-theme) .mytasks-container > .right-column {
+    background-color: #f4f6f8 !important;
+}
+
+/* タスクカード：白 */
+body:not(.dark-theme) .mytasks-container .assigned-task-card,
+body:not(.dark-theme) .mytasks-container .personal-task-item {
+    background-color: #ffffff !important;
+}
