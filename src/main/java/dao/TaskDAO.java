@@ -409,7 +409,7 @@ public class TaskDAO {
 					continue;
 				}
 
-				String color = "#6B7280";
+				String color = "#007BFF";
 
 				if (newTagColors != null
 						&& i < newTagColors.length
