@@ -82,7 +82,7 @@ public class LoginServlet extends HttpServlet {
 		}
 		// role に応じて遷移先を分岐
 		if (user.isAdmin()) {
-			response.sendRedirect(request.getContextPath() + "/admin.jsp");
+			response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
 		} else {
 			response.sendRedirect(request.getContextPath() + "/taskboard.jsp");
 		}

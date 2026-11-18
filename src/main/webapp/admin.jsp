@@ -1,26 +1,78 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
-<%@ page import="model.User"%>
+
 <%
-// 未ログイン、または管理者以外はログイン画面へ戻す
-User loginUser = (User) session.getAttribute("loginUser");
-if (loginUser == null || !loginUser.isAdmin()) {
-	response.sendRedirect(request.getContextPath() + "/login.jsp");
-	return;
-}
+request.setAttribute("pageTitle", "管理");
+request.setAttribute("currentPage", "admin");
 %>
+
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>管理者画面</title>
+<jsp:include page="common/theme.jsp" />
+
+<title>管理</title>
+
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/setting.css">
+
 </head>
-<body>
-	<h2>管理者画面</h2>
-	<p><%=loginUser.getUserName()%>さん、ようこそ(仮の画面です)
-	</p>
-	<p>
-		<a href="<%=request.getContextPath()%>/taskboard.jsp">タスクボードへ</a>
-	</p>
+
+<body class="${themeValue}-theme font-${themeFontSize}"
+	style="--custom-bg-color:${themeBgColor};
+        --custom-text-color:${themeTextColor};">
+
+	<div class="app-container">
+
+		<%@ include file="common/sidebar.jsp"%>
+
+		<main class="main-content">
+
+			<%@ include file="common/header.jsp"%>
+
+			<div class="content-body settings-container">
+
+				<aside class="settings-sidebar">
+
+					<ul class="settings-menu">
+
+						<li class="settings-item active"><a href="#">団体管理</a></li>
+
+						<li class="settings-item"><a href="#">プロジェクト管理</a></li>
+
+						<li class="settings-item"><a href="#">メンバー管理</a></li>
+
+						<li class="settings-item"><a href="#">ログ管理</a></li>
+
+					</ul>
+
+				</aside>
+
+				<section class="settings-panel">
+
+					<h2>団体管理</h2>
+
+					<button class="setting-btn">＋ 団体作成</button>
+
+					<hr>
+
+					<h3>所属団体一覧</h3>
+
+					<div class="org-list">
+
+						<div class="org-card">サンプル団体</div>
+
+					</div>
+
+				</section>
+			</div>
+
+			<%@ include file="common/footer.jsp"%>
+
+		</main>
+
+	</div>
+
 </body>
 </html>
