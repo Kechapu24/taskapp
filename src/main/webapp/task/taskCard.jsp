@@ -186,9 +186,9 @@ if (dueDateSql != null) {
 					String tagColor = (String) tag.get("color");
 			%>
 
-			<button type="button" class="task-tag-chip"style="background-color:<%=tagColor%>;
-			"onclick="event.stopPropagation();openTagColorModal(
-            '<%=tagId%>','<%=tagName%>','<%=tagColor%>');">
+			<button type="button" class="task-tag-chip"
+				style="background-color:<%=tagColor%>;"
+				onclick="event.stopPropagation(); openTagEditModal(this, <%=tagId%>, '<%=tagColor%>');">
 				<%=tagName%>
 			</button>
 
