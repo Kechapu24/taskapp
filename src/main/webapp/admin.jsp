@@ -1,5 +1,9 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%@ page language="java"
+    contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+
+<%@ taglib prefix="c"
+    uri="http://java.sun.com/jsp/jstl/core" %>
 
 <%
 request.setAttribute("pageTitle", "管理");
@@ -53,7 +57,8 @@ request.setAttribute("currentPage", "admin");
 
 					<h2>団体管理</h2>
 
-					<button class="setting-btn">＋ 団体作成</button>
+					<button class="setting-btn"
+						onclick="location.href='organization_create.jsp'">＋ 団体作成</button>
 
 					<hr>
 
@@ -61,7 +66,16 @@ request.setAttribute("currentPage", "admin");
 
 					<div class="org-list">
 
-						<div class="org-card">サンプル団体</div>
+						<c:forEach var="org" items="${orgList}">
+
+							<div class="org-card">
+
+								<strong> <c:out value="${org.orgName}" />
+								</strong>
+								
+							</div>
+
+						</c:forEach>
 
 					</div>
 
