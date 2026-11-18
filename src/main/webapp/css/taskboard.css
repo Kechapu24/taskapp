@@ -688,33 +688,52 @@
 	background-color: var(--ui-hover);
 }
 
-/* タグの編集モーダル */
-.tag-color-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+/* タグ編集モーダル */
+.tag-edit-form {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
-.tag-color-name {
-    font-size: 16px;
-    font-weight: bold;
+.tag-edit-form label {
+	margin-top: 4px;
+	font-weight: bold;
 }
 
-.tag-color-form label {
-    font-weight: bold;
+.tag-edit-form input[type="text"] {
+	width: 100%;
+	padding: 8px 10px;
+	background: var(--ui-input);
+	color: var(--ui-text);
+	border: 1px solid var(--ui-border);
+	border-radius: 6px;
+}
+
+.tag-edit-preview-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 4px;
+	color: var(--ui-muted);
+}
+
+.tag-edit-preview {
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 10px;
+	border-radius: 12px;
+	color: white;
+	font-size: 12px;
 }
 
 .tag-color-picker {
-    width: 70px;
-    height: 40px;
-
-    padding: 2px;
-
-    border: 1px solid var(--ui-border);
-    border-radius: 6px;
-
-    background-color: var(--ui-input);
-    cursor: pointer;
+	width: 70px;
+	height: 40px;
+	padding: 2px;
+	background: var(--ui-input);
+	border: 1px solid var(--ui-border);
+	border-radius: 6px;
+	cursor: pointer;
 }
 
 /* =========================================

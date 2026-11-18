@@ -917,98 +917,57 @@
 			</script>
 
 			<script>
-function openTagColorModal(
-    tagId,
-    tagName,
-    currentColor
-) {
+function openTagEditModal(button, tagId, currentColor) {
+	const modalOverlay = document.getElementById("modalOverlay");
+	const modalTitle = document.getElementById("modalTitle");
+	const modalBody = document.getElementById("modalBody");
+	const tagName = button.textContent.trim();
 
-    const modalOverlay =
-        document.getElementById(
-            "modalOverlay"
-        );
+	modalTitle.textContent = "タグ編集";
 
-    const modalTitle =
-        document.getElementById(
-            "modalTitle"
-        );
+	modalBody.innerHTML = `
+		<form class="tag-edit-form" method="post"
+			action="<%=request.getContextPath()%>/task/tagColorUpdate.jsp">
 
-    const modalBody =
-        document.getElementById(
-            "modalBody"
-        );
+			<input type="hidden" name="tag_id">
 
-    modalTitle.textContent =
-        "タグ色変更";
+			<div class="tag-edit-preview-row">
+				<span>プレビュー</span>
+				<span class="tag-edit-preview"></span>
+			</div>
 
+			<label>タグ名</label>
+			<input type="text" name="tag_name" maxlength="50" required>
 
-    const form =
-        document.createElement(
-            "form"
-        );
+			<label>カラー</label>
+			<input type="color" name="color" class="tag-color-picker">
 
-    form.method =
-        "post";
+			<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
+		</form>
+	`;
 
-    form.action =
-        "<%=request.getContextPath()%>
-				/task/tagColorUpdate.jsp";
+	const form = modalBody.querySelector(".tag-edit-form");
+	const nameInput = form.querySelector('[name="tag_name"]');
+	const colorInput = form.querySelector('[name="color"]');
+	const preview = form.querySelector(".tag-edit-preview");
 
-					form.className = "tag-color-form";
+	form.querySelector('[name="tag_id"]').value = tagId;
+	nameInput.value = tagName;
+	colorInput.value = currentColor;
 
-					const tagIdInput = document.createElement("input");
+	function updatePreview() {
+		preview.textContent = nameInput.value || "タグ";
+		preview.style.backgroundColor = colorInput.value;
+	}
 
-					tagIdInput.type = "hidden";
+	nameInput.addEventListener("input", updatePreview);
+	colorInput.addEventListener("input", updatePreview);
+	updatePreview();
 
-					tagIdInput.name = "tag_id";
+	modalOverlay.style.display = "flex";
+}
+</script>
 
-					tagIdInput.value = tagId;
-
-					form.appendChild(tagIdInput);
-
-					const name = document.createElement("p");
-
-					name.className = "tag-color-name";
-
-					name.textContent = tagName;
-
-					form.appendChild(name);
-
-					const label = document.createElement("label");
-
-					label.textContent = "カラー";
-
-					form.appendChild(label);
-
-					const color = document.createElement("input");
-
-					color.type = "color";
-
-					color.name = "color";
-
-					color.value = currentColor;
-
-					color.className = "tag-color-picker";
-
-					form.appendChild(color);
-
-					const submit = document.createElement("button");
-
-					submit.type = "submit";
-
-					submit.className = "modal-submit-btn custom-theme-accent";
-
-					submit.textContent = "保存";
-
-					form.appendChild(submit);
-
-					modalBody.innerHTML = "";
-
-					modalBody.appendChild(form);
-
-					modalOverlay.style.display = "flex";
-				}
-			</script>
 		</main>
 
 	</div>
