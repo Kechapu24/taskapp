@@ -811,6 +811,163 @@
 					}
 				});
 			</script>
+
+			<script>
+				function updateTaskTagOverflow() {
+
+					const tagRows = document
+							.querySelectorAll(".task-card-tags");
+
+					tagRows
+							.forEach(function(row) {
+
+								const tags = Array
+										.from(row
+												.querySelectorAll(".task-tag-chip:not(.task-tag-more)"));
+
+								const more = row
+										.querySelector(".task-tag-more");
+
+								if (!more) {
+									return;
+								}
+
+								// 一度全部表示して測り直す
+								tags.forEach(function(tag) {
+									tag.style.display = "inline-flex";
+								});
+
+								more.style.display = "none";
+
+								if (tags.length === 0) {
+									return;
+								}
+
+								const rowStyle = window.getComputedStyle(row);
+
+								const gap = parseFloat(rowStyle.gap) || 0;
+
+								const availableWidth = row.clientWidth;
+
+								// 全タグがそのまま収まるか確認
+								let totalWidth = 0;
+
+								tags.forEach(function(tag, index) {
+
+									if (index > 0) {
+										totalWidth += gap;
+									}
+
+									totalWidth += tag.offsetWidth;
+								});
+
+								// 全部入るなら「…」不要
+								if (totalWidth <= availableWidth) {
+									return;
+								}
+
+								// はみ出すので「…」を表示
+								more.style.display = "inline-flex";
+
+								const moreWidth = more.offsetWidth;
+
+								let usedWidth = 0;
+
+								let visibleCount = 0;
+
+								let overflowStarted = false;
+
+								tags.forEach(function(tag) {
+
+									if (overflowStarted) {
+
+										tag.style.display = "none";
+
+										return;
+									}
+
+									const beforeTagGap = visibleCount > 0 ? gap
+											: 0;
+
+									// 最後に「…」を置くスペースも予約
+									const requiredWidth = usedWidth
+											+ beforeTagGap + tag.offsetWidth
+											+ gap + moreWidth;
+
+									if (requiredWidth <= availableWidth) {
+
+										usedWidth += beforeTagGap
+												+ tag.offsetWidth;
+
+										visibleCount++;
+
+									} else {
+
+										overflowStarted = true;
+
+										tag.style.display = "none";
+									}
+								});
+							});
+				}
+
+				window.addEventListener("load", updateTaskTagOverflow);
+
+				window.addEventListener("resize", updateTaskTagOverflow);
+			</script>
+
+			<script>
+function openTagEditModal(button, tagId, currentColor) {
+	const modalOverlay = document.getElementById("modalOverlay");
+	const modalTitle = document.getElementById("modalTitle");
+	const modalBody = document.getElementById("modalBody");
+	const tagName = button.textContent.trim();
+
+	modalTitle.textContent = "タグ編集";
+
+	modalBody.innerHTML = `
+		<form class="tag-edit-form" method="post"
+			action="<%=request.getContextPath()%>/task/tagColorUpdate.jsp">
+
+			<input type="hidden" name="tag_id">
+
+			<div class="tag-edit-preview-row">
+				<span>プレビュー</span>
+				<span class="tag-edit-preview"></span>
+			</div>
+
+			<label>タグ名</label>
+			<input type="text" name="tag_name" maxlength="50" required>
+
+			<label>カラー</label>
+			<input type="color" name="color" class="tag-color-picker">
+
+			<button type="submit" class="modal-submit-btn custom-theme-accent">保存</button>
+		</form>
+	`;
+
+	const form = modalBody.querySelector(".tag-edit-form");
+	const nameInput = form.querySelector('[name="tag_name"]');
+	const colorInput = form.querySelector('[name="color"]');
+	const preview = form.querySelector(".tag-edit-preview");
+
+	form.querySelector('[name="tag_id"]').value = tagId;
+	nameInput.value = tagName;
+	colorInput.value = currentColor;
+
+	function updatePreview() {
+		preview.textContent = nameInput.value || "タグ";
+		preview.style.backgroundColor = colorInput.value;
+	}
+
+	nameInput.addEventListener("input", updatePreview);
+	colorInput.addEventListener("input", updatePreview);
+	updatePreview();
+
+	modalOverlay.style.display = "flex";
+}
+</script>
+
 		</main>
 
 	</div>

@@ -2,6 +2,7 @@
 	pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.Map"%>
+<%@ page import="java.util.List"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="java.time.temporal.ChronoUnit"%>
 <%@ page import="java.util.Set"%>
@@ -12,6 +13,9 @@
 Map<String, Object> task = (Map<String, Object>) request.getAttribute("taskData");
 
 int taskId = (Integer) task.get("taskId");
+
+@SuppressWarnings("unchecked")
+List<Map<String, Object>> tagOptions = (List<Map<String, Object>>) request.getAttribute("tagOptions");
 
 Set<Integer> selectedTagIds = new HashSet<>();
 
@@ -125,37 +129,75 @@ if (dueDateSql != null) {
 		<%=task.get("projectName")%>
 	</p>
 
-	<p>
-		<%=task.get("assignees")%>
-	</p>
+	<div class="task-card-assignee-row">
 
-	<div class="task-card-bottom">
-
-		<p>
-			<%=task.get("dueDate")%>
+		<p class="task-card-assignee">
+			<%=task.get("assignees")%>
 		</p>
 
 		<div class="task-card-actions">
 
 			<button class="icon-button"
 				onclick="
-                    event.stopPropagation();
-                    openModalFromElement(
-                        'コメント',
-                        'comment-<%=taskId%>'
-                    )
-                ">
+                event.stopPropagation();
+                openModalFromElement(
+                    'コメント',
+                    'comment-<%=taskId%>'
+                )
+            ">
 				💬</button>
 
 			<button class="icon-button"
 				onclick="
-                    event.stopPropagation();
-                    openModalFromElement(
-                        '添付ファイル',
-                        'file-<%=taskId%>'
-                    )
-                ">
+                event.stopPropagation();
+                openModalFromElement(
+                    '添付ファイル',
+                    'file-<%=taskId%>'
+                )
+            ">
 				📎</button>
+
+		</div>
+
+	</div>
+
+
+	<div class="task-card-bottom">
+
+		<p class="task-card-date">
+			<%=task.get("dueDate")%>
+		</p>
+
+		<div class="task-card-tags">
+
+			<%
+			if (tagOptions != null) {
+
+				for (Map<String, Object> tag : tagOptions) {
+
+					int tagId = (Integer) tag.get("tagId");
+
+					if (!selectedTagIds.contains(tagId)) {
+				continue;
+					}
+
+					String tagName = (String) tag.get("tagName");
+
+					String tagColor = (String) tag.get("color");
+			%>
+
+			<button type="button" class="task-tag-chip"style="background-color:<%=tagColor%>;
+			"onclick="event.stopPropagation();openTagColorModal(
+            '<%=tagId%>','<%=tagName%>','<%=tagColor%>');">
+				<%=tagName%>
+			</button>
+
+			<%
+			}
+			}
+			%>
+
+			<span class="task-tag-chip task-tag-more"> … </span>
 
 		</div>
 
