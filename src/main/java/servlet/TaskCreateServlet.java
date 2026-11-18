@@ -1,4 +1,3 @@
-
 package servlet;
 
 import java.io.IOException;
@@ -16,11 +15,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import dao.ActivityLogDAO;
 import dao.NotificationDAO;
 
 @WebServlet("/TaskCreateServlet")
 public class TaskCreateServlet extends HttpServlet {
 
+    // ==========================================
+    // 1. POSTリクエストの処理（フォーム送信時）
+    // ==========================================
     protected void doPost(
             HttpServletRequest request,
             HttpServletResponse response)
@@ -188,8 +191,34 @@ public class TaskCreateServlet extends HttpServlet {
                 System.out.println("タスク作成通知の登録に失敗しました。");
             }
         }
+        
+        // ログ情報の追加
+        ActivityLogDAO logDAO = new ActivityLogDAO();
+
+        System.out.println("★★ログ登録開始★★");
+
+        logDAO.insert(
+            assignedUserId,
+            null,
+            "TASK_CREATE",
+            "タスク「" + taskName + "」を作成"
+        );
+        System.out.println("★★ログ登録終了★★");
 
         // 処理完了後、カレンダー画面にリダイレクト
         response.sendRedirect("calendar.jsp");
-    }
-}
+    } // <--- ここで doPost メソッドが完全に終わります
+
+    // ==========================================
+    // 2. GETリクエストの処理（URL直接アクセス等）
+    // ==========================================
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        // 直接アクセスされた場合はタスク登録画面にフォワードする
+        request.getRequestDispatcher("taskCreate.jsp").forward(request, response);
+    } // <--- doGet の終わり
+
+} // <--- クラス全体の終わり
