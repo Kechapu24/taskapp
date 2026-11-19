@@ -1118,6 +1118,7 @@ body.custom-theme .chat-message-row.is-own .chat-message-bubble {
     align-items: center;
 }
 
+
 /* 送信ボタンの高さ */
 .chat-send-button {
     height: 42px;
