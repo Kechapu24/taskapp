@@ -44,7 +44,61 @@ public class OrgDAO {
  
         return result;
     }
- 
+    
+    
+    /**
+     * 指定IDの団体を取得
+     */
+    public Organization getOrganizationById(int orgId) {
+
+        String sql =
+            "SELECT org_id, org_name " +
+            "FROM organization " +
+            "WHERE org_id = ?";
+
+        try (Connection conn =
+                DBConnection.getConnection();
+
+             PreparedStatement stmt =
+                conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, orgId);
+
+            try (ResultSet rs =
+                    stmt.executeQuery()) {
+
+                if (rs.next()) {
+
+                    return new Organization(
+                        rs.getInt("org_id"),
+                        rs.getString("org_name"),
+                        null
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+
+            throw new RuntimeException(
+                "団体情報取得中にエラー",
+                e);
+        }
+
+        return null;
+    }
+    
+    
+    
+    
+//	今後の追加予定
+//    getOrganization(int orgId)
+//    getMembersByOrgId(int orgId)
+//    updateOrganizationName(...)
+//    deleteOrganization(...)
+//    changeMemberRole(...)
+//    removeMember(...)
+    
+    
     /**
      * 指定ユーザーが指定org_idに本当に所属しているかを確認する。
      * 切り替えボタンで、他人の団体IDを勝手に指定されるのを防ぐために使う。

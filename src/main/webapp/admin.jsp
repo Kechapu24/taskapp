@@ -1,9 +1,7 @@
-<%@ page language="java"
-    contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 
-<%@ taglib prefix="c"
-    uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
 <%
 request.setAttribute("pageTitle", "管理");
@@ -12,8 +10,10 @@ request.setAttribute("currentPage", "admin");
 
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
 <meta charset="UTF-8">
+
 <jsp:include page="common/theme.jsp" />
 
 <title>管理</title>
@@ -25,7 +25,7 @@ request.setAttribute("currentPage", "admin");
 
 <body class="${themeValue}-theme font-${themeFontSize}"
 	style="--custom-bg-color:${themeBgColor};
-        --custom-text-color:${themeTextColor};">
+             --custom-text-color:${themeTextColor};">
 
 	<div class="app-container">
 
@@ -47,7 +47,7 @@ request.setAttribute("currentPage", "admin");
 
 						<li class="settings-item"><a href="#">メンバー管理</a></li>
 
-						<li class="settings-item"><a href="#">ログ管理</a></li>
+						<li class="settings-item"><a href="logs.jsp">ログ管理</a></li>
 
 					</ul>
 
@@ -58,7 +58,8 @@ request.setAttribute("currentPage", "admin");
 					<h2>団体管理</h2>
 
 					<button class="setting-btn"
-						onclick="location.href='organization_create.jsp'">＋ 団体作成</button>
+						onclick="location.href='organization_create.jsp'">＋ 団体作成
+					</button>
 
 					<hr>
 
@@ -66,20 +67,43 @@ request.setAttribute("currentPage", "admin");
 
 					<div class="org-list">
 
-						<c:forEach var="org" items="${orgList}">
+						<c:forEach var="org" items="${sessionScope.orgList}">
 
 							<div class="org-card">
 
-								<strong> <c:out value="${org.orgName}" />
-								</strong>
-								
+								<div class="org-name">
+									<c:out value="${org.orgName}" />
+								</div>
+								<button
+									onclick="location.href='${pageContext.request.contextPath}/organization/detail?orgId=${org.orgId}'">
+
+									詳細</button>
+								<div class="org-role">
+
+									<c:choose>
+
+										<c:when test="${org.orgRole == 'admin'}">
+                                        管理者
+                                    </c:when>
+
+										<c:otherwise>
+                                        メンバー
+                                    </c:otherwise>
+
+									</c:choose>
+
+								</div>
+
 							</div>
 
 						</c:forEach>
 
 					</div>
+					<button onclick="location.href='organization_detail.jsp'">
+						詳細</button>
 
 				</section>
+
 			</div>
 
 			<%@ include file="common/footer.jsp"%>

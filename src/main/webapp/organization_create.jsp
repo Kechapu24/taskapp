@@ -14,7 +14,7 @@
 
 <h2>団体作成</h2>
 
-<form action="OrganizationCreateServlet"
+<form action="${pageContext.request.contextPath}/organization/create"
       method="post">
 
     <label>
