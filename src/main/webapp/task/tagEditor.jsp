@@ -108,7 +108,7 @@ if (selectedTagIds == null) {
 
 		<input type="text" class="new-tag-name" maxlength="50"
 			placeholder="タグ名"> <input type="color" class="new-tag-color"
-			value="#6B7280">
+			value="#007BFF">
 
 		<button type="button" onclick="addNewTag(this)">追加</button>
 

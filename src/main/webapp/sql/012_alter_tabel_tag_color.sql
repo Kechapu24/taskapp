@@ -1,0 +1,11 @@
+BEGIN;
+
+ALTER TABLE tag
+ALTER COLUMN color
+SET DEFAULT '#007BFF';
+
+UPDATE tag
+SET color = '#007BFF'
+WHERE color = '#6B7280';
+
+COMMIT;

@@ -44,7 +44,7 @@
         </li>
 
 		<li class="menu-item ${currentPage == 'logs' ? 'active' : ''}"><a
-			href="logs.jsp">管理</a></li>
+			href="admin.jsp">管理</a></li>
 
 		<%
 		} else {

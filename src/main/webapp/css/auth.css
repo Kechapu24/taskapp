@@ -189,3 +189,36 @@ button:disabled {
     color: #14401f;
 }
  
+
+/* 動作確認用アカウント情報のカード */
+.sample-login-info {
+    position: fixed;
+    top: 50%;
+    left: calc(50% + 260px);
+    transform: translateY(-50%);
+
+    width: 280px;
+    padding: 24px;
+    box-sizing: border-box;
+
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+    color: #333;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.sample-login-info h3 {
+    margin: 0 0 16px;
+    font-size: 18px;
+}
+
+.sample-login-info p {
+    margin: 0 0 12px;
+}
+
+.sample-login-info p:last-child {
+    margin-bottom: 0;
+}
