@@ -38,6 +38,10 @@
 			class="menu-item ${currentPage == 'notifications' ? 'active' : ''}">
 			<a href="notifications.jsp">通知センター</a>
 		</li>
+		
+		<li class="menu-item ${currentPage == 'chat' ? 'active' : ''}">
+    <a href="chatRoom">チャット</a>
+        </li>
 
 		<li class="menu-item ${currentPage == 'logs' ? 'active' : ''}"><a
 			href="logs.jsp">管理</a></li>
