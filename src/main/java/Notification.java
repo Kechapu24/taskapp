@@ -1,22 +1,40 @@
-package model;
-
 import java.sql.Timestamp;
 
+/**
+ * 通知情報を保持するモデルクラス
+ */
 public class Notification {
 
     private int notificationId;
-    private int userId;
-    private int projectId;
-    private int taskId;
-
     private String type;
     private String message;
-
-    private boolean isRead;
-    private Timestamp createdAt;
-
     private String taskName;
     private String projectName;
+    private Timestamp createdAt;
+    private boolean isRead;
+
+    // デフォルトコンストラクタ
+    public Notification() {
+    }
+
+    // 通知情報をまとめて設定するコンストラクタ
+    public Notification(
+            int notificationId,
+            String type,
+            String message,
+            String taskName,
+            String projectName,
+            Timestamp createdAt,
+            boolean isRead) {
+
+        this.notificationId = notificationId;
+        this.type = type;
+        this.message = message;
+        this.taskName = taskName;
+        this.projectName = projectName;
+        this.createdAt = createdAt;
+        this.isRead = isRead;
+    }
 
     public int getNotificationId() {
         return notificationId;
@@ -24,30 +42,6 @@ public class Notification {
 
     public void setNotificationId(int notificationId) {
         this.notificationId = notificationId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public int getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(int projectId) {
-        this.projectId = projectId;
-    }
-
-    public int getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(int taskId) {
-        this.taskId = taskId;
     }
 
     public String getType() {
@@ -66,22 +60,6 @@ public class Notification {
         this.message = message;
     }
 
-    public boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(boolean isRead) {
-        this.isRead = isRead;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public String getTaskName() {
         return taskName;
     }
@@ -96,5 +74,21 @@ public class Notification {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        this.isRead = read;
     }
 }
