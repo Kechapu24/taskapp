@@ -245,6 +245,92 @@ public class ChatMessageDAO {
     /**
      * チャットルームの最終閲覧日時を更新する。
      */
+    
+
+/**
+ * 自分が送信したメッセージの既読状況を取得する。
+ *
+ * @param chatRoomId チャットルームID
+ * @param senderId 送信者のユーザーID
+ * @return メッセージごとの既読人数一覧
+ */
+public List<Map<String, Object>> getReadStatuses(
+        long chatRoomId,
+        int senderId) {
+
+    String sql =
+        "SELECT " +
+        "m.message_id, " +
+
+        // 既読にした人数
+        "(SELECT COUNT(*) " +
+        "FROM chat_room_member reader " +
+        "WHERE reader.chat_room_id = m.chat_room_id " +
+        "AND reader.user_id IS DISTINCT FROM m.sender_id " +
+        "AND reader.last_read_at IS NOT NULL " +
+        "AND reader.last_read_at >= m.created_at" +
+        ") AS read_count, " +
+
+        // 既読対象人数
+        "(SELECT COUNT(*) " +
+        "FROM chat_room_member recipient " +
+        "WHERE recipient.chat_room_id = m.chat_room_id " +
+        "AND recipient.user_id IS DISTINCT FROM m.sender_id" +
+        ") AS recipient_count " +
+
+        "FROM chat_message m " +
+        "WHERE m.chat_room_id = ? " +
+        "AND m.sender_id = ? " +
+        "AND m.deleted_at IS NULL " +
+        "ORDER BY m.message_id ASC";
+
+    List<Map<String, Object>> statuses =
+        new ArrayList<>();
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setLong(1, chatRoomId);
+        stmt.setInt(2, senderId);
+
+        try (ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+
+                Map<String, Object> status =
+                    new LinkedHashMap<>();
+
+                status.put(
+                    "messageId",
+                    rs.getLong("message_id")
+                );
+
+                status.put(
+                    "readCount",
+                    rs.getLong("read_count")
+                );
+
+                status.put(
+                    "recipientCount",
+                    rs.getLong("recipient_count")
+                );
+
+                statuses.add(status);
+            }
+        }
+
+    } catch (SQLException e) {
+
+        throw new RuntimeException(
+            "メッセージの既読状況取得に失敗しました。",
+            e
+        );
+    }
+
+    return statuses;
+}
+
+    
     public void markAsRead(
             long chatRoomId,
             int userId) {

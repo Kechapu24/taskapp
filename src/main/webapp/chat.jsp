@@ -9,7 +9,7 @@
 <%@ include file="common/mode.jsp" %>
 
 <%!
-    // HTMLに表示する文字列をエスケープする
+    // HTMLエスケープ
     private String escapeHtml(Object value) {
         if (value == null) return "";
 
@@ -21,7 +21,7 @@
             .replace("'", "&#39;");
     }
 
-    // メッセージ内の改行をHTML表示用に変換する
+    // メッセージの改行をHTML表示用に変換
     private String formatMessage(Object value) {
         return escapeHtml(value)
             .replace("\r\n", "\n")
@@ -29,7 +29,7 @@
             .replace("\n", "<br>");
     }
 
-    // ファイル容量を読みやすい形式に変換する
+    // ファイル容量の表示
     private String formatFileSize(Object value) {
         if (!(value instanceof Number)) return "";
 
@@ -62,7 +62,7 @@ request.setAttribute("pageTitle", "チャット");
 request.setAttribute("currentPage", "chat");
 
 // ========================================
-// チャットルーム情報を取得
+// チャットルーム情報
 // ========================================
 
 Long activeRoomId = null;
@@ -81,7 +81,7 @@ String activeDirectUserName = null;
 
 String roomLoadError = null;
 
-// Servletから渡されたメッセージ一覧
+// Servletから受け取ったメッセージ一覧
 List<Map<String, Object>> messages =
     (List<Map<String, Object>>) request.getAttribute("messages");
 
@@ -90,7 +90,7 @@ if (messages == null) {
 }
 
 // ========================================
-// 現在開いているチャットルームを確認
+// 現在のチャットルームを確認
 // ========================================
 
 if (activeRoomId != null && !personalMode) {
@@ -120,7 +120,7 @@ if (activeRoomId != null && !personalMode) {
                 activeRoomType =
                     rs.getString("room_type");
 
-                // 個人チャットの場合、相手のユーザーIDを取得
+                // 個人チャットの場合、相手のIDを取得
                 if ("direct".equals(activeRoomType)) {
 
                     int lowUserId =
@@ -161,7 +161,7 @@ if (activeRoomId != null && !personalMode) {
 }
 
 // ========================================
-// 個人チャットの相手の名前を取得
+// 個人チャット相手の名前を取得
 // ========================================
 
 if (activeDirectUserId != null) {
@@ -200,6 +200,7 @@ if (activeDirectUserId != null) {
 // ========================================
 
 String activeHeaderName = "チャット";
+
 String activeHeaderDescription =
     "チャットルームを選択してください";
 
@@ -226,7 +227,59 @@ if ("group".equals(activeRoomType)) {
 }
 
 // ========================================
-// 現在の団体に所属するメンバー一覧
+// グループチャットの未読確認
+// ========================================
+
+boolean groupHasUnread = false;
+
+if (!personalMode) {
+
+    String groupUnreadSql =
+        "SELECT EXISTS (" +
+        "SELECT 1 " +
+        "FROM chat_room r " +
+        "INNER JOIN chat_room_member rm " +
+        "ON rm.chat_room_id = r.chat_room_id " +
+        "WHERE r.org_id = ? " +
+        "AND r.room_type = 'group' " +
+        "AND rm.user_id = ? " +
+        "AND EXISTS (" +
+        "SELECT 1 FROM chat_message m " +
+        "WHERE m.chat_room_id = r.chat_room_id " +
+        "AND m.deleted_at IS NULL " +
+        "AND m.sender_id IS DISTINCT FROM ? " +
+        "AND (rm.last_read_at IS NULL " +
+        "OR m.created_at > rm.last_read_at)" +
+        ")" +
+        ") AS has_unread";
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt =
+             conn.prepareStatement(groupUnreadSql)) {
+
+        stmt.setInt(1, activeOrgId);
+        stmt.setInt(2, loginUserId);
+        stmt.setInt(3, loginUserId);
+
+        try (ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                groupHasUnread =
+                    rs.getBoolean("has_unread");
+            }
+        }
+
+    } catch (Exception e) {
+
+        application.log(
+            "グループチャットの未読確認に失敗しました。",
+            e
+        );
+    }
+}
+
+// ========================================
+// 団体メンバー一覧と個人チャット未読確認
 // ========================================
 
 List<Map<String, Object>> chatMembers =
@@ -237,7 +290,32 @@ String memberLoadError = null;
 if (!personalMode) {
 
     String memberSql =
-        "SELECT u.user_id, u.user_name " +
+        "SELECT u.user_id, " +
+        "u.user_name, " +
+
+        "EXISTS (" +
+        "SELECT 1 " +
+        "FROM chat_room r " +
+        "INNER JOIN chat_room_member rm " +
+        "ON rm.chat_room_id = r.chat_room_id " +
+        "AND rm.user_id = ? " +
+
+        "WHERE r.org_id = ? " +
+        "AND r.room_type = 'direct' " +
+
+        "AND r.direct_user_low_id = LEAST(?, u.user_id) " +
+        "AND r.direct_user_high_id = GREATEST(?, u.user_id) " +
+
+        "AND EXISTS (" +
+        "SELECT 1 FROM chat_message m " +
+        "WHERE m.chat_room_id = r.chat_room_id " +
+        "AND m.deleted_at IS NULL " +
+        "AND m.sender_id IS DISTINCT FROM ? " +
+        "AND (rm.last_read_at IS NULL " +
+        "OR m.created_at > rm.last_read_at)" +
+        ")" +
+        ") AS has_unread " +
+
         "FROM org_member om " +
         "JOIN users u ON om.user_id = u.user_id " +
         "WHERE om.org_id = ? " +
@@ -248,8 +326,13 @@ if (!personalMode) {
          PreparedStatement stmt =
              conn.prepareStatement(memberSql)) {
 
-        stmt.setInt(1, activeOrgId);
-        stmt.setInt(2, loginUserId);
+        stmt.setInt(1, loginUserId);
+        stmt.setInt(2, activeOrgId);
+        stmt.setInt(3, loginUserId);
+        stmt.setInt(4, loginUserId);
+        stmt.setInt(5, loginUserId);
+        stmt.setInt(6, activeOrgId);
+        stmt.setInt(7, loginUserId);
 
         try (ResultSet rs = stmt.executeQuery()) {
 
@@ -266,6 +349,11 @@ if (!personalMode) {
                 member.put(
                     "userName",
                     rs.getString("user_name")
+                );
+
+                member.put(
+                    "hasUnread",
+                    rs.getBoolean("has_unread")
                 );
 
                 chatMembers.add(member);
@@ -340,10 +428,6 @@ boolean hasActiveRoom =
 
             <aside class="chat-list-panel">
 
-                <div class="chat-list-header">
-                    <h2>チャット</h2>
-                </div>
-
                 <div class="chat-list-scroll">
 
                     <!-- グループチャット -->
@@ -375,6 +459,16 @@ boolean hasActiveRoom =
 
                         </span>
 
+                        <% if (groupHasUnread) { %>
+
+                            <span
+                                class="chat-unread-dot"
+                                title="新着メッセージがあります"
+                                aria-label="未読メッセージあり">
+                            </span>
+
+                        <% } %>
+
                     </button>
 
                     <!-- 個人チャット -->
@@ -386,26 +480,20 @@ boolean hasActiveRoom =
                     <% if (personalMode) { %>
 
                         <div class="chat-list-message">
-
                             団体モードに切り替えると、
                             メンバーを選択できます。
-
                         </div>
 
                     <% } else if (memberLoadError != null) { %>
 
                         <div class="chat-list-message error">
-
                             <%= escapeHtml(memberLoadError) %>
-
                         </div>
 
                     <% } else if (chatMembers.isEmpty()) { %>
 
                         <div class="chat-list-message">
-
                             他のメンバーはいません。
-
                         </div>
 
                     <% } else { %>
@@ -426,6 +514,9 @@ boolean hasActiveRoom =
                             boolean selectedMember =
                                 activeDirectUserId != null &&
                                 activeDirectUserId.intValue() == memberId;
+
+                            boolean memberHasUnread =
+                                Boolean.TRUE.equals(member.get("hasUnread"));
 
                         %>
 
@@ -452,6 +543,16 @@ boolean hasActiveRoom =
 
                                 </span>
 
+                                <% if (memberHasUnread) { %>
+
+                                    <span
+                                        class="chat-unread-dot"
+                                        title="新着メッセージがあります"
+                                        aria-label="未読メッセージあり">
+                                    </span>
+
+                                <% } %>
+
                             </button>
 
                         <% } %>
@@ -463,12 +564,12 @@ boolean hasActiveRoom =
             </aside>
 
             <!-- =================================
-                 右側：チャット画面
+                 右側：会話画面
                  ================================= -->
 
             <section class="chat-conversation-panel">
 
-                <!-- チャット上部 -->
+                <!-- チャットヘッダー -->
 
                 <div class="chat-conversation-header">
 
@@ -584,6 +685,46 @@ boolean hasActiveRoom =
                                 Timestamp createdAt =
                                     (Timestamp) message.get("createdAt");
 
+                                // 既読人数
+                                Object readCountValue =
+                                    message.get("readCount");
+
+                                long readCount =
+                                    readCountValue instanceof Number
+                                        ? ((Number) readCountValue).longValue()
+                                        : 0;
+
+                                // 既読対象人数
+                                Object recipientCountValue =
+                                    message.get("recipientCount");
+
+                                long recipientCount =
+                                    recipientCountValue instanceof Number
+                                        ? ((Number) recipientCountValue).longValue()
+                                        : 0;
+
+                                // 既読ラベル
+                                // 未読の場合は空文字
+                                String readLabel = "";
+
+                                if (ownMessage) {
+
+                                    if ("direct".equals(activeRoomType)) {
+
+                                        if (recipientCount > 0 &&
+                                                readCount >= recipientCount) {
+
+                                            readLabel = "既読";
+                                        }
+
+                                    } else if ("group".equals(activeRoomType)) {
+
+                                        if (readCount > 0) {
+                                            readLabel = "既読 " + readCount;
+                                        }
+                                    }
+                                }
+
                                 // 添付ファイル一覧
                                 List<Map<String, Object>> attachments =
                                     (List<Map<String, Object>>)
@@ -596,6 +737,8 @@ boolean hasActiveRoom =
                             %>
 
                                 <div class="chat-message-row <%= ownMessage ? "is-own" : "" %>">
+
+                                    <!-- 送信者名・時刻 -->
 
                                     <div class="chat-message-meta">
 
@@ -615,19 +758,41 @@ boolean hasActiveRoom =
 
                                     </div>
 
-                                    <!-- メッセージ本文 -->
+                                    <!-- =================================
+                                         本文と既読表示
+                                         既読は吹き出しの左隣
+                                         ================================= -->
 
-                                    <% if (messageText != null &&
-                                            !String.valueOf(messageText).isEmpty()) { %>
+                                    <div class="chat-message-content-row">
 
-                                        <div class="chat-message-bubble">
-                                            <%= formatMessage(messageText) %>
-                                        </div>
+                                        <% if (ownMessage) { %>
 
-                                    <% } %>
+                                            <span
+                                                class="chat-read-status"
+                                                data-message-id="<%= message.get("messageId") %>"
+                                                style="<%= readLabel.isEmpty()
+                                                    ? "display:none;"
+                                                    : "display:inline-block;" %>">
+
+                                                <%= escapeHtml(readLabel) %>
+
+                                            </span>
+
+                                        <% } %>
+
+                                        <% if (messageText != null &&
+                                                !String.valueOf(messageText).isEmpty()) { %>
+
+                                            <div class="chat-message-bubble">
+                                                <%= formatMessage(messageText) %>
+                                            </div>
+
+                                        <% } %>
+
+                                    </div>
 
                                     <!-- =================================
-                                         添付ファイル表示
+                                         添付ファイル
                                          ================================= -->
 
                                     <% if (!attachments.isEmpty()) { %>
@@ -653,7 +818,6 @@ boolean hasActiveRoom =
                                                         attachment.get("contentType")
                                                     );
 
-                                                // 画像ファイルか判定
                                                 boolean imageAttachment =
                                                     attachmentContentType.startsWith("image/");
 
@@ -666,23 +830,21 @@ boolean hasActiveRoom =
 
                                                 <% if (imageAttachment) { %>
 
-                                                    <!-- 画像用の小型カード -->
+                                                    <!-- 画像サムネイル -->
 
                                                     <div
                                                         class="chat-attachment-card has-image"
                                                         style="
-                                                            display: flex !important;
-                                                            flex-direction: row !important;
-                                                            align-items: center !important;
-                                                            gap: 10px !important;
-                                                            width: fit-content !important;
-                                                            max-width: 100% !important;
-                                                            margin-top: 8px !important;
-                                                            padding: 8px !important;
-                                                            border-radius: 8px !important;
+                                                            display:flex !important;
+                                                            flex-direction:row !important;
+                                                            align-items:center !important;
+                                                            gap:10px !important;
+                                                            width:fit-content !important;
+                                                            max-width:100% !important;
+                                                            margin-top:8px !important;
+                                                            padding:8px !important;
+                                                            border-radius:8px !important;
                                                         ">
-
-                                                        <!-- 96×72pxの画像サムネイル -->
 
                                                         <a
                                                             href="<%= attachmentUrl %>&amp;view=inline"
@@ -690,14 +852,14 @@ boolean hasActiveRoom =
                                                             rel="noopener noreferrer"
                                                             title="画像を大きく表示"
                                                             style="
-                                                                display: block !important;
-                                                                flex: 0 0 96px !important;
-                                                                width: 96px !important;
-                                                                height: 72px !important;
-                                                                max-width: 96px !important;
-                                                                overflow: hidden !important;
-                                                                border-radius: 6px !important;
-                                                                line-height: 0 !important;
+                                                                display:block !important;
+                                                                flex:0 0 96px !important;
+                                                                width:96px !important;
+                                                                height:72px !important;
+                                                                max-width:96px !important;
+                                                                overflow:hidden !important;
+                                                                border-radius:6px !important;
+                                                                line-height:0 !important;
                                                             ">
 
                                                             <img
@@ -707,43 +869,38 @@ boolean hasActiveRoom =
                                                                 width="96"
                                                                 height="72"
                                                                 style="
-                                                                    display: block !important;
-                                                                    width: 96px !important;
-                                                                    height: 72px !important;
-                                                                    min-width: 96px !important;
-                                                                    min-height: 72px !important;
-                                                                    max-width: 96px !important;
-                                                                    max-height: 72px !important;
-                                                                    object-fit: cover !important;
-                                                                    border-radius: 6px !important;
+                                                                    display:block !important;
+                                                                    width:96px !important;
+                                                                    height:72px !important;
+                                                                    min-width:96px !important;
+                                                                    min-height:72px !important;
+                                                                    max-width:96px !important;
+                                                                    max-height:72px !important;
+                                                                    object-fit:cover !important;
+                                                                    border-radius:6px !important;
                                                                 ">
 
                                                         </a>
 
-                                                        <!-- 画像のファイル情報 -->
-
                                                         <div
                                                             class="chat-attachment-info"
                                                             style="
-                                                                min-width: 0 !important;
-                                                                flex: 1 1 auto !important;
+                                                                min-width:0 !important;
+                                                                flex:1 1 auto !important;
                                                             ">
 
-                                                            <div class="chat-attachment-name"
-                                                                 style="
-                                                                    overflow-wrap: anywhere;
-                                                                 ">
+                                                            <div
+                                                                class="chat-attachment-name"
+                                                                style="overflow-wrap:anywhere;">
 
                                                                 <%= escapeHtml(fileName) %>
 
                                                             </div>
 
                                                             <div class="chat-attachment-size">
-
                                                                 <%= escapeHtml(
                                                                     formatFileSize(fileSize)
                                                                 ) %>
-
                                                             </div>
 
                                                             <a
@@ -760,7 +917,7 @@ boolean hasActiveRoom =
 
                                                 <% } else { %>
 
-                                                    <!-- 画像以外の添付ファイル -->
+                                                    <!-- 画像以外のファイル -->
 
                                                     <div class="chat-attachment-card">
 
@@ -771,17 +928,13 @@ boolean hasActiveRoom =
                                                         <div class="chat-attachment-info">
 
                                                             <div class="chat-attachment-name">
-
                                                                 <%= escapeHtml(fileName) %>
-
                                                             </div>
 
                                                             <div class="chat-attachment-size">
-
                                                                 <%= escapeHtml(
                                                                     formatFileSize(fileSize)
                                                                 ) %>
-
                                                             </div>
 
                                                             <a
@@ -815,7 +968,7 @@ boolean hasActiveRoom =
                 </div>
 
                 <!-- =================================
-                     メッセージ入力・添付欄
+                     メッセージ入力欄
                      ================================= -->
 
                 <div class="chat-input-area">
@@ -834,18 +987,18 @@ boolean hasActiveRoom =
                                 name="roomId"
                                 value="<%= activeRoomId %>">
 
-                            <!-- ファイル選択ボタン -->
+                            <!-- 添付ボタン -->
 
                             <label
-    for="chatFileInput"
-    class="chat-attach-button"
-    data-tooltip="ファイルを添付"
-    aria-label="ファイルを添付"
-    tabindex="0">
+                                for="chatFileInput"
+                                class="chat-attach-button"
+                                data-tooltip="ファイルを添付"
+                                aria-label="ファイルを添付"
+                                tabindex="0">
 
-    📎
+                                📎
 
-</label>
+                            </label>
 
                             <input
                                 type="file"
@@ -875,7 +1028,7 @@ boolean hasActiveRoom =
 
                         </form>
 
-                        <!-- 選択したファイルの表示 -->
+                        <!-- 選択したファイル -->
 
                         <div
                             id="chatSelectedFiles"
@@ -884,10 +1037,8 @@ boolean hasActiveRoom =
                         </div>
 
                         <p class="chat-input-note">
-
                             Enterで送信、Shift + Enterで改行できます。
                             最大5ファイル・1ファイル10MBまで。
-
                         </p>
 
                     <% } else { %>
@@ -903,18 +1054,14 @@ boolean hasActiveRoom =
                                 type="button"
                                 class="chat-send-button"
                                 disabled>
-
                                 送信
-
                             </button>
 
                         </div>
 
                         <p class="chat-input-note">
-
                             チャットルームを選択すると
                             メッセージを送信できます。
-
                         </p>
 
                     <% } %>
@@ -925,8 +1072,6 @@ boolean hasActiveRoom =
 
         </div>
 
-        <!-- 共通フッター -->
-
         <%@ include file="common/footer.jsp" %>
 
     </main>
@@ -934,11 +1079,10 @@ boolean hasActiveRoom =
 </div>
 
 <!-- =================================
-     チャット一覧・送信処理
+     チャット一覧・送信・既読更新
      ================================= -->
 
 <script>
-
 (function() {
 
     const contextPath =
@@ -988,7 +1132,6 @@ boolean hasActiveRoom =
                 + encodeURIComponent(userId);
 
         });
-
     });
 
     // =================================
@@ -999,10 +1142,8 @@ boolean hasActiveRoom =
         document.getElementById("chatMessageArea");
 
     if (messageArea) {
-
         messageArea.scrollTop =
             messageArea.scrollHeight;
-
     }
 
     // =================================
@@ -1015,7 +1156,6 @@ boolean hasActiveRoom =
     const selectedFilesArea =
         document.getElementById("chatSelectedFiles");
 
-    // ファイル容量を表示用に変換
     function formatSize(size) {
 
         if (size < 1024) {
@@ -1029,7 +1169,6 @@ boolean hasActiveRoom =
         return (size / (1024 * 1024)).toFixed(1) + " MB";
     }
 
-    // 選択されたファイル一覧を表示
     function showSelectedFiles() {
 
         if (!fileInput || !selectedFilesArea) {
@@ -1060,7 +1199,6 @@ boolean hasActiveRoom =
 
         });
 
-        // 合計容量を確認
         const totalSize = files.reduce(
             function(total, file) {
                 return total + file.size;
@@ -1100,12 +1238,10 @@ boolean hasActiveRoom =
     }
 
     if (fileInput) {
-
         fileInput.addEventListener(
             "change",
             showSelectedFiles
         );
-
     }
 
     // =================================
@@ -1132,20 +1268,16 @@ boolean hasActiveRoom =
                 fileInput &&
                 fileInput.files.length > 0;
 
-            // 本文もファイルもない場合は送信しない
             if (!hasText && !hasFiles) {
 
                 event.preventDefault();
-
                 messageInput.focus();
 
                 return;
             }
 
-            // 二重送信を防ぐ
             sendButton.disabled = true;
             sendButton.textContent = "送信中...";
-
         });
 
         // Enterで送信、Shift + Enterで改行
@@ -1169,15 +1301,131 @@ boolean hasActiveRoom =
                 if (hasText || hasFiles) {
                     messageForm.requestSubmit();
                 }
-
             }
-
         });
-
     }
 
-})();
+    // =================================
+    // 既読状況の自動更新
+    // =================================
 
+    const activeRoomId =
+        <%= hasActiveRoom ? activeRoomId.toString() : "null" %>;
+
+    const activeRoomType =
+        "<%= activeRoomType == null ? "" : activeRoomType %>";
+
+    async function refreshReadStatuses() {
+
+        if (!activeRoomId) {
+            return;
+        }
+
+        // 別タブを表示している間は通信しない
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                contextPath
+                + "/chatReadStatus?roomId="
+                + encodeURIComponent(activeRoomId),
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const statuses = await response.json();
+
+            statuses.forEach(function(status) {
+
+                const messageId =
+                    Number(status.messageId);
+
+                const readCount =
+                    Number(status.readCount);
+
+                const recipientCount =
+                    Number(status.recipientCount);
+
+                const element = document.querySelector(
+                    '.chat-read-status[data-message-id="'
+                    + messageId
+                    + '"]'
+                );
+
+                if (!element) {
+                    return;
+                }
+
+                let label = "";
+
+                // 個人チャット
+                if (activeRoomType === "direct") {
+
+                    if (
+                        recipientCount > 0 &&
+                        readCount >= recipientCount
+                    ) {
+                        label = "既読";
+                    }
+
+                // グループチャット
+                } else if (activeRoomType === "group") {
+
+                    if (readCount > 0) {
+                        label = "既読 " + readCount;
+                    }
+                }
+
+                element.textContent = label;
+
+                // 未読なら非表示、既読なら表示
+                element.style.display =
+                    label === ""
+                        ? "none"
+                        : "inline-block";
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "既読状況の更新に失敗しました。",
+                error
+            );
+        }
+    }
+
+    // 初回取得
+    refreshReadStatuses();
+
+    // 4秒ごとに更新
+    window.setInterval(
+        refreshReadStatuses,
+        4000
+    );
+
+    // タブに戻った際にも更新
+    document.addEventListener(
+        "visibilitychange",
+        function() {
+
+            if (document.visibilityState === "visible") {
+                refreshReadStatuses();
+            }
+        }
+    );
+
+})();
 </script>
 
 </body>
