@@ -15,6 +15,29 @@ Map<String, Object> task = (Map<String, Object>) request.getAttribute("taskData"
 int taskId = (Integer) task.get("taskId");
 
 @SuppressWarnings("unchecked")
+List<Map<String, Object>> currentAssignees = (List<Map<String, Object>>) task.get("assigneeList");
+
+StringBuilder currentAssigneeIds = new StringBuilder();
+
+if (currentAssignees != null) {
+
+	for (Map<String, Object> assignee : currentAssignees) {
+
+		Object userId = assignee.get("userId");
+
+		if (userId instanceof Number) {
+
+	if (currentAssigneeIds.length() > 0) {
+		currentAssigneeIds.append(",");
+	}
+
+	currentAssigneeIds.append(
+			((Number) userId).intValue());
+		}
+	}
+}
+
+@SuppressWarnings("unchecked")
 List<Map<String, Object>> tagOptions = (List<Map<String, Object>>) request.getAttribute("tagOptions");
 
 Set<Integer> selectedTagIds = new HashSet<>();
@@ -623,16 +646,9 @@ if (dueDateSql != null) {
 		? ""
 		: task.get("description")%></textarea>
 
-			<!-- 担当者は次にDB連携へ置換 -->
-			<label>担当者</label> <select name="user_id">
-
-				<option value="1">伊藤</option>
-				<option value="2">高橋</option>
-				<option value="3">中村</option>
-				<option value="4">小林</option>
-				<option value="5">加藤</option>
-
-			</select>
+			<div class="assignee-editor-mount"
+				data-project-id="<%=task.get("projectId")%>"
+				data-selected-ids="<%=currentAssigneeIds.toString()%>"></div>
 
 			<%
 			request.setAttribute(

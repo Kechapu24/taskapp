@@ -8,6 +8,7 @@
 <%@ page import="java.util.ArrayList"%>
 <%@ page import="java.util.List"%>
 <%@ page import="java.util.Map"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
@@ -18,6 +19,8 @@
 <title>タスク管理アプリ</title>
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/taskboard.css">
+<link rel="stylesheet" href="css/assignee-editor.css">
+<script src="js/assignee-editor.js" defer></script>
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
 	style="--custom-bg-color: ${themeBgColor};
@@ -76,6 +79,10 @@
 				taskFilter.setSort(sort);
 
 				TaskDAO taskDAO = new TaskDAO();
+				
+				List<Map<String, Object>> boardProjectOptions = taskDAO.getProjectOptionsForBoard(
+					        loginUserId, activeOrgId);
+					request.setAttribute("boardProjectOptions",boardProjectOptions);
 
 				List<Map<String, Object>> allTasks = taskDAO.getTasksForBoard(loginUserId, activeOrgId, taskFilter);
 
@@ -397,7 +404,52 @@
 
 			<%@ include file="common/footer.jsp"%>
 
+
+
 			<script>
+			function refreshTaskAssigneeEditor(form, selectedIds) {
+
+			    if (!form) {
+			        return;
+			    }
+
+			    const mount = form.querySelector(".assignee-editor-mount");
+
+			    if (!mount) {
+			        return;
+			    }
+
+			    const projectSelect =
+			        form.querySelector('select[name="project_id"]');
+
+			    const projectId = projectSelect
+			        ? projectSelect.value
+			        : mount.dataset.projectId;
+
+			    // 編集時はDBから渡された既存担当者IDを使用
+			    const ids = selectedIds !== undefined
+			        ? selectedIds
+			        : (mount.dataset.selectedIds || "")
+			            .split(",")
+			            .filter(Boolean);
+
+			    const template = document.getElementById(
+			        "assignee-project-" + projectId
+			    );
+
+			    mount.innerHTML = template ? template.innerHTML : "";
+
+			    // 次回の切り替えで古い担当者を復元しない
+			    mount.dataset.selectedIds = "";
+
+			    const editor = mount.querySelector(".assignee-editor");
+
+			    if (editor && window.selectAssigneeIdsInEditor) {
+			        window.selectAssigneeIdsInEditor(editor, ids);
+			    }
+			}
+
+			
 				function openModalFromElement(title, elementId) {
 					const source = document.getElementById(elementId);
 					const modalOverlay = document
@@ -408,6 +460,14 @@
 					modalTitle.textContent = title;
 					modalBody.innerHTML = source.innerHTML;
 					modalOverlay.style.display = "flex";
+
+					const editForm = modalBody.querySelector(
+						    "form.edit-form"
+						);
+
+						if (editForm) {
+						    refreshTaskAssigneeEditor(editForm);
+						}
 
 					closeAllTaskMenus();
 				}
@@ -460,6 +520,10 @@
 					const statusInput = modalBody
 							.querySelector("#addTaskStatus");
 					statusInput.value = status;
+
+					const addForm = modalBody.querySelector("form.edit-form");
+
+					refreshTaskAssigneeEditor(addForm, []);
 
 					closeAllTaskMenus();
 				}
@@ -984,15 +1048,48 @@ function openTagEditModal(button, tagId, currentColor) {
 		</div>
 	</div>
 
+
+	<%
+	for (Map<String, Object> projectOption : boardProjectOptions) {
+
+		int candidateProjectId = (Integer) projectOption.get("projectId");
+
+		List<Map<String, Object>> candidateUsers = taskDAO.getAssigneeCandidatesForProject(
+		candidateProjectId,
+		loginUserId,
+		activeOrgId);
+
+		request.setAttribute(
+		"assigneeOptions",
+		candidateUsers);
+
+		request.removeAttribute("selectedAssigneeIds");
+	%>
+
+	<template id="assignee-project-<%=candidateProjectId%>">
+		<jsp:include page="/task/assigneeEditor.jsp" />
+	</template>
+
+	<%
+	}
+	%>
+
 	<div id="task-add-form" style="display: none;">
 		<form class="edit-form" action="task/taskAdd.jsp" method="post">
 
 			<input type="hidden" name="status" id="addTaskStatus"> <label>プロジェクト</label>
-			<select name="project_id" required>
-				<option value="1">販売管理システム</option>
-				<option value="2">在庫管理システム</option>
-				<option value="3">社内ポータルサイト</option>
-				<option value="4">勤怠管理システム</option>
+
+			<select name="project_id" required
+				onchange="refreshTaskAssigneeEditor(this.form, [])">
+
+				<option value="">プロジェクトを選択</option>
+
+				<c:forEach var="project" items="${boardProjectOptions}">
+					<option value="${project.projectId}">
+						<c:out value="${project.projectName}" />
+					</option>
+				</c:forEach>
+
 			</select> <label>タスク名</label> <input type="text" name="task_name" required>
 
 			<label>説明</label>
@@ -1003,14 +1100,8 @@ function openTagEditModal(button, tagId, currentColor) {
 				<option value="中" selected>中</option>
 				<option value="高">高</option>
 			</select> <label>開始日</label> <input type="date" name="start_date"> <label>期限</label>
-			<input type="date" name="due_date"> <label>担当者</label> <select
-				name="user_id">
-				<option value="1">伊藤</option>
-				<option value="2">高橋</option>
-				<option value="3">中村</option>
-				<option value="4">小林</option>
-				<option value="5">加藤</option>
-			</select>
+			<input type="date" name="due_date">
+			<div class="assignee-editor-mount"></div>
 
 			<%
 			request.removeAttribute(

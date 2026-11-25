@@ -335,6 +335,52 @@ public class TaskDAO {
 		}
 	}
 
+	public List<Map<String, Object>> getProjectOptionsForBoard(
+			int loginUserId,
+			Integer activeOrgId) {
+
+		List<Map<String, Object>> result = new ArrayList<>();
+
+		String sql = "SELECT p.project_id, p.project_name "
+				+ "FROM project p "
+				+ (activeOrgId == null
+						? "WHERE p.user_id = ? AND p.org_id IS NULL "
+						: "WHERE p.org_id = ? AND p.user_id IS NULL ")
+				+ "ORDER BY p.project_name, p.project_id";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(
+					1,
+					activeOrgId == null ? loginUserId : activeOrgId);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+
+					Map<String, Object> project = new LinkedHashMap<>();
+
+					project.put(
+							"projectId",
+							rs.getInt("project_id"));
+
+					project.put(
+							"projectName",
+							rs.getString("project_name"));
+
+					result.add(project);
+				}
+			}
+
+		} catch (SQLException e) {
+			throw new RuntimeException(
+					"プロジェクト一覧取得中にDBエラーが発生しました",
+					e);
+		}
+
+		return result;
+	}
+
 	public List<Map<String, Object>> getAssigneeCandidatesForProject(
 			int projectId,
 			int loginUserId,

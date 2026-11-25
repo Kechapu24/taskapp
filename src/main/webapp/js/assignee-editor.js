@@ -156,4 +156,30 @@
 		}
 	});
 
+
+	// 編集画面で既存の担当者を選択済みにする
+	window.selectAssigneeIdsInEditor = function(editor, userIds) {
+
+		if (!editor) {
+			return;
+		}
+
+		const options = Array.from(
+			editor.querySelectorAll(".assignee-editor-option")
+		);
+
+		(userIds || []).forEach(function(userId) {
+
+			const option = options.find(function(item) {
+				return item.dataset.userId === String(userId);
+			});
+
+			if (option) {
+				addAssignee(editor, option);
+			}
+		});
+
+		setMenuOpen(editor, false);
+	};
+
 })();
