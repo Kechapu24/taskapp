@@ -255,11 +255,149 @@ public class TaskDAO {
 				}
 			}
 
+			loadAssigneeDetails(conn, result, activeOrgId);
+
 		} catch (SQLException e) {
 
 			throw new RuntimeException(
 					"タスク一覧取得中にDBエラーが発生しました",
 					e);
+		}
+
+		return result;
+	}
+
+	private void loadAssigneeDetails(
+			Connection conn,
+			List<Map<String, Object>> tasks,
+			Integer activeOrgId) throws SQLException {
+
+		if (tasks.isEmpty()) {
+			return;
+		}
+
+		Map<Integer, List<Map<String, Object>>> byTaskId = new LinkedHashMap<>();
+
+		// タスクごとに担当者リストを用意
+		for (Map<String, Object> task : tasks) {
+			Integer taskId = (Integer) task.get("taskId");
+
+			List<Map<String, Object>> assigneeList = new ArrayList<>();
+
+			task.put("assigneeList", assigneeList);
+			byTaskId.put(taskId, assigneeList);
+		}
+
+		String sql = "SELECT ta.task_id, u.user_id, u.user_name, "
+				+ "(u.icon_data IS NOT NULL) AS icon_set, "
+				+ "om.org_role "
+				+ "FROM task_assignee ta "
+				+ "JOIN users u ON ta.user_id = u.user_id "
+				+ "LEFT JOIN org_member om "
+				+ "ON om.user_id = u.user_id AND om.org_id = ? "
+				+ "WHERE ta.task_id = ANY (?) "
+				+ "ORDER BY ta.task_id, u.user_id";
+
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			if (activeOrgId == null) {
+				stmt.setNull(1, java.sql.Types.INTEGER);
+			} else {
+				stmt.setInt(1, activeOrgId);
+			}
+
+			Integer[] taskIds = byTaskId.keySet().toArray(new Integer[0]);
+
+			stmt.setArray(
+					2,
+					conn.createArrayOf("integer", taskIds));
+
+			try (ResultSet rs = stmt.executeQuery()) {
+
+				while (rs.next()) {
+
+					int taskId = rs.getInt("task_id");
+
+					Map<String, Object> assignee = new LinkedHashMap<>();
+
+					assignee.put("userId", rs.getInt("user_id"));
+					assignee.put("userName", rs.getString("user_name"));
+					assignee.put("iconSet", rs.getBoolean("icon_set"));
+					assignee.put("orgRole", rs.getString("org_role"));
+
+					List<Map<String, Object>> list = byTaskId.get(taskId);
+
+					if (list != null) {
+						list.add(assignee);
+					}
+				}
+			}
+		}
+	}
+
+	public List<Map<String, Object>> getAssigneeCandidatesForProject(
+			int projectId,
+			int loginUserId,
+			Integer activeOrgId) {
+
+		List<Map<String, Object>> result = new ArrayList<>();
+
+		String sql;
+
+		if (activeOrgId == null) {
+			// 個人モード：プロジェクト所有者本人のみ
+			sql = "SELECT u.user_id, u.user_name, "
+					+ "(u.icon_data IS NOT NULL) AS icon_set, "
+					+ "NULL::varchar AS org_role "
+					+ "FROM project p "
+					+ "JOIN users u ON u.user_id = p.user_id "
+					+ "WHERE p.project_id = ? "
+					+ "AND p.user_id = ? "
+					+ "AND p.org_id IS NULL";
+		} else {
+			// 団体モード：プロジェクト参加者のみ
+			sql = "SELECT u.user_id, u.user_name, "
+					+ "(u.icon_data IS NOT NULL) AS icon_set, "
+					+ "om.org_role "
+					+ "FROM project p "
+					+ "JOIN project_member pm "
+					+ "ON pm.project_id = p.project_id "
+					+ "JOIN users u ON u.user_id = pm.user_id "
+					+ "JOIN org_member om "
+					+ "ON om.user_id = u.user_id "
+					+ "AND om.org_id = p.org_id "
+					+ "WHERE p.project_id = ? "
+					+ "AND p.org_id = ? "
+					+ "ORDER BY u.user_name, u.user_id";
+		}
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, projectId);
+
+			stmt.setInt(
+					2,
+					activeOrgId == null ? loginUserId : activeOrgId);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+
+				while (rs.next()) {
+
+					Map<String, Object> user = new LinkedHashMap<>();
+
+					user.put("userId", rs.getInt("user_id"));
+					user.put("userName", rs.getString("user_name"));
+					user.put("iconSet", rs.getBoolean("icon_set"));
+					user.put("orgRole", rs.getString("org_role"));
+
+					result.add(user);
+				}
+			}
+
+		} catch (SQLException e) {
+			throw new RuntimeException(
+					"担当者候補取得中にDBエラーが発生しました", e);
 		}
 
 		return result;

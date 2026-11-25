@@ -1,0 +1,975 @@
+
+@charset "UTF-8";
+
+/* ==========================================
+   1. チャット画面全体
+   ========================================== */
+
+.chat-page-body {
+    overflow: hidden;
+}
+
+.chat-main-content {
+    min-width: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.chat-workspace {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 16px;
+
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+
+    padding: 16px;
+
+    background-color: var(--ui-bg);
+    box-sizing: border-box;
+}
+
+
+/* ==========================================
+   2. 左側：チャット一覧
+   ========================================== */
+
+.chat-list-panel {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    min-height: 0;
+
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+.chat-list-header {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.chat-list-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--ui-text);
+}
+
+.chat-list-scroll {
+    flex: 1;
+    min-height: 0;
+
+    padding: 12px 10px;
+    overflow-y: auto;
+}
+
+.chat-section-title {
+    padding: 12px 10px 7px;
+
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--ui-muted);
+}
+
+
+/* ==========================================
+   3. チャット選択ボタン
+   ========================================== */
+
+.chat-list-item {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    gap: 11px;
+
+    padding: 11px 10px;
+    margin-bottom: 4px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+    color: var(--ui-text);
+
+    text-align: left;
+    cursor: pointer;
+
+    transition: background 0.2s;
+}
+
+.chat-list-item:hover:not(:disabled) {
+    background-color: var(--ui-hover);
+}
+
+.chat-list-item.active {
+    background-color: var(--ui-selected);
+    box-shadow: inset 3px 0 0 #3498db;
+}
+
+.chat-list-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* ==========================================
+   4. チャットアイコン
+   ========================================== */
+
+.chat-avatar,
+.chat-header-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background-color: #dce8f7;
+    color: #285b96;
+
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.group-avatar {
+    background-color: #dce8f7;
+    color: #285b96;
+}
+
+.chat-header-avatar {
+    width: 43px;
+    height: 43px;
+    font-size: 16px;
+}
+
+
+/* ==========================================
+   5. チャット名と説明
+   ========================================== */
+
+.chat-item-info {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    gap: 4px;
+}
+
+.chat-item-name {
+    overflow: hidden;
+
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--ui-text);
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chat-item-description {
+    overflow: hidden;
+
+    font-size: 11px;
+    color: var(--ui-muted);
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chat-list-message {
+    padding: 14px 10px;
+
+    color: var(--ui-muted);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.chat-list-message.error {
+    color: #d9534f;
+}
+
+
+/* ==========================================
+   6. 右側：会話画面
+   ========================================== */
+
+.chat-conversation-panel {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    min-height: 0;
+
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+
+/* ==========================================
+   7. 会話ヘッダー
+   ========================================== */
+
+.chat-conversation-header {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    min-height: 76px;
+    padding: 13px 20px;
+
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.chat-header-info {
+    min-width: 0;
+}
+
+.chat-header-info h2 {
+    margin: 0 0 5px;
+
+    color: var(--ui-text);
+    font-size: 16px;
+}
+
+.chat-header-info p {
+    margin: 0;
+
+    color: var(--ui-muted);
+    font-size: 12px;
+}
+
+
+/* ==========================================
+   8. メッセージ表示領域
+   ========================================== */
+
+.chat-message-area {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-height: 0;
+
+    padding: 24px;
+    overflow-y: auto;
+
+    scroll-behavior: smooth;
+}
+
+.chat-message-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    width: 100%;
+}
+
+
+/* ==========================================
+   9. メッセージがない場合
+   ========================================== */
+
+.chat-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    max-width: 380px;
+    margin: auto;
+
+    text-align: center;
+}
+
+.chat-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 68px;
+    height: 68px;
+    margin-bottom: 18px;
+
+    border-radius: 50%;
+    background-color: var(--ui-column);
+
+    font-size: 30px;
+}
+
+.chat-empty-state h3 {
+    margin-bottom: 10px;
+
+    color: var(--ui-text);
+    font-size: 18px;
+}
+
+.chat-empty-state p {
+    margin: 0;
+
+    color: var(--ui-muted);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.chat-development-label {
+    display: inline-block;
+
+    margin-top: 20px;
+    padding: 6px 11px;
+
+    border-radius: 20px;
+    background-color: var(--ui-column);
+    color: var(--ui-muted);
+
+    font-size: 11px;
+}
+
+
+/* ==========================================
+   10. メッセージの行
+   ========================================== */
+
+.chat-message-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: flex-start;
+
+    width: fit-content;
+    max-width: min(75%, 720px);
+}
+
+/* 自分のメッセージは右側 */
+.chat-message-row.is-own {
+    align-items: flex-end;
+    align-self: flex-end;
+}
+
+
+/* ==========================================
+   11. 送信者名・送信時刻
+   ========================================== */
+
+.chat-message-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-bottom: 6px;
+
+    font-size: 12px;
+    color: var(--ui-muted);
+}
+
+.chat-message-sender {
+    font-weight: 600;
+}
+
+.chat-message-time {
+    font-size: 11px;
+    color: var(--ui-muted);
+}
+
+
+/* ==========================================
+   12. メッセージ吹き出し
+   ========================================== */
+
+.chat-message-bubble {
+    padding: 11px 16px;
+
+    border-radius: 14px;
+
+    background-color: var(--ui-column);
+    color: var(--ui-text);
+
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* 自分のメッセージ */
+.chat-message-row.is-own .chat-message-bubble {
+    background-color: #dce8f7;
+    color: #244c78;
+}
+
+
+/* ==========================================
+   13. 添付ファイル表示
+   ========================================== */
+
+/* 添付ファイル一覧 */
+.chat-attachment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 9px;
+}
+
+/* 添付ファイルカード */
+.chat-attachment-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    min-width: 190px;
+    max-width: 320px;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--ui-border);
+    border-radius: 9px;
+
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+}
+
+/* ファイルアイコン */
+.chat-attachment-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+
+    border-radius: 8px;
+    background-color: var(--ui-column);
+
+    font-size: 20px;
+}
+
+/* ファイル名・容量 */
+.chat-attachment-info {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    gap: 3px;
+}
+
+.chat-attachment-name {
+    overflow: hidden;
+
+    color: var(--ui-text);
+    font-size: 12px;
+    font-weight: bold;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chat-attachment-size {
+    color: var(--ui-muted);
+    font-size: 10px;
+}
+
+/* ダウンロードリンク */
+.chat-attachment-link {
+    color: #2980b9;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.chat-attachment-link:hover {
+    text-decoration: underline;
+}
+
+
+/* ==========================================
+   14. 画像プレビュー
+   ========================================== */
+
+/*
+ * 現在のchat.jspでは画像サイズを
+ * インライン指定で96×72pxに固定している。
+ * 以下は他の画像表示箇所にも適用する基本設定。
+ */
+
+.chat-attachment-image-link {
+    display: block;
+    flex: 0 0 96px;
+
+    width: 96px;
+    height: 72px;
+    max-width: 96px;
+
+    overflow: hidden;
+    border-radius: 6px;
+    line-height: 0;
+}
+
+.chat-attachment-image {
+    display: block;
+
+    width: 96px;
+    height: 72px;
+
+    max-width: 96px;
+    max-height: 72px;
+
+    object-fit: cover;
+
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.chat-attachment-image-link:hover .chat-attachment-image {
+    opacity: 0.9;
+}
+
+
+/* ==========================================
+   15. 添付ファイル選択後のプレビュー
+   ========================================== */
+
+.chat-selected-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin-bottom: 10px;
+}
+
+.chat-file-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    max-width: 100%;
+    padding: 7px 10px;
+
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+
+    background-color: var(--ui-column);
+    color: var(--ui-text);
+
+    font-size: 11px;
+}
+
+.chat-file-preview-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chat-file-preview-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 23px;
+    height: 23px;
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background-color: transparent;
+    color: var(--ui-muted);
+
+    cursor: pointer;
+}
+
+.chat-file-preview-remove:hover {
+    background-color: var(--ui-hover);
+    color: #d9534f;
+}
+
+
+/* ==========================================
+   16. メッセージ入力欄
+   ========================================== */
+
+.chat-input-area {
+    padding: 15px 18px 12px;
+
+    border-top: 1px solid var(--ui-border);
+}
+
+.chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* テキスト入力欄 */
+.chat-message-input {
+    flex: 1;
+    min-width: 0;
+
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+
+    padding: 10px 12px;
+    box-sizing: border-box;
+
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+
+    background-color: var(--ui-input);
+    color: var(--ui-text);
+
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 20px;
+
+    resize: none;
+
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-message-input:focus {
+    outline: none;
+
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.12);
+}
+
+.chat-message-input:not(:disabled) {
+    cursor: text;
+    opacity: 1;
+}
+
+.chat-message-input:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+
+/* ==========================================
+   17. ファイル添付ボタン
+   ========================================== */
+
+.chat-attach-button {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+
+    padding: 0;
+
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+
+    background-color: var(--ui-surface);
+    color: var(--ui-muted);
+
+    font-size: 22px;
+
+    cursor: pointer;
+    overflow: visible !important;
+
+    transition: background 0.2s, color 0.2s;
+}
+
+.chat-attach-button:hover {
+    background-color: var(--ui-hover);
+    color: var(--ui-text);
+}
+
+.chat-attach-button:focus-visible {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* ファイル選択用inputは非表示 */
+.chat-file-input {
+    display: none;
+}
+
+
+/* ==========================================
+   18. 添付ボタンのツールチップ
+   ========================================== */
+
+.chat-attach-button::after {
+    content: attr(data-tooltip);
+
+    position: absolute;
+
+    /* アイコンの左端を基準に表示 */
+    left: 0;
+    right: auto;
+    bottom: calc(100% + 9px);
+
+    display: block;
+    width: max-content;
+    max-width: 180px;
+
+    padding: 8px 12px;
+    box-sizing: border-box;
+
+    border-radius: 6px;
+
+    background-color: #333333;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 1.5;
+
+    white-space: nowrap;
+    text-align: center;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    z-index: 9999;
+
+    transition: opacity 0.15s ease;
+}
+
+/* マウスを合わせたとき */
+.chat-attach-button:hover::after,
+.chat-attach-button:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* ==========================================
+   19. 送信ボタン
+   ========================================== */
+
+.chat-send-button {
+    min-width: 75px;
+    height: 42px;
+
+    padding: 0 17px;
+    box-sizing: border-box;
+
+    border: none;
+    border-radius: 7px;
+
+    background-color: #3498db;
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.chat-send-button:not(:disabled):hover {
+    background-color: #2980b9;
+}
+
+.chat-send-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* ==========================================
+   20. 入力欄の補足
+   ========================================== */
+
+.chat-input-note {
+    margin: 7px 0 0;
+
+    color: var(--ui-muted);
+    font-size: 10px;
+    text-align: right;
+}
+
+
+/* ==========================================
+   21. ダークモード
+   ========================================== */
+
+body.dark-theme .chat-list-panel,
+body.dark-theme .chat-conversation-panel {
+    background-color: var(--ui-surface);
+    border-color: var(--ui-border);
+}
+
+body.dark-theme .chat-avatar,
+body.dark-theme .chat-header-avatar {
+    background-color: #384b60;
+    color: #dce8f7;
+}
+
+body.dark-theme .chat-message-row:not(.is-own) .chat-message-bubble {
+    background-color: #414141;
+    color: #ffffff;
+}
+
+body.dark-theme .chat-message-row.is-own .chat-message-bubble {
+    background-color: #384b60;
+    color: #e5efff;
+}
+
+
+/* ==========================================
+   22. カスタムテーマ対応
+   ========================================== */
+
+/* 選択中のチャット */
+body.custom-theme .chat-list-item.active {
+    background-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 18%,
+        #ffffff 82%
+    );
+
+    color: var(--custom-text-color);
+    box-shadow: inset 3px 0 0 var(--custom-bg-color);
+}
+
+/* チャットアイコンは青系に固定 */
+body.custom-theme .chat-avatar,
+body.custom-theme .chat-header-avatar,
+body.custom-theme .group-avatar {
+    background-color: #dce8f7 !important;
+    color: #285b96 !important;
+}
+
+/* 送信ボタン */
+body.custom-theme .chat-send-button {
+    background-color: var(--custom-bg-color);
+    color: var(--custom-text-color);
+}
+
+/* 添付ボタン */
+body.custom-theme .chat-attach-button {
+    border-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 30%,
+        #cccccc 70%
+    );
+}
+
+/* 入力欄 */
+body.custom-theme .chat-message-input {
+    border-color: color-mix(
+        in srgb,
+        var(--custom-bg-color) 30%,
+        #cccccc 70%
+    );
+}
+
+/* 自分のメッセージは青系を維持 */
+body.custom-theme .chat-message-row.is-own .chat-message-bubble {
+    background-color: #dce8f7;
+    color: #244c78;
+}
+
+
+/* ==========================================
+   23. レスポンシブ対応
+   ========================================== */
+
+@media (max-width: 900px) {
+
+    .chat-workspace {
+        grid-template-columns: 230px minmax(0, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .chat-message-area {
+        padding: 18px;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .chat-page-body {
+        overflow: auto;
+    }
+
+    .chat-main-content {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+    }
+
+    .chat-workspace {
+        grid-template-columns: 1fr;
+        grid-template-rows: 190px minmax(420px, 1fr);
+    }
+
+    .chat-list-panel {
+        min-height: 0;
+    }
+
+    .chat-list-scroll {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 4px;
+    }
+
+    .chat-section-title {
+        width: 100%;
+    }
+
+    .chat-list-item {
+        width: auto;
+        max-width: 48%;
+    }
+
+    .chat-conversation-panel {
+        min-height: 420px;
+    }
+
+    .chat-message-area {
+        padding: 14px;
+    }
+
+    .chat-message-row {
+        max-width: 90%;
+    }
+
+    .chat-input-wrapper {
+        gap: 6px;
+    }
+
+    .chat-attach-button {
+        width: 40px;
+        min-width: 40px;
+        height: 42px;
+    }
+
+    .chat-send-button {
+        min-width: 58px;
+        padding: 0 12px;
+    }
+
+    .chat-attachment-image-link,
+    .chat-attachment-image {
+        width: 96px;
+        max-width: 96px;
+    }
+
+}

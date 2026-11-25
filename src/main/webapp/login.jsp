@@ -1,10 +1,9 @@
 <!-- ログイン済みならタスクボードへ -->
 <%
 if (session.getAttribute("loginUser") != null) {
-    response.sendRedirect(
-        request.getContextPath() + "/taskboard.jsp"
-    );
-    return;
+	response.sendRedirect(
+	request.getContextPath() + "/taskboard.jsp");
+	return;
 }
 %>
 
@@ -44,8 +43,8 @@ if (session.getAttribute("loginUser") != null) {
 
 			<!-- メールアドレス(ログイン失敗時は、入力した内容を残す) -->
 			<label for="email">メールアドレス</label> <input type="email" id="email"
-				name="email" value="<c:out value='${email}'/>"
-				placeholder="メールアドレス" autocomplete="username" required
+				name="email" value="<c:out value='${email}'/>" placeholder="メールアドレス"
+				autocomplete="username" required
 				<c:if test="${empty email}">autofocus</c:if>>
 
 			<!-- パスワード(表示/非表示ボタン付き) -->
@@ -54,8 +53,7 @@ if (session.getAttribute("loginUser") != null) {
 				<input type="password" id="password" name="password"
 					placeholder="パスワード" autocomplete="current-password" required
 					<c:if test="${not empty email}">autofocus</c:if>>
-				<button type="button" class="password-toggle"
-					data-target="password"></button>
+				<button type="button" class="password-toggle" data-target="password"></button>
 			</div>
 
 			<div class="button-area">
@@ -67,6 +65,14 @@ if (session.getAttribute("loginUser") != null) {
 			アカウントをお持ちでない方は <a
 				href="${pageContext.request.contextPath}/register.jsp">新規登録はこちら</a>
 		</p>
+	</div>
+
+	<div class="sample-login-info">
+		<h3>動作確認用アカウント</h3>
+		<p>伊藤：アドミン</p>
+		<p>メールアドレス：ito@example.com<br> パスワード：password</p>
+		<p>高橋：メンバー</p>
+		<p>メールアドレス：takahashi@example.com<br> パスワード：password</p>
 	</div>
 
 </body>

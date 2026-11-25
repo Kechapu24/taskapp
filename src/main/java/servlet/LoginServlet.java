@@ -75,6 +75,7 @@ public class LoginServlet extends HttpServlet {
 			// 前回の団体モードを復元
 			session.setAttribute("activeOrgId", lastOrgId);
 
+		
 		} else {
 
 			// 初回ログイン、前回が個人モード、または団体から脱退した場合
