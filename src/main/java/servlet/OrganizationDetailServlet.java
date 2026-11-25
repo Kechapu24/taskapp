@@ -1,23 +1,17 @@
-//org_id受取
-
-//団体情報取得
-
-//所属メンバー取得
-
-//organization_detail.jspへ渡す
-
 package servlet;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import model.User;
+import dao.OrgDAO;
+import model.Member;
+import model.Organization;
 
 @WebServlet("/organization/detail")
 public class OrganizationDetailServlet extends HttpServlet {
@@ -27,29 +21,43 @@ public class OrganizationDetailServlet extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
+    	System.out.println("OrganizationDetailServlet 実行");
+        String orgIdParam =
+                request.getParameter("orgId");
 
-        HttpSession session = request.getSession();
-        User loginUser =
-                (User) session.getAttribute("loginUser");
-
-        // 未ログイン対策
-        if (loginUser == null) {
+        if (orgIdParam == null) {
 
             response.sendRedirect(
                     request.getContextPath()
-                    + "/login.jsp");
+                    + "/admin.jsp");
 
             return;
         }
 
-        // 将来利用する
-        String orgId =
-                request.getParameter("orgId");
+        int orgId =
+                Integer.parseInt(orgIdParam);
 
-        request.setAttribute("orgId", orgId);
+        OrgDAO dao =
+                new OrgDAO();
+
+        Organization org =
+                dao.getOrganizationById(orgId);
+        
+        List<Member> memberList =
+                dao.getMembersByOrgId(orgId);
+
+        request.setAttribute(
+                "organization",
+                org);
+        
+        request.setAttribute(
+                "memberList",
+                memberList);
 
         request.getRequestDispatcher(
                 "/organization_detail.jsp")
-                .forward(request, response);
+                .forward(
+                    request,
+                    response);
     }
 }

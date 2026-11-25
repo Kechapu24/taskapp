@@ -71,37 +71,18 @@ request.setAttribute("currentPage", "admin");
 
 							<div class="org-card">
 
-								<div class="org-name">
-									<c:out value="${org.orgName}" />
-								</div>
+								<strong> <c:out value="${org.orgName}" />
+								</strong>
+
 								<button
 									onclick="location.href='${pageContext.request.contextPath}/organization/detail?orgId=${org.orgId}'">
 
 									詳細</button>
-								<div class="org-role">
-
-									<c:choose>
-
-										<c:when test="${org.orgRole == 'admin'}">
-                                        管理者
-                                    </c:when>
-
-										<c:otherwise>
-                                        メンバー
-                                    </c:otherwise>
-
-									</c:choose>
-
-								</div>
 
 							</div>
 
 						</c:forEach>
-
 					</div>
-					<button onclick="location.href='organization_detail.jsp'">
-						詳細</button>
-
 				</section>
 
 			</div>

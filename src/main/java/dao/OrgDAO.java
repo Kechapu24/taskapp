@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.Member;
 import model.Organization;
 import util.DBConnection;
  
@@ -67,15 +68,18 @@ public class OrgDAO {
             try (ResultSet rs =
                     stmt.executeQuery()) {
 
-                if (rs.next()) {
+            	if (rs.next()) {
 
-                    return new Organization(
-                        rs.getInt("org_id"),
-                        rs.getString("org_name"),
-                        null
-                    );
-                }
-            }
+            	    System.out.println(
+            	        "orgName=" +
+            	        rs.getString("org_name"));
+
+            	    return new Organization(
+            	        rs.getInt("org_id"),
+            	        rs.getString("org_name"),
+            	        null
+            	    );
+            	}            }
 
         } catch (SQLException e) {
 
@@ -87,7 +91,57 @@ public class OrgDAO {
         return null;
     }
     
-    
+    /**
+     * 指定団体の所属メンバー一覧を取得
+     */
+    public List<Member> getMembersByOrgId(int orgId) {
+
+        String sql =
+            "SELECT u.user_id, " +
+            "u.user_name, " +
+            "om.org_role " +
+            "FROM org_member om " +
+            "JOIN users u " +
+            "ON om.user_id = u.user_id " +
+            "WHERE om.org_id = ? " +
+            "ORDER BY u.user_name";
+
+        List<Member> result =
+                new ArrayList<>();
+
+        try (Connection conn =
+                DBConnection.getConnection();
+
+             PreparedStatement stmt =
+                conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, orgId);
+
+            try (ResultSet rs =
+                    stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    result.add(
+                        new Member(
+                            rs.getInt("user_id"),
+                            rs.getString("user_name"),
+                            rs.getString("org_role")
+                        )
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+
+            throw new RuntimeException(
+                "メンバー一覧取得中にDBエラーが発生しました",
+                e);
+        }
+
+        return result;
+    }
+  
     
     
 //	今後の追加予定

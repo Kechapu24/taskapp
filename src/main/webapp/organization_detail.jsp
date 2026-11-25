@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="c"
+    uri="http://java.sun.com/jsp/jstl/core" %>
+    
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,11 +10,13 @@
 <title>Insert title here</title>
 </head>
 <body>
+
 <h2>団体詳細</h2>
 
 <h3>団体名</h3>
 
-<p>団体A</p>
+
+<p>${organization.orgName}</p>
 
 <button>
     ＋ 団体名変更
@@ -25,17 +30,27 @@
 
 <h3>所属メンバー</h3>
 
-<div class="member-card">
-    伊藤　admin
-</div>
+<c:forEach var="member"
+           items="${memberList}">
 
-<div class="member-card">
-    宮﨑　member
-</div>
+    <div class="member-card">
+
+        <strong>
+            ${member.userName}
+        </strong>
+
+       　
+
+        <span>
+            ${member.orgRole}
+        </span>
+
+    </div>
+
+</c:forEach>
 
 <button>
     ＋ メンバー招待
 </button>
-
 </body>
 </html>
