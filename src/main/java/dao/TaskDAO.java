@@ -403,6 +403,161 @@ public class TaskDAO {
 		return result;
 	}
 
+	// タスクの担当者を複数人まとめて更新する。
+	public void replaceTaskAssignees(
+			Connection conn,
+			int taskId,
+			String[] userIds,
+			int loginUserId,
+			Integer activeOrgId) throws SQLException {
+
+		// ① 担当者IDを整理する（重複防止）
+		Set<Integer> selectedIds = new LinkedHashSet<>();
+
+		if (userIds != null) {
+			for (String value : userIds) {
+				Integer id = parseInteger(value);
+
+				if (id == null || id <= 0) {
+					throw new SQLException("担当者IDが不正です。");
+				}
+
+				selectedIds.add(id);
+			}
+		}
+
+		// ② タスクが所属するプロジェクトを取得
+		int projectId;
+		Integer projectUserId;
+		Integer projectOrgId;
+
+		String scopeSql = "SELECT p.project_id, p.user_id, p.org_id "
+				+ "FROM task t "
+				+ "JOIN project p ON t.project_id = p.project_id "
+				+ "WHERE t.task_id = ?";
+
+		try (PreparedStatement stmt = conn.prepareStatement(scopeSql)) {
+			stmt.setInt(1, taskId);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (!rs.next()) {
+					throw new SQLException("対象タスクが見つかりません。");
+				}
+
+				projectId = rs.getInt("project_id");
+				projectUserId = (Integer) rs.getObject("user_id");
+				projectOrgId = (Integer) rs.getObject("org_id");
+			}
+		}
+
+		// ③ モードと担当者の所属を確認
+		if (projectOrgId == null) {
+
+			// 個人モード：自分のプロジェクト、自分のみ
+			if (activeOrgId != null
+					|| projectUserId == null
+					|| projectUserId.intValue() != loginUserId) {
+
+				throw new SQLException(
+						"このプロジェクトを操作できません。");
+			}
+
+			if (!selectedIds.isEmpty()
+					&& (selectedIds.size() != 1
+							|| !selectedIds.contains(loginUserId))) {
+
+				throw new SQLException(
+						"個人プロジェクトでは自分のみ担当者にできます。");
+			}
+
+		} else {
+
+			// 団体モード：選択中の団体と一致するか確認
+			if (activeOrgId == null
+					|| !projectOrgId.equals(activeOrgId)) {
+
+				throw new SQLException(
+						"選択中の団体に属さないタスクです。");
+			}
+
+			// 操作するユーザーが団体に所属しているか確認
+			String actorSql = "SELECT 1 FROM org_member "
+					+ "WHERE org_id = ? AND user_id = ?";
+
+			try (PreparedStatement stmt = conn.prepareStatement(actorSql)) {
+				stmt.setInt(1, projectOrgId);
+				stmt.setInt(2, loginUserId);
+
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (!rs.next()) {
+						throw new SQLException(
+								"この団体に所属していません。");
+					}
+				}
+			}
+
+			// 担当者がプロジェクト参加者か一括確認
+			String memberSql = "SELECT pm.user_id "
+					+ "FROM project_member pm "
+					+ "JOIN org_member om "
+					+ "ON om.user_id = pm.user_id "
+					+ "AND om.org_id = ? "
+					+ "WHERE pm.project_id = ? "
+					+ "AND pm.user_id = ANY (?)";
+
+			Set<Integer> validIds = new LinkedHashSet<>();
+
+			try (PreparedStatement stmt = conn.prepareStatement(memberSql)) {
+
+				stmt.setInt(1, projectOrgId);
+				stmt.setInt(2, projectId);
+				stmt.setArray(
+						3,
+						conn.createArrayOf(
+								"integer",
+								selectedIds.toArray(new Integer[0])));
+
+				try (ResultSet rs = stmt.executeQuery()) {
+					while (rs.next()) {
+						validIds.add(rs.getInt("user_id"));
+					}
+				}
+			}
+
+			if (!validIds.containsAll(selectedIds)) {
+				throw new SQLException(
+						"プロジェクトに参加していない担当者が含まれています。");
+			}
+		}
+
+		// ④ 既存の担当者を削除
+		String deleteSql = "DELETE FROM task_assignee WHERE task_id = ?";
+
+		try (PreparedStatement stmt = conn.prepareStatement(deleteSql)) {
+			stmt.setInt(1, taskId);
+			stmt.executeUpdate();
+		}
+
+		// ⑤ 新しい担当者を複数登録
+		// 担当者0人の場合はINSERTしない
+		if (!selectedIds.isEmpty()) {
+
+			String insertSql = "INSERT INTO task_assignee (task_id, user_id) "
+					+ "VALUES (?, ?)";
+
+			try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+
+				for (Integer userId : selectedIds) {
+					stmt.setInt(1, taskId);
+					stmt.setInt(2, userId);
+					stmt.addBatch();
+				}
+
+				stmt.executeBatch();
+			}
+		}
+	}
+
 	public List<Map<String, Object>> getTagOptionsForBoard(
 			int loginUserId,
 			Integer activeOrgId) {

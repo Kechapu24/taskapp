@@ -2,9 +2,19 @@
 	pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*"%>
 <%@ page import="dao.TaskDAO"%>
+<%@ page import="model.User"%>
 
 <%
 request.setCharacterEncoding("UTF-8");
+
+User loginUser = (User) session.getAttribute("loginUser");
+
+if (loginUser == null) {
+	response.sendRedirect(request.getContextPath() + "/login.jsp");
+	return;
+}
+
+Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
 
 String projectIdStr = request.getParameter("project_id");
 String taskName = request.getParameter("task_name");
@@ -13,7 +23,16 @@ String status = request.getParameter("status");
 String priority = request.getParameter("priority");
 String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
-String userIdStr = request.getParameter("user_id");
+String[] assigneeUserIds = request.getParameterValues("user_ids");
+//Phase 4までは旧フォーム（1人選択）にも対応
+if (assigneeUserIds == null) {
+
+	String oldUserId = request.getParameter("user_id");
+
+	if (oldUserId != null && !oldUserId.trim().isEmpty()) {
+		assigneeUserIds = new String[] { oldUserId };
+	}
+}
 String[] tagIds = request.getParameterValues("tag_ids");
 String[] newTagNames = request.getParameterValues("new_tag_names");
 String[] newTagColors = request.getParameterValues("new_tag_colors");
@@ -24,7 +43,6 @@ String password = "taskpass";
 
 Connection conn = null;
 PreparedStatement taskStmt = null;
-PreparedStatement assigneeStmt = null;
 ResultSet generatedKeys = null;
 
 try {
@@ -61,18 +79,29 @@ try {
 
 	generatedKeys = taskStmt.getGeneratedKeys();
 
-	if (generatedKeys.next()) {
-		int taskId = generatedKeys.getInt(1);
-
-		String assigneeSql = "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
-		assigneeStmt = conn.prepareStatement(assigneeSql);
-		assigneeStmt.setInt(1, taskId);
-		assigneeStmt.setInt(2, Integer.parseInt(userIdStr));
-		assigneeStmt.executeUpdate();
-		TaskDAO taskDAO =new TaskDAO();
-			taskDAO.replaceTaskTags(
-					conn,taskId,tagIds,newTagNames,newTagColors);
+	if (!generatedKeys.next()) {
+		throw new SQLException("タスクIDの取得に失敗しました。");
 	}
+
+	int taskId = generatedKeys.getInt(1);
+
+	TaskDAO taskDAO = new TaskDAO();
+
+	// 担当者を複数登録
+	taskDAO.replaceTaskAssignees(
+	conn,
+	taskId,
+	assigneeUserIds,
+	loginUser.getUserId(),
+	activeOrgId);
+
+	// タグ登録処理
+	taskDAO.replaceTaskTags(
+	conn,
+	taskId,
+	tagIds,
+	newTagNames,
+	newTagColors);
 
 	conn.commit();
 
@@ -102,11 +131,6 @@ if (generatedKeys != null)
 if (taskStmt != null)
 	try {
 		taskStmt.close();
-	} catch (Exception e) {
-	}
-if (assigneeStmt != null)
-	try {
-		assigneeStmt.close();
 	} catch (Exception e) {
 	}
 if (conn != null)

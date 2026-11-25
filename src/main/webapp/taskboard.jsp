@@ -8,6 +8,7 @@
 <%@ page import="java.util.ArrayList"%>
 <%@ page import="java.util.List"%>
 <%@ page import="java.util.Map"%>
+
 <jsp:include page="common/theme.jsp" />
 <!DOCTYPE html>
 <html lang="ja">

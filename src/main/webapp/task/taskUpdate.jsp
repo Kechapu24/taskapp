@@ -1,24 +1,33 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8" %>
+	pageEncoding="UTF-8"%>
 
-<%@ page import="java.sql.*" %>
-<%@ page import="dao.TaskDAO" %>
-<%@ page import="util.DBConnection" %>
+<%@ page import="java.sql.*"%>
+<%@ page import="dao.TaskDAO"%>
+<%@ page import="util.DBConnection"%>
+<%@ page import="model.User"%>
 
 <%
 request.setCharacterEncoding("UTF-8");
+
+User loginUser = (User) session.getAttribute("loginUser");
+
+if (loginUser == null) {
+	response.sendRedirect(request.getContextPath() + "/login.jsp");
+	return;
+}
+
+Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
 
 // 戻り先を判定
 String returnTo = request.getParameter("return_to");
 
 String returnPath = "mytasks".equals(returnTo)
-    ? "/mytasks.jsp"
-    : "/taskboard.jsp";
+		? "/mytasks.jsp"
+		: "/taskboard.jsp";
 
 String returnLabel = "mytasks".equals(returnTo)
-    ? "マイタスクへ戻る"
-    : "タスクボードへ戻る";
-
+		? "マイタスクへ戻る"
+		: "タスクボードへ戻る";
 
 // フォームから受け取る値
 String taskIdStr = request.getParameter("task_id");
@@ -28,7 +37,17 @@ String status = request.getParameter("status");
 String priority = request.getParameter("priority");
 String startDate = request.getParameter("start_date");
 String dueDate = request.getParameter("due_date");
-String userIdStr = request.getParameter("user_id");
+String[] assigneeUserIds = request.getParameterValues("user_ids");
+
+//旧フォームへの一時的な互換対応
+if (assigneeUserIds == null) {
+
+	String oldUserId = request.getParameter("user_id");
+
+	if (oldUserId != null && !oldUserId.trim().isEmpty()) {
+		assigneeUserIds = new String[] { oldUserId };
+	}
+}
 
 String[] tagIds = request.getParameterValues("tag_ids");
 String[] newTagNames = request.getParameterValues("new_tag_names");
@@ -38,186 +57,150 @@ Connection conn = null;
 
 try {
 
-    // 入力チェック
-    if (taskIdStr == null || taskIdStr.trim().isEmpty()) {
-        throw new IllegalArgumentException("タスクIDが指定されていません。");
-    }
+	// 入力チェック
+	if (taskIdStr == null || taskIdStr.trim().isEmpty()) {
+		throw new IllegalArgumentException("タスクIDが指定されていません。");
+	}
 
-    if (taskName == null || taskName.trim().isEmpty()) {
-        throw new IllegalArgumentException("タスク名を入力してください。");
-    }
+	if (taskName == null || taskName.trim().isEmpty()) {
+		throw new IllegalArgumentException("タスク名を入力してください。");
+	}
 
-    if (userIdStr == null || userIdStr.trim().isEmpty()) {
-        throw new IllegalArgumentException("担当者を選択してください。");
-    }
+	int taskId = Integer.parseInt(taskIdStr);
 
-    int taskId = Integer.parseInt(taskIdStr);
-    int userId = Integer.parseInt(userIdStr);
+	Class.forName("org.postgresql.Driver");
 
+	conn = DBConnection.getConnection();
 
-    Class.forName("org.postgresql.Driver");
+	conn.setAutoCommit(false);
 
-    conn = DBConnection.getConnection();
+	// ======================================
+	// ① タスク本体を更新
+	// ======================================
 
-    conn.setAutoCommit(false);
+	String taskSql = "UPDATE task "
+	+ "SET task_name = ?, "
+	+ "description = ?, "
+	+ "status = ?, "
+	+ "priority = ?, "
+	+ "start_date = ?, "
+	+ "due_date = ? "
+	+ "WHERE task_id = ?";
 
+	try (PreparedStatement taskStmt = conn.prepareStatement(taskSql)) {
 
-    // ======================================
-    // ① タスク本体を更新
-    // ======================================
+		taskStmt.setString(1, taskName.trim());
+		taskStmt.setString(2, description == null ? "" : description);
+		taskStmt.setString(3, status);
+		taskStmt.setString(4, priority);
 
-    String taskSql =
-        "UPDATE task "
-        + "SET task_name = ?, "
-        + "description = ?, "
-        + "status = ?, "
-        + "priority = ?, "
-        + "start_date = ?, "
-        + "due_date = ? "
-        + "WHERE task_id = ?";
+		if (startDate == null || startDate.isEmpty()) {
+	taskStmt.setNull(5, java.sql.Types.DATE);
+		} else {
+	taskStmt.setDate(5, java.sql.Date.valueOf(startDate));
+		}
 
-    try (PreparedStatement taskStmt = conn.prepareStatement(taskSql)) {
+		if (dueDate == null || dueDate.isEmpty()) {
+	taskStmt.setNull(6, java.sql.Types.DATE);
+		} else {
+	taskStmt.setDate(6, java.sql.Date.valueOf(dueDate));
+		}
 
-        taskStmt.setString(1, taskName.trim());
-        taskStmt.setString(2, description == null ? "" : description);
-        taskStmt.setString(3, status);
-        taskStmt.setString(4, priority);
+		taskStmt.setInt(7, taskId);
 
-        if (startDate == null || startDate.isEmpty()) {
-            taskStmt.setNull(5, java.sql.Types.DATE);
-        } else {
-            taskStmt.setDate(5, java.sql.Date.valueOf(startDate));
-        }
+		int updatedRows = taskStmt.executeUpdate();
 
-        if (dueDate == null || dueDate.isEmpty()) {
-            taskStmt.setNull(6, java.sql.Types.DATE);
-        } else {
-            taskStmt.setDate(6, java.sql.Date.valueOf(dueDate));
-        }
+		if (updatedRows == 0) {
+	throw new SQLException("更新対象のタスクが見つかりません。");
+		}
+	}
 
-        taskStmt.setInt(7, taskId);
+	// ======================================
+	// ② 担当者を更新
+	// ======================================
 
-        int updatedRows = taskStmt.executeUpdate();
+	TaskDAO taskDAO = new TaskDAO();
 
-        if (updatedRows == 0) {
-            throw new SQLException("更新対象のタスクが見つかりません。");
-        }
-    }
+	taskDAO.replaceTaskAssignees(
+	conn,
+	taskId,
+	assigneeUserIds,
+	loginUser.getUserId(),
+	activeOrgId);
 
+	// ======================================
+	// ③ タグを更新
+	// ======================================
 
-    // ======================================
-    // ② 担当者を更新
-    // ======================================
+	taskDAO.replaceTaskTags(
+	conn,
+	taskId,
+	tagIds,
+	newTagNames,
+	newTagColors);
 
-    String deleteAssigneeSql =
-        "DELETE FROM task_assignee WHERE task_id = ?";
+	// ======================================
+	// ④ DBへ確定
+	// ======================================
 
-    try (PreparedStatement deleteAssigneeStmt =
-            conn.prepareStatement(deleteAssigneeSql)) {
+	conn.commit();
 
-        deleteAssigneeStmt.setInt(1, taskId);
-        deleteAssigneeStmt.executeUpdate();
-    }
-
-
-    String insertAssigneeSql =
-        "INSERT INTO task_assignee (task_id, user_id) VALUES (?, ?)";
-
-    try (PreparedStatement insertAssigneeStmt =
-            conn.prepareStatement(insertAssigneeSql)) {
-
-        insertAssigneeStmt.setInt(1, taskId);
-        insertAssigneeStmt.setInt(2, userId);
-
-        insertAssigneeStmt.executeUpdate();
-    }
-
-
-    // ======================================
-    // ③ タグを更新
-    // ======================================
-
-    TaskDAO taskDAO = new TaskDAO();
-
-    taskDAO.replaceTaskTags(
-        conn,
-        taskId,
-        tagIds,
-        newTagNames,
-        newTagColors
-    );
-
-
-    // ======================================
-    // ④ DBへ確定
-    // ======================================
-
-    conn.commit();
-
-
-    // 編集元のページへ戻る
-    response.sendRedirect(
-        request.getContextPath() + returnPath
-    );
+	// 編集元のページへ戻る
+	response.sendRedirect(
+	request.getContextPath() + returnPath);
 
 } catch (Exception e) {
 
-    // エラー時はロールバック
-    if (conn != null) {
-        try {
-            conn.rollback();
-        } catch (Exception rollbackError) {
-            application.log("タスク更新のロールバックに失敗しました。", rollbackError);
-        }
-    }
+	// エラー時はロールバック
+	if (conn != null) {
+		try {
+	conn.rollback();
+		} catch (Exception rollbackError) {
+	application.log("タスク更新のロールバックに失敗しました。", rollbackError);
+		}
+	}
 
-    application.log("タスク更新エラー", e);
+	application.log("タスク更新エラー", e);
 
-    response.setStatus(500);
-
+	response.setStatus(500);
 %>
 
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <title>タスク更新エラー</title>
+<meta charset="UTF-8">
+<title>タスク更新エラー</title>
 </head>
 
 <body>
 
-    <h2>タスク更新エラー</h2>
+	<h2>タスク更新エラー</h2>
 
-    <p>
-        タスクの更新に失敗しました。
-    </p>
+	<p>タスクの更新に失敗しました。</p>
 
-    <p>
-        <%= e.getMessage() == null ? "" : e.getMessage() %>
-    </p>
+	<p>
+		<%=e.getMessage() == null ? "" : e.getMessage()%>
+	</p>
 
-    <p>
-        <a href="<%= request.getContextPath() + returnPath %>">
-            <%= returnLabel %>
-        </a>
-    </p>
+	<p>
+		<a href="<%=request.getContextPath() + returnPath%>"> <%=returnLabel%>
+		</a>
+	</p>
 
 </body>
 </html>
 
 <%
-
 } finally {
 
-    if (conn != null) {
-        try {
-            conn.setAutoCommit(true);
-            conn.close();
-        } catch (Exception closeError) {
-            application.log("DB接続の終了に失敗しました。", closeError);
-        }
-    }
+if (conn != null) {
+	try {
+		conn.setAutoCommit(true);
+		conn.close();
+	} catch (Exception closeError) {
+		application.log("DB接続の終了に失敗しました。", closeError);
+	}
 }
-
+}
 %>
