@@ -182,8 +182,7 @@
 	margin-top: 0;
 }
 
-
-/* == タスクカード：担当者アイコン == */
+/* ===== タスクカード：担当者アイコン ===== */
 
 .task-card-assignee-display {
     display: flex;
@@ -198,47 +197,67 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
-/* 既存の .avatar をカード用サイズに調整 */
+/* 担当者アイコン：20px */
 .task-card-assignee-avatar {
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    font-size: 12px;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 9px;
     border-width: 1px;
+    z-index: 0;
 }
 
-/* 現段階では6人目以降を省略 */
+/* JavaScript実行前の仮表示 */
+.task-card-assignee-display:not(.is-ready)
 .task-card-assignee-avatar:nth-child(n+6) {
     display: none;
 }
 
-/* 表示しきれない人数 */
+/* 6人以上、または幅が狭い場合の重ね表示 */
+.task-card-assignee-avatars.is-overlapping {
+    gap: 0;
+}
+
+/* 約50%ずつ重ねる */
+.task-card-assignee-avatars.is-overlapping
+.task-card-assignee-avatar:not(:first-child) {
+    margin-left: -10px;
+}
+
+/* ホバー時にアイコンを最前面へ */
+.task-card-assignee-avatar:hover {
+    z-index: 10;
+}
+
+/* 省略人数 */
 .task-card-assignee-more {
     display: none;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    min-width: 28px;
-    height: 28px;
-    padding: 0 6px;
-    border-radius: 20px;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 12px;
     background: var(--ui-hover, #eeeeee);
     color: var(--ui-text, #222222);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: bold;
     white-space: nowrap;
+    cursor: default;
 }
 
 .task-card-assignee-more.is-visible {
     display: inline-flex;
 }
 
-/* 担当者がいない場合 */
+/* 担当者なし */
 .task-card-assignee-empty {
     color: var(--ui-muted, #777777);
     font-size: 12px;

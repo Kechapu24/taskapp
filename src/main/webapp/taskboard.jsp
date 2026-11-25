@@ -981,6 +981,230 @@
 				window.addEventListener("resize", updateTaskTagOverflow);
 			</script>
 
+
+			<script>
+(function () {
+
+    function updateTaskAssigneeOverflow() {
+
+        const displays = document.querySelectorAll(
+            ".task-card-assignee-display"
+        );
+
+        displays.forEach(function (display) {
+
+            const avatarRow = display.querySelector(
+                ".task-card-assignee-avatars"
+            );
+
+            const more = display.querySelector(
+                ".task-card-assignee-more"
+            );
+
+            if (!avatarRow || !more) {
+                return;
+            }
+
+            const avatars = Array.from(
+                avatarRow.querySelectorAll(
+                    ".task-card-assignee-avatar"
+                )
+            );
+
+            const total = avatars.length;
+
+            if (total === 0) {
+                return;
+            }
+
+            // 前回の計算結果をいったん解除
+            display.classList.add("is-ready");
+            avatarRow.classList.remove("is-overlapping");
+
+            avatars.forEach(function (avatar) {
+                avatar.style.display = "inline-flex";
+            });
+
+            more.style.display = "none";
+
+            // 担当者表示に使える横幅
+            const availableWidth = display.clientWidth;
+
+            if (availableWidth <= 0) {
+                return;
+            }
+
+            const iconWidth = avatars[0]
+                .getBoundingClientRect().width;
+
+            const gap = parseFloat(
+                window.getComputedStyle(avatarRow).gap
+            ) || 0;
+
+            const displayGap = parseFloat(
+                window.getComputedStyle(display).gap
+            ) || 0;
+
+            // 通常配置した場合の横幅
+            const normalWidth =
+                total * iconWidth +
+                Math.max(0, total - 1) * gap;
+
+            // 6人以上、または通常配置では収まらない場合
+            const overlapMode =
+                total > 5 || normalWidth > availableWidth;
+
+            const overlapWidth = iconWidth / 2;
+
+            avatarRow.classList.toggle(
+                "is-overlapping",
+                overlapMode
+            );
+
+            // 最大5人まで表示
+            const maximumVisible = Math.min(total, 5);
+
+            let visibleCount = 0;
+
+            // 最大人数から順に、収まる人数を探す
+            for (
+                let count = maximumVisible;
+                count >= 0;
+                count--
+            ) {
+
+                const hiddenCount = total - count;
+
+                let avatarsWidth = 0;
+
+                if (count > 0) {
+
+                    if (overlapMode) {
+                        avatarsWidth =
+                            iconWidth +
+                            (count - 1) * overlapWidth;
+                    } else {
+                        avatarsWidth =
+                            count * iconWidth +
+                            (count - 1) * gap;
+                    }
+                }
+
+                let moreWidth = 0;
+
+                if (hiddenCount > 0) {
+
+                    // 実際の +N の横幅を測定
+                    more.textContent = "+" + hiddenCount;
+                    more.style.display = "inline-flex";
+
+                    moreWidth = more.getBoundingClientRect().width;
+                } else {
+                    more.style.display = "none";
+                }
+
+                const requiredWidth =
+                    avatarsWidth +
+                    (hiddenCount > 0 && count > 0
+                        ? displayGap
+                        : 0) +
+                    moreWidth;
+
+                if (requiredWidth <= availableWidth) {
+                    visibleCount = count;
+                    break;
+                }
+            }
+
+            // 計算結果を表示に反映
+            avatars.forEach(function (avatar, index) {
+                avatar.style.display =
+                    index < visibleCount
+                        ? "inline-flex"
+                        : "none";
+            });
+
+            const hiddenCount = total - visibleCount;
+
+            if (hiddenCount > 0) {
+
+                more.textContent = "+" + hiddenCount;
+                more.style.display = "inline-flex";
+
+                // 省略された担当者の名前を表示
+                const hiddenNames = avatars
+                    .slice(visibleCount)
+                    .map(function (avatar) {
+                        return avatar.getAttribute("title") || "";
+                    })
+                    .filter(Boolean);
+
+                more.title = hiddenNames.join("\n");
+
+                more.setAttribute(
+                    "aria-label",
+                    "ほかに" + hiddenCount + "人: " +
+                    hiddenNames.join("、")
+                );
+
+            } else {
+
+                more.style.display = "none";
+                more.removeAttribute("title");
+                more.removeAttribute("aria-label");
+            }
+
+        });
+    }
+
+    // 短時間に何度も計算しないようにする
+    let updateScheduled = false;
+
+    function scheduleAssigneeUpdate() {
+
+        if (updateScheduled) {
+            return;
+        }
+
+        updateScheduled = true;
+
+        requestAnimationFrame(function () {
+            updateScheduled = false;
+            updateTaskAssigneeOverflow();
+        });
+    }
+
+    // 初期表示
+    window.addEventListener("load", function () {
+
+        scheduleAssigneeUpdate();
+
+        // カード幅が変わったときにも再計算
+        if ("ResizeObserver" in window) {
+
+            const observer = new ResizeObserver(
+                scheduleAssigneeUpdate
+            );
+
+            document.querySelectorAll(
+                ".task-card-assignee-row"
+            ).forEach(function (row) {
+                observer.observe(row);
+            });
+        }
+
+    });
+
+    // ウィンドウサイズ変更
+    window.addEventListener(
+        "resize",
+        scheduleAssigneeUpdate
+    );
+
+})();
+</script>
+
+
 			<script>
 function openTagEditModal(button, tagId, currentColor) {
 	const modalOverlay = document.getElementById("modalOverlay");
