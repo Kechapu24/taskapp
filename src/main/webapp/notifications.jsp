@@ -392,6 +392,22 @@ function showNotification(message) {
         toast.style.display = "none";
     }, 3000);
 }
+} else if ("PROJECT_INVITED".equals(type)) {
+    title = "プロジェクトに招待されました";
+    icon = "📩";
+
+} else if ("PROJECT_JOINED".equals(type)) {
+    title = "メンバーがプロジェクトに参加しました";
+    icon = "👥";
+
+} else if ("PROJECT_LEFT".equals(type)) {
+    title = "プロジェクトから退出しました";
+    icon = "🚪";
+
+} else if ("PROJECT_REMOVED".equals(type)) {
+    title = "プロジェクトから除外されました";
+    icon = "⚠️";
+}
 </script>
 
 </body>

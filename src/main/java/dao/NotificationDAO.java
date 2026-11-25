@@ -60,10 +60,17 @@ public class NotificationDAO {
             int taskId,
             String taskName) {
 
-        String sql =
-            "INSERT INTO notification " +
-            "(user_id, project_id, task_id, type, message, is_read, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, FALSE, CURRENT_TIMESTAMP)";
+    	String sql =
+    		    "SELECT n.notification_id, n.type, n.message, " +
+    		    "t.task_name, " +
+    		    "COALESCE(o.org_name, p.project_name) AS project_name, " +
+    		    "n.created_at, n.is_read " +
+    		    "FROM notification n " +
+    		    "LEFT JOIN task t ON n.task_id = t.task_id " +
+    		    "LEFT JOIN project p ON n.project_id = p.project_id " +
+    		    "LEFT JOIN organization o ON n.org_id = o.org_id " +
+    		    "WHERE n.user_id = ? " +
+    		    "ORDER BY n.created_at DESC";
 
         String message =
             "タスク「" + taskName + "」の担当者に設定されました。";
@@ -83,6 +90,58 @@ public class NotificationDAO {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+}
+public boolean createOrganizationNotification(
+        int userId, int orgId, String type, String message) {
+
+    String sql =
+        "INSERT INTO notification " +
+        "(user_id, org_id, type, message, is_read, created_at) " +
+        "VALUES (?, ?, ?, ?, FALSE, CURRENT_TIMESTAMP)";
+
+    try (
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)
+    ) {
+        ps.setInt(1, userId);
+        ps.setInt(2, orgId);
+        ps.setString(3, type);
+        ps.setString(4, message);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        throw new RuntimeException("団体通知の登録に失敗しました", e);
+    }
+    public int notifyOrganizationMembers(
+            int orgId,
+            int excludedUserId,
+            String type,
+            String message) {
+
+        String sql =
+            "INSERT INTO notification " +
+            "(user_id, org_id, type, message, is_read, created_at) " +
+            "SELECT user_id, ?, ?, ?, FALSE, CURRENT_TIMESTAMP " +
+            "FROM org_member " +
+            "WHERE org_id = ? AND user_id <> ?";
+
+        try (
+            Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, orgId);
+            ps.setString(2, type);
+            ps.setString(3, message);
+            ps.setInt(4, orgId);
+            ps.setInt(5, excludedUserId);
+
+            return ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new RuntimeException("メンバー通知の登録に失敗しました", e);
         }
     }
 }
