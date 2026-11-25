@@ -7,6 +7,8 @@
 <%@ page import="java.time.temporal.ChronoUnit"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.HashSet"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <%
 @SuppressWarnings("unchecked")
@@ -16,6 +18,15 @@ int taskId = (Integer) task.get("taskId");
 
 @SuppressWarnings("unchecked")
 List<Map<String, Object>> currentAssignees = (List<Map<String, Object>>) task.get("assigneeList");
+
+//タスクカード用の担当者一覧
+int cardAssigneeCount = currentAssignees == null ? 0 : currentAssignees.size();
+
+pageContext.setAttribute(
+		"cardAssignees",
+		currentAssignees == null
+		? java.util.Collections.emptyList()
+		: currentAssignees);
 
 StringBuilder currentAssigneeIds = new StringBuilder();
 
@@ -154,9 +165,57 @@ if (dueDateSql != null) {
 
 	<div class="task-card-assignee-row">
 
-		<p class="task-card-assignee">
-			<%=task.get("assignees")%>
-		</p>
+
+		<div class="task-card-assignee-display"
+			data-assignee-count="<%=cardAssigneeCount%>">
+
+			<%
+			if (cardAssigneeCount == 0) {
+			%>
+
+			<span class="task-card-assignee-empty"> 未設定 </span>
+
+			<%
+			} else {
+			%>
+
+			<div class="task-card-assignee-avatars">
+
+				<c:forEach var="person" items="${cardAssignees}">
+
+					<span class="avatar task-card-assignee-avatar"
+						style="--h: ${(person.userId * 67) % 360};"
+						title="${fn:escapeXml(person.userName)}"> <c:choose>
+							<c:when test="${person.iconSet}">
+								<img
+									src="${pageContext.request.contextPath}/icon?userId=${person.userId}"
+									alt="">
+							</c:when>
+
+							<c:otherwise>
+								<c:out value="${fn:substring(person.userName, 0, 1)}" />
+							</c:otherwise>
+						</c:choose>
+
+					</span>
+
+				</c:forEach>
+
+			</div>
+
+			<span
+				class="task-card-assignee-more
+            <%=cardAssigneeCount > 5 ? "is-visible" : ""%>"
+				aria-label="ほかに<%=Math.max(0, cardAssigneeCount - 5)%>人"> +<%=Math.max(0, cardAssigneeCount - 5)%>
+
+			</span>
+
+			<%
+			}
+			%>
+
+		</div>
+
 
 		<div class="task-card-actions">
 

@@ -183,6 +183,68 @@
 }
 
 
+/* == タスクカード：担当者アイコン == */
+
+.task-card-assignee-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* アイコンを並べる領域 */
+.task-card-assignee-avatars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* 既存の .avatar をカード用サイズに調整 */
+.task-card-assignee-avatar {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    font-size: 12px;
+    border-width: 1px;
+}
+
+/* 現段階では6人目以降を省略 */
+.task-card-assignee-avatar:nth-child(n+6) {
+    display: none;
+}
+
+/* 表示しきれない人数 */
+.task-card-assignee-more {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: 20px;
+    background: var(--ui-hover, #eeeeee);
+    color: var(--ui-text, #222222);
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.task-card-assignee-more.is-visible {
+    display: inline-flex;
+}
+
+/* 担当者がいない場合 */
+.task-card-assignee-empty {
+    color: var(--ui-muted, #777777);
+    font-size: 12px;
+}
+
+
 /* 期限 + タグ */
 .task-card-bottom {
 	display: flex;
@@ -1187,7 +1249,6 @@ body.custom-theme .new-tag-row button:hover {
 	line-height: 1.7;
 
 	text-align: left;
-	vertical-align: top;
 
 	/*
 	 * 入力された改行は残すが、
