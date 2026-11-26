@@ -28,6 +28,17 @@ pageContext.setAttribute(
 		? java.util.Collections.emptyList()
 		: currentAssignees);
 
+/* 団体権限の日本語表示名 */
+Map<String, String> orgRoleNames = new java.util.HashMap<>();
+
+orgRoleNames.put("owner", "オーナー");
+orgRoleNames.put("admin", "管理者");
+orgRoleNames.put("manager", "マネージャー");
+orgRoleNames.put("leader", "リーダー");
+orgRoleNames.put("member", "メンバー");
+
+pageContext.setAttribute("orgRoleNames", orgRoleNames);
+
 StringBuilder currentAssigneeIds = new StringBuilder();
 
 if (currentAssignees != null) {
@@ -181,11 +192,19 @@ if (dueDateSql != null) {
 
 			<div class="task-card-assignee-avatars">
 
+
 				<c:forEach var="person" items="${cardAssignees}">
+
+					<c:set var="roleLabel" value="${orgRoleNames[person.orgRole]}" />
+
+					<c:if test="${empty roleLabel and not empty person.orgRole}">
+						<c:set var="roleLabel" value="${person.orgRole}" />
+					</c:if>
 
 					<span class="avatar task-card-assignee-avatar"
 						style="--h: ${(person.userId * 67) % 360};"
-						title="${fn:escapeXml(person.userName)}"> <c:choose>
+						title="${fn:escapeXml(person.userName)}${not empty roleLabel ? '（' : ''}${fn:escapeXml(roleLabel)}${not empty roleLabel ? '）' : ''}">
+						<c:choose>
 							<c:when test="${person.iconSet}">
 								<img
 									src="${pageContext.request.contextPath}/icon?userId=${person.userId}"
@@ -331,21 +350,6 @@ if (dueDateSql != null) {
 				: detailDueDate.toLocalDate().format(
 				java.time.format.DateTimeFormatter.ofPattern("MM/dd"));
 
-		String assigneesText = (String) task.get("assignees");
-
-		String[] assigneeList;
-
-		if (assigneesText == null
-				|| assigneesText.trim().isEmpty()
-				|| "未設定".equals(assigneesText)) {
-
-			assigneeList = new String[0];
-
-		} else {
-
-			assigneeList = assigneesText.split("\\s*,\\s*");
-		}
-
 		String descriptionText = (String) task.get("description");
 
 		String commentsText = (String) task.get("comments");
@@ -440,29 +444,61 @@ if (dueDateSql != null) {
 
 			<div class="detail-group">
 
+
 				<div class="detail-section-title">担当者</div>
 
-				<div class="detail-chip-list">
+				<div class="detail-chip-list detail-assignee-list">
 
-					<%
-					if (assigneeList.length == 0) {
-					%>
+					<c:choose>
 
-					<span class="detail-empty"> 未設定 </span>
+						<c:when test="${empty cardAssignees}">
+							<span class="detail-empty">未設定</span>
+						</c:when>
 
-					<%
-					} else {
+						<c:otherwise>
 
-					for (String assignee : assigneeList) {
-					%>
+							<c:forEach var="person" items="${cardAssignees}">
 
-					<span class="detail-assignee-chip"> <%=assignee%>
-					</span>
+								<c:set var="roleLabel" value="${orgRoleNames[person.orgRole]}" />
 
-					<%
-					}
-					}
-					%>
+								<c:if test="${empty roleLabel and not empty person.orgRole}">
+									<c:set var="roleLabel" value="${person.orgRole}" />
+								</c:if>
+
+								<span class="detail-assignee-chip"> <span
+									class="avatar detail-assignee-avatar"
+									style="--h: ${(person.userId * 67) % 360};"> <c:choose>
+
+											<c:when test="${person.iconSet}">
+												<img
+													src="${pageContext.request.contextPath}/icon?userId=${person.userId}"
+													alt="">
+											</c:when>
+
+											<c:otherwise>
+												<c:out value="${fn:substring(person.userName, 0, 1)}" />
+											</c:otherwise>
+
+										</c:choose>
+
+								</span> <span class="detail-assignee-info"> <span
+										class="detail-assignee-name"> <c:out
+												value="${person.userName}" />
+									</span> <c:if test="${not empty roleLabel}">
+											<span class="detail-assignee-role"> <c:out
+													value="${roleLabel}" />
+											</span>
+										</c:if>
+
+								</span>
+
+								</span>
+
+							</c:forEach>
+
+						</c:otherwise>
+
+					</c:choose>
 
 				</div>
 

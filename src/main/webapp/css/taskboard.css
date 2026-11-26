@@ -1221,6 +1221,47 @@ body.custom-theme .new-tag-row button:hover {
 }
 
 
+/* ===== 詳細タブ：担当者情報 ===== */
+
+/* アイコンと氏名の間隔 */
+.detail-assignee-chip {
+    gap: 7px;
+    padding: 5px 9px;
+}
+
+/* 詳細欄の担当者アイコン */
+.detail-assignee-avatar {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    font-size: 11px;
+    border-width: 1px;
+}
+
+/* 氏名と権限を縦に並べる */
+.detail-assignee-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+/* 担当者名 */
+.detail-assignee-name {
+    color: var(--ui-text);
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* 団体権限 */
+.detail-assignee-role {
+    color: var(--ui-muted);
+    font-size: 10px;
+}
+
+
 /* タグ
    背景色はDBに保存されたタグ色を使う */
 
