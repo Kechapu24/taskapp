@@ -680,7 +680,7 @@ if (dueDateSql != null) {
 		request.setAttribute("taskFormMode", "edit");
 		request.setAttribute("taskFormReturnTo", "taskboard");
 		%>
-		<%-- <jsp:include page="/task/taskForm.jsp" /> --%>
+		<jsp:include page="/task/taskForm.jsp" />
 	</div>
 
 	<!-- 削除 -->

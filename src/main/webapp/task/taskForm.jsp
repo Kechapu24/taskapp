@@ -133,7 +133,7 @@ pageContext.setAttribute("sharedFormTask", formTask);
             <% for (Map<String, Object> project : formProjects) { %>
 
                 <option value="<%=project.get("projectId")%>">
-                    <c:out value="<%=project.get("projectName")%>"/>
+                    <c:out value='<%=project.get("projectName")%>'/>
                 </option>
 
             <% } %>

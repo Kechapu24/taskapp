@@ -1303,7 +1303,7 @@ function openTagEditModal(button, tagId, currentColor) {
 		request.setAttribute("taskFormMode", "add");
 		request.setAttribute("taskFormReturnTo", "taskboard");
 		%>
-		<%-- <jsp:include page="/task/taskForm.jsp" /> --%>
+		<jsp:include page="/task/taskForm.jsp" />
 	</div>
 
 </body>
