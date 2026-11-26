@@ -71,6 +71,12 @@ public class TaskDAO {
 			sql.append("AND p.org_id = ? ");
 			params.add(activeOrgId);
 		}
+		
+		// タスクIDを指定した場合は1件に絞り込む
+		if (filter.getTaskId() != null) {
+		    sql.append("AND t.task_id = ? ");
+		    params.add(filter.getTaskId());
+		}
 
 		// タスク名
 		if (hasText(filter.getKeyword())) {

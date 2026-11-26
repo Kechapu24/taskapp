@@ -1002,3 +1002,20 @@ body.custom-theme .splitter:hover,
 body.custom-theme .splitter.dragging {
     background-color: var(--custom-bg-color);
 }
+
+/* ドロップダウンメニュー */
+.dropdown-detail-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--ui-text, #333);
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.dropdown-detail-item:hover {
+    background: var(--ui-hover, #eee);
+}

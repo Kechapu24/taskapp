@@ -105,8 +105,14 @@ try {
 
 	conn.commit();
 
+	String returnTo = request.getParameter("return_to");
+
+	String returnPath = "projects".equals(returnTo)
+	? "/projects.jsp"
+	: "/taskboard.jsp";
+
 	response.sendRedirect(
-	request.getContextPath() + "/taskboard.jsp");
+	request.getContextPath() + returnPath);
 
 } catch (Exception e) {
 	if (conn != null) {

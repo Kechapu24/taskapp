@@ -106,16 +106,16 @@ pageContext.setAttribute("sharedFormTask", formTask);
 <form class="edit-form task-shared-form"
     action="<%=request.getContextPath()%>/task/<%=formEditing ? "taskUpdate.jsp" : "taskAdd.jsp"%>"
     method="post">
+    
+    <input type="hidden"
+       name="return_to"
+       value="<%=formReturnTo%>">
 
     <% if (formEditing) { %>
 
         <input type="hidden"
             name="task_id"
             value="<%=formTask.get("taskId")%>">
-
-        <input type="hidden"
-            name="return_to"
-            value="<%=formReturnTo%>">
 
     <% } else { %>
 

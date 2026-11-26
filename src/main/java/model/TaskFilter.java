@@ -15,6 +15,7 @@ public class TaskFilter {
     private String priority;
     private String deadline;
     private String sort;
+    private Integer taskId;
 
     public String getKeyword() {
         return keyword;
@@ -70,5 +71,13 @@ public class TaskFilter {
 
     public void setSort(String sort) {
         this.sort = sort;
+    }
+    
+    public Integer getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(Integer taskId) {
+        this.taskId = taskId;
     }
 }

@@ -21,13 +21,19 @@ Integer activeOrgId = (Integer) session.getAttribute("activeOrgId");
 // 戻り先を判定
 String returnTo = request.getParameter("return_to");
 
-String returnPath = "mytasks".equals(returnTo)
-		? "/mytasks.jsp"
-		: "/taskboard.jsp";
+String returnPath =
+"mytasks".equals(returnTo)
+    ? "/mytasks.jsp"
+    : "projects".equals(returnTo)
+        ? "/projects.jsp"
+        : "/taskboard.jsp";
 
-String returnLabel = "mytasks".equals(returnTo)
-		? "マイタスクへ戻る"
-		: "タスクボードへ戻る";
+String returnLabel =
+"mytasks".equals(returnTo)
+    ? "マイタスクへ戻る"
+    : "projects".equals(returnTo)
+        ? "プロジェクト一覧へ戻る"
+        : "タスクボードへ戻る";
 
 // フォームから受け取る値
 String taskIdStr = request.getParameter("task_id");

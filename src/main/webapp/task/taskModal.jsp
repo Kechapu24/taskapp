@@ -1,36 +1,25 @@
 
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8"%>
 
-<div class="task-shared-modal"
-     id="sharedTaskModal"
-     hidden>
+<div class="task-shared-modal" id="sharedTaskModal"
+	data-content-url="${pageContext.request.contextPath}/task/taskModalContent.jsp"
+	hidden>
 
-    <div class="task-shared-modal__dialog"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="sharedTaskModalTitle"
-         tabindex="-1">
+	<div class="task-shared-modal__dialog" role="dialog" aria-modal="true"
+		aria-labelledby="sharedTaskModalTitle" tabindex="-1">
 
-        <div class="task-shared-modal__header">
+		<div class="task-shared-modal__header">
 
-            <h2 id="sharedTaskModalTitle">
-                タスク
-            </h2>
+			<h2 id="sharedTaskModalTitle">タスク</h2>
 
-            <button type="button"
-                    class="task-shared-modal__close"
-                    data-task-modal-close
-                    aria-label="閉じる">
-                ×
-            </button>
+			<button type="button" class="task-shared-modal__close"
+				data-task-modal-close aria-label="閉じる">×</button>
 
-        </div>
+		</div>
 
-        <div class="task-shared-modal__body"
-             id="sharedTaskModalBody">
-        </div>
+		<div class="task-shared-modal__body" id="sharedTaskModalBody"></div>
 
-    </div>
+	</div>
 
 </div>

@@ -91,9 +91,10 @@ if (action != null) {
 		}
 		out.print("<button class='task-menu-trigger' onclick='toggleTaskMenu(this)'>⋮</button>");
 		out.print("<div class='task-dropdown-menu'>");
-		out.print("<button class='dropdown-edit-item' onclick='openEditTaskModal(" + taskId + ", \""
-				+ escapedTaskName + "\", \"" + status + "\", \"" + priority + "\", \"" + startDate + "\", \""
-				+ dueDate + "\", \"" + assigneeUserId + "\", \"" + escapedDesc + "\")'>編集</button>");
+		out.print("<button class='dropdown-detail-item' " + "onclick='TaskModal.open({" + "mode:\"detail\","
+				+ "taskId:" + taskId + "})'>詳細</button>");
+		out.print("<button class='dropdown-edit-item' " + "onclick='TaskModal.open({" + "mode:\"edit\","
+				+ "taskId:" + taskId + "," + "returnTo:\"projects\"" + "})'>編集</button>");
 		out.print("<button class='dropdown-delete-item' onclick='openDeleteModal(" + taskId + ", \""
 				+ taskName.replace("\"", "&quot;") + "\")'>削除</button>");
 		out.print("</div>");
@@ -276,6 +277,12 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 <title>タスク管理アプリ - プロジェクト一覧</title>
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/project.css">
+<link rel="stylesheet" href="css/assignee-editor.css">
+<link rel="stylesheet" href="css/task-modal.css">
+
+<script src="js/assignee-editor.js" defer></script>
+<script src="js/tag-editor.js" defer></script>
+<script src="js/task-modal.js" defer></script>
 
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
@@ -670,23 +677,20 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 						});
 				}
 
+
 				function addNewTask() {
-					if (!currentRawProjectId) {
-						alert("プロジェクトが選択されていません。");
-						return;
-					}
-					taskModalMode = 'add';
-					targetTaskIdForEdit = null;
-					document.getElementById("taskModalTitle").innerText = "タスクの追加";
-					document.getElementById("modalTaskName").value = "";
-					document.getElementById("modalStatus").value = "未着手";
-					document.getElementById("modalPriority").value = "中";
-					document.getElementById("modalStartDate").value = "";
-					document.getElementById("modalDueDate").value = "";
-					document.getElementById("modalUserId").value = "";
-					document.getElementById("modalDescription").value = "";
-					
-					document.getElementById("taskModal").style.display = "flex";
+
+				    if (!currentRawProjectId) {
+				        alert("プロジェクトが選択されていません。");
+				        return;
+				    }
+
+				    TaskModal.open({
+				        mode: "add",
+				        projectId: currentRawProjectId,
+				        status: "未着手",
+				        returnTo: "projects"
+				    });
 				}
 
 				function openEditTaskModal(taskId, taskName, status, priority, startDate, dueDate, userId, description) {
@@ -924,5 +928,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 		</main>
 	</div>
+
+	<jsp:include page="/task/taskModal.jsp" />
+
 </body>
 </html>
