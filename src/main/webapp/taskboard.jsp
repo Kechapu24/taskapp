@@ -20,7 +20,10 @@
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/taskboard.css">
 <link rel="stylesheet" href="css/assignee-editor.css">
+<link rel="stylesheet" href="css/task-modal.css">
 <script src="js/assignee-editor.js" defer></script>
+<script src="js/tag-editor.js" defer></script>
+<script src="js/task-modal.js" defer></script>
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
 	style="--custom-bg-color: ${themeBgColor};
@@ -407,49 +410,6 @@
 
 
 			<script>
-			function refreshTaskAssigneeEditor(form, selectedIds) {
-
-			    if (!form) {
-			        return;
-			    }
-
-			    const mount = form.querySelector(".assignee-editor-mount");
-
-			    if (!mount) {
-			        return;
-			    }
-
-			    const projectSelect =
-			        form.querySelector('select[name="project_id"]');
-
-			    const projectId = projectSelect
-			        ? projectSelect.value
-			        : mount.dataset.projectId;
-
-			    // 編集時はDBから渡された既存担当者IDを使用
-			    const ids = selectedIds !== undefined
-			        ? selectedIds
-			        : (mount.dataset.selectedIds || "")
-			            .split(",")
-			            .filter(Boolean);
-
-			    const template = document.getElementById(
-			        "assignee-project-" + projectId
-			    );
-
-			    mount.innerHTML = template ? template.innerHTML : "";
-
-			    // 次回の切り替えで古い担当者を復元しない
-			    mount.dataset.selectedIds = "";
-
-			    const editor = mount.querySelector(".assignee-editor");
-
-			    if (editor && window.selectAssigneeIdsInEditor) {
-			        window.selectAssigneeIdsInEditor(editor, ids);
-			    }
-			}
-
-			
 				function openModalFromElement(title, elementId) {
 					const source = document.getElementById(elementId);
 					const modalOverlay = document
@@ -506,201 +466,18 @@
 			</script>
 
 			<script>
-				function openAddTaskModal(status) {
-					const source = document.getElementById("task-add-form");
-					const modalOverlay = document
-							.getElementById("modalOverlay");
-					const modalTitle = document.getElementById("modalTitle");
-					const modalBody = document.getElementById("modalBody");
 
-					modalTitle.textContent = "タスク追加";
-					modalBody.innerHTML = source.innerHTML;
-					modalOverlay.style.display = "flex";
+			function openAddTaskModal(status) {
 
-					const statusInput = modalBody
-							.querySelector("#addTaskStatus");
-					statusInput.value = status;
+			    TaskModal.open({
+			        mode: "add",
+			        status: status,
+			        sourceId: "task-add-form"
+			    });
 
-					const addForm = modalBody.querySelector("form.edit-form");
+			    closeAllTaskMenus();
+			}
 
-					refreshTaskAssigneeEditor(addForm, []);
-
-					closeAllTaskMenus();
-				}
-			</script>
-
-			<script>
-				function getTagEditor(element) {
-					return element.closest(".tag-editor");
-				}
-
-				function openTagEditor(input) {
-
-					const editor = getTagEditor(input);
-
-					editor.querySelector(".tag-editor-menu").classList
-							.add("open");
-				}
-
-				function toggleTagEditor(button) {
-
-					const editor = getTagEditor(button);
-
-					editor.querySelector(".tag-editor-menu").classList
-							.toggle("open");
-				}
-
-				function filterTagEditor(input) {
-
-					const editor = getTagEditor(input);
-
-					const keyword = input.value.trim().toLowerCase();
-
-					const options = editor
-							.querySelectorAll(".tag-editor-option");
-
-					options.forEach(function(option) {
-
-						const name = option.textContent.trim().toLowerCase();
-
-						option.style.display = keyword === ""
-								|| name.includes(keyword) ? "" : "none";
-					});
-
-					editor.querySelector(".tag-editor-menu").classList
-							.add("open");
-				}
-
-				function selectExistingTag(button) {
-
-					const editor = getTagEditor(button);
-
-					const tagId = button.dataset.tagId;
-
-					const tagName = button.textContent.trim();
-
-					const color = button.dataset.tagColor;
-
-					const existing = editor
-							.querySelector('input[name="tag_ids"][value="'
-									+ tagId + '"]');
-
-					if (existing) {
-						return;
-					}
-
-					createTagChip(editor, tagName, color, "tag_ids", tagId);
-
-					editor.querySelector(".tag-editor-search").value = "";
-
-					editor.querySelector(".tag-editor-menu").classList
-							.remove("open");
-				}
-
-				function addNewTag(button) {
-
-					const editor = getTagEditor(button);
-
-					const nameInput = editor.querySelector(".new-tag-name");
-
-					const colorInput = editor.querySelector(".new-tag-color");
-
-					const tagName = nameInput.value.trim();
-
-					const color = colorInput.value;
-
-					if (!tagName) {
-						return;
-					}
-
-					createNewTagChip(editor, tagName, color);
-
-					nameInput.value = "";
-				}
-
-				function createNewTagChip(editor, tagName, color) {
-
-					const chip = document.createElement("span");
-
-					chip.className = "selected-tag";
-
-					chip.style.backgroundColor = color;
-
-					const text = document.createTextNode(tagName + " ");
-
-					chip.appendChild(text);
-
-					const nameHidden = document.createElement("input");
-
-					nameHidden.type = "hidden";
-
-					nameHidden.name = "new_tag_names";
-
-					nameHidden.value = tagName;
-
-					chip.appendChild(nameHidden);
-
-					const colorHidden = document.createElement("input");
-
-					colorHidden.type = "hidden";
-
-					colorHidden.name = "new_tag_colors";
-
-					colorHidden.value = color;
-
-					chip.appendChild(colorHidden);
-
-					appendRemoveButton(chip);
-
-					editor.querySelector(".selected-tags").appendChild(chip);
-				}
-
-				function createTagChip(editor, tagName, color, inputName, value) {
-
-					const chip = document.createElement("span");
-
-					chip.className = "selected-tag";
-
-					chip.style.backgroundColor = color;
-
-					const text = document.createTextNode(tagName + " ");
-
-					chip.appendChild(text);
-
-					const hidden = document.createElement("input");
-
-					hidden.type = "hidden";
-
-					hidden.name = inputName;
-
-					hidden.value = value;
-
-					chip.appendChild(hidden);
-
-					appendRemoveButton(chip);
-
-					editor.querySelector(".selected-tags").appendChild(chip);
-				}
-
-				function appendRemoveButton(chip) {
-
-					const remove = document.createElement("button");
-
-					remove.type = "button";
-
-					remove.textContent = "×";
-
-					remove.onclick = function() {
-						chip.remove();
-					};
-
-					chip.appendChild(remove);
-				}
-
-				function removeTagChip(button) {
-
-					button.closest(".selected-tag").remove();
-				}
 			</script>
 
 			<script>
@@ -1271,6 +1048,8 @@ function openTagEditModal(button, tagId, currentColor) {
 			<div class="modal-body" id="modalBody"></div>
 		</div>
 	</div>
+
+	<jsp:include page="/task/taskModal.jsp" />
 
 
 	<%

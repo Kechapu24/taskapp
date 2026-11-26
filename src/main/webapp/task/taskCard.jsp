@@ -137,23 +137,25 @@ if (dueDateSql != null) {
 
 			<div class="menu-dropdown" id="menu-<%=taskId%>">
 
-				<button
-					onclick="
-                        openModalFromElement(
-                            '詳細',
-                            'detail-<%=taskId%>'
-                        )
-                    ">
+
+				<button type="button"
+					onclick="event.stopPropagation();
+        TaskModal.open({
+            mode: 'detail',
+            taskId: <%=taskId%>
+        });">
 					詳細</button>
 
-				<button
-					onclick="
-                        openModalFromElement(
-                            '編集',
-                            'edit-<%=taskId%>'
-                        )
-                    ">
+
+
+				<button type="button"
+					onclick="event.stopPropagation();
+        TaskModal.open({
+            mode: 'edit',
+            taskId: <%=taskId%>
+        });">
 					編集</button>
+
 
 				<button class="delete-menu-button"
 					onclick="
@@ -303,7 +305,7 @@ if (dueDateSql != null) {
 		</div>
 
 	</div>
-	
+
 	<!-- 詳細 -->
 	<jsp:include page="/task/taskDetail.jsp" />
 

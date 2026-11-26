@@ -1,0 +1,702 @@
+
+/* ===== 共通タスクモーダル ===== */
+
+.task-shared-modal[hidden] {
+    display: none !important;
+}
+
+.task-shared-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 16px;
+    box-sizing: border-box;
+
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.task-shared-modal__dialog {
+    width: min(700px, 100%);
+    max-height: 85vh;
+    overflow-y: auto;
+
+    box-sizing: border-box;
+    padding: 24px;
+
+    border-radius: 10px;
+    background: var(--ui-surface, #fff);
+    color: var(--ui-text, #222);
+
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.task-shared-modal__dialog:focus {
+    outline: none;
+}
+
+.task-shared-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.task-shared-modal__header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.task-shared-modal__close {
+    border: none;
+    background: transparent;
+    color: var(--ui-text, #222);
+    font-size: 26px;
+    cursor: pointer;
+}
+
+.task-shared-modal .edit-form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+.task-shared-modal .edit-form > input,
+.task-shared-modal .edit-form > textarea,
+.task-shared-modal .edit-form > select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+
+    margin-top: 4px;
+    padding: 8px;
+
+    border: 1px solid var(--ui-border, #ccc);
+    border-radius: 6px;
+
+    background: var(--ui-input, #fff);
+    color: var(--ui-text, #222);
+    font: inherit;
+}
+
+.task-shared-modal .edit-form > textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.task-shared-modal .modal-submit-btn {
+    margin-top: 18px;
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #3498db;
+    color: #fff;
+    cursor: pointer;
+}
+
+.task-shared-modal .modal-submit-btn:hover {
+    filter: brightness(0.92);
+}
+
+.task-shared-modal .modal-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.task-shared-modal .tag-editor-control {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 35px;
+
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border, #ccc);
+    border-radius: 6px;
+
+    background: var(--ui-input, #fff);
+}
+
+/* =========================================
+   タグUI：共通デザイン
+   ========================================= */
+
+
+/* タグ検索・編集プルダウンの配置 */
+.tag-combobox,
+.tag-editor-combobox {
+	position: relative;
+	width: 100%;
+}
+
+.tag-editor {
+	margin-top: 12px;
+}
+
+/* 入力欄のレイアウト */
+.tag-combobox-control,
+.tag-editor-control {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+/* 入力部分 */
+.tag-combobox-input,
+.edit-form .tag-editor-search {
+	flex: 1;
+	min-width: 0;
+	width: auto;
+	padding: 8px 10px;
+	margin: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--ui-text);
+}
+
+/* プレースホルダー */
+.tag-combobox-input::placeholder,
+.tag-editor-search::placeholder {
+	color: var(--ui-muted);
+}
+
+
+/* ▼ボタン */
+.tag-combobox-toggle,
+.tag-editor-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex: 0 0 36px;
+	width: 36px;
+	align-self: stretch;
+	padding: 0 6px 0 0;
+	border: none;
+	background: transparent;
+	color: var(--ui-text);
+	cursor: pointer;
+	font-size: 0;
+}
+
+
+/* ブラウザ標準のselectに近い矢印 */
+.tag-combobox-toggle::after,
+.tag-editor-toggle::after {
+	content: "";
+	width: 5px;
+	height: 5px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg) translateY(-1px);
+}
+
+
+
+/* 候補一覧 */
+.tag-combobox-menu,
+.tag-editor-menu {
+	display: none;
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 180px;
+	overflow-y: auto;
+	background-color: var(--ui-surface);
+	border: 1px solid var(--ui-border);
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	z-index: 100;
+}
+
+/* 開いた状態 */
+.tag-combobox-menu.open,
+.tag-editor-menu.open {
+	display: block;
+}
+
+/* 候補項目 */
+.tag-combobox-option,
+.tag-editor-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 10px;
+	border: none;
+	background: transparent;
+	color: var(--ui-text);
+	text-align: left;
+	cursor: pointer;
+	font-size: 14px;
+}
+
+.tag-combobox-option:hover,
+.tag-editor-option:hover {
+	background-color: var(--ui-hover);
+}
+
+/* タグの色表示 */
+.tag-color-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+/* 選択済みタグ */
+.selected-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.selected-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 4px 8px;
+	border-radius: 12px;
+	color: white;
+	font-size: 12px;
+}
+
+.selected-tag button {
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	padding: 0;
+}
+
+.selected-tag button:hover {
+	opacity: 0.7;
+}
+
+/* 新しいタグの追加 */
+.new-tag-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.new-tag-row .new-tag-name {
+	flex: 1;
+	min-width: 0;
+	width: auto;
+	height: 36px;
+	margin-top: 0;
+}
+
+.new-tag-row .new-tag-color {
+	flex: 0 0 44px;
+	width: 44px;
+	height: 36px;
+	padding: 2px;
+	margin-top: 0;
+}
+
+/* 追加ボタン */
+.new-tag-row button {
+	height: 36px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 6px;
+	background-color: #3498db;
+	color: white;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.new-tag-row button:hover {
+	background-color: #2980b9;
+}
+
+/* カスタムテーマへの対応 */
+body.custom-theme .new-tag-row button {
+	background-color: var(--custom-bg-color);
+	color: var(--custom-text-color);
+}
+
+body.custom-theme .new-tag-row button:hover {
+	background-color: color-mix(in srgb,
+			var(--custom-bg-color) 80%,
+			var(--custom-text-color) 20%);
+}
+
+/* =========================================
+   右サイドパネル：タスク詳細
+   ========================================= */
+
+
+/* タスク名・プロジェクト・状態 */
+
+.detail-header {
+	padding-bottom: 14px;
+}
+
+.detail-task-title {
+	margin: 0 0 8px 0;
+	font-size: 20px;
+	line-height: 1.35;
+
+	color: var(--ui-text);
+
+	word-break: break-word;
+}
+
+.detail-project-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.detail-project-name {
+	min-width: 0;
+
+	font-size: 13px;
+	color: var(--ui-muted);
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+
+/* =========================================
+   状態
+   タスクコラム上部と同じ色
+   ========================================= */
+
+.detail-status-badge {
+	flex-shrink: 0;
+
+	padding: 4px 9px;
+	border-radius: 20px;
+
+	font-size: 11px;
+	font-weight: bold;
+
+	color: white;
+}
+
+/* 未着手 */
+.detail-status-todo {
+	background-color: #3498db;
+}
+
+/* 進行中 */
+.detail-status-doing {
+	background-color: #f1c40f;
+	color: #333;
+}
+
+/* 完了 */
+.detail-status-done {
+	background-color: #2ecc71;
+}
+
+
+/* =========================================
+   優先度・開始日・期限
+   ========================================= */
+
+.detail-summary-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+
+	gap: 8px;
+
+	padding: 14px 0;
+
+	border-top: 1px solid var(--ui-border);
+	border-bottom: 1px solid var(--ui-border);
+}
+
+.detail-summary-item {
+	min-width: 0;
+	text-align: center;
+}
+
+.detail-summary-label {
+	margin-bottom: 5px;
+
+	font-size: 11px;
+	color: var(--ui-muted);
+}
+
+.detail-summary-value {
+	font-size: 13px;
+	font-weight: bold;
+
+	color: var(--ui-text);
+}
+
+
+/* =========================================
+   優先度
+   既存のpriorityと同じ色
+   ========================================= */
+
+.detail-priority-badge {
+	display: inline-block;
+
+	min-width: 32px;
+
+	padding: 3px 9px;
+	border-radius: 20px;
+
+	font-size: 11px;
+	font-weight: bold;
+
+	color: white;
+}
+
+.detail-priority-high {
+	background-color: #e74c3c;
+}
+
+.detail-priority-middle {
+	background-color: #f39c12;
+}
+
+.detail-priority-low {
+	background-color: #2ecc71;
+}
+
+
+/* =========================================
+   詳細の各ブロック
+   ========================================= */
+
+.detail-section {
+	padding: 14px 0;
+
+	border-bottom: 1px solid var(--ui-border);
+}
+
+.detail-section-title {
+	margin-bottom: 8px;
+
+	font-size: 12px;
+	font-weight: bold;
+
+	color: var(--ui-muted);
+}
+
+.detail-group + .detail-group {
+	margin-top: 16px;
+}
+
+
+/* =========================================
+   担当者・タグ
+   ========================================= */
+
+.detail-chip-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+
+/* 担当者 */
+
+.detail-assignee-chip {
+	display: inline-flex;
+	align-items: center;
+
+	padding: 4px 9px;
+
+	border: 1px solid var(--ui-border);
+	border-radius: 20px;
+
+	background-color: var(--ui-selected);
+	color: var(--ui-text);
+
+	font-size: 12px;
+}
+
+
+/* ===== 詳細タブ：担当者情報 ===== */
+
+/* アイコンと氏名の間隔 */
+.detail-assignee-chip {
+    gap: 7px;
+    padding: 5px 9px;
+}
+
+/* 詳細欄の担当者アイコン */
+.detail-assignee-avatar {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    font-size: 11px;
+    border-width: 1px;
+}
+
+/* 氏名と権限を縦に並べる */
+.detail-assignee-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+/* 担当者名 */
+.detail-assignee-name {
+    color: var(--ui-text);
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* 団体権限 */
+.detail-assignee-role {
+    color: var(--ui-muted);
+    font-size: 10px;
+}
+
+
+/* タグ
+   背景色はDBに保存されたタグ色を使う */
+
+.detail-tag-chip {
+	display: inline-flex;
+	align-items: center;
+
+	padding: 4px 9px;
+
+	border: none;
+	border-radius: 20px;
+
+	color: white;
+
+	font-family: inherit;
+	font-size: 12px;
+
+	cursor: pointer;
+
+	box-shadow:
+		inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.detail-tag-chip:hover {
+	filter: brightness(0.92);
+}
+
+
+/* =========================================
+   説明
+   ========================================= */
+
+.detail-description {
+	display: block;
+
+	width: 100%;
+	min-height: 90px;
+
+	margin: 0;
+	padding: 0;
+
+	color: var(--ui-text);
+
+	font-size: 13px;
+	line-height: 1.7;
+
+	text-align: left;
+
+	/*
+	 * 入力された改行は残すが、
+	 * JSP側のインデントなどの余計な空白は詰める
+	 */
+	white-space: pre-line;
+
+	word-break: break-word;
+}
+
+
+/* =========================================
+   コメント
+   ========================================= */
+
+.detail-section-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.detail-section-heading .detail-section-title {
+	margin-bottom: 8px;
+}
+
+.detail-count {
+	font-size: 11px;
+	color: var(--ui-muted);
+}
+
+.detail-comment-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.detail-comment-item {
+	display: flex;
+
+	font-size: 13px;
+	line-height: 1.5;
+
+	color: var(--ui-text);
+}
+
+.detail-comment-dot {
+	flex-shrink: 0;
+}
+
+
+/* =========================================
+   添付ファイル
+   ========================================= */
+
+.detail-file-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.detail-file-item {
+	display: flex;
+	align-items: center;
+
+	gap: 7px;
+
+	padding: 7px 9px;
+
+	background-color: var(--ui-column);
+	color: var(--ui-text);
+
+	border: 1px solid var(--ui-border);
+	border-radius: 6px;
+
+	font-size: 12px;
+}
+
+
+/* 未設定・データなし */
+
+.detail-empty {
+	font-size: 12px;
+	color: var(--ui-muted);
+}
