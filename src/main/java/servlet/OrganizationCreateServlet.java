@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,12 +15,19 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import dao.ActivityLogDAO;
+import dao.OrgDAO;
+import dao.UserDAO;
+import model.Organization;
 import model.User;
 import util.DBConnection;
+
 
 @WebServlet("/organization/create")
 public class OrganizationCreateServlet extends HttpServlet {
 
+	private final UserDAO userDAO = new UserDAO();
+	private final OrgDAO orgDAO = new OrgDAO();
+	
     @Override
     protected void doPost(
             HttpServletRequest request,
@@ -101,9 +109,30 @@ public class OrganizationCreateServlet extends HttpServlet {
             // ③ コミット
             //--------------------------------------
             conn.commit();
+            
+          //--------------------------------------
+         // ④ 作成した団体へ自動切り替え
+         //--------------------------------------
+
+         // 最後に選択した団体としてDBに保存
+         userDAO.saveLastOrgId(
+                 loginUser.getUserId(),
+                 orgId
+         );
+
+         // 所属団体一覧を最新状態に更新
+         List<Organization> orgList =
+                 orgDAO.getOrganizationsForUser(
+                         loginUser.getUserId()
+                 );
+
+         session.setAttribute("orgList", orgList);
+
+         // 現在の作業モードを新しい団体に切り替える
+         session.setAttribute("activeOrgId", orgId);
 
             //--------------------------------------
-            // ④ ログ出力
+            // ⑤ ログ出力
             //--------------------------------------
             
             System.out.println("ログ登録前");
@@ -116,7 +145,7 @@ public class OrganizationCreateServlet extends HttpServlet {
             System.out.println("ログ登録後");
 
             //--------------------------------------
-            // ⑤ 管理画面へ戻る
+            // ⑥ 管理画面へ戻る
             //--------------------------------------
             response.sendRedirect(
                     request.getContextPath()
