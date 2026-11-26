@@ -23,10 +23,23 @@ if (action != null) {
 
 		// ① タスク一覧の取得（横並び表示用にカード形式で出力）
 		if ("getTasks".equals(action)) {
+
 	String pId = request.getParameter("projectId");
-	String sql = "SELECT t.task_id, t.task_name, t.status, t.priority, TO_CHAR(t.start_date, 'YYYY-MM-DD') as fmt_start_date, TO_CHAR(t.due_date, 'YYYY-MM-DD') as fmt_due_date, t.description, ta.user_id "
-			+ "FROM task t LEFT JOIN task_assignee ta ON t.task_id = ta.task_id "
-			+ "WHERE t.project_id = ? ORDER BY t.task_id ASC";
+
+	String sql = "SELECT " + "t.task_id, " + "t.task_name, " + "t.status, " + "t.priority, "
+			+ "TO_CHAR(t.start_date, 'YYYY-MM-DD') AS fmt_start_date, "
+			+ "TO_CHAR(t.due_date, 'YYYY-MM-DD') AS fmt_due_date, " + "t.description, "
+
+			// 旧フォームとの互換用：先頭の担当者ID
+			+ "(SELECT MIN(ta.user_id) " + " FROM task_assignee ta "
+			+ " WHERE ta.task_id = t.task_id) AS user_id, "
+
+			// 複数担当者のIDをカンマ区切りで取得
+			+ "COALESCE((" + " SELECT string_agg(ta.user_id::text, ',' ORDER BY ta.user_id) "
+			+ " FROM task_assignee ta " + " WHERE ta.task_id = t.task_id" + "), '') AS assignee_ids "
+
+			+ "FROM task t " + "WHERE t.project_id = ? " + "ORDER BY t.task_id ASC";
+
 	PreparedStatement pstmt = conn.prepareStatement(sql);
 	pstmt.setInt(1, Integer.parseInt(pId));
 	ResultSet rs = pstmt.executeQuery();
@@ -266,7 +279,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 </head>
 <body class="${themeValue}-theme font-${themeFontSize}"
-      style="--custom-bg-color: ${themeBgColor};
+	style="--custom-bg-color: ${themeBgColor};
              --custom-text-color: ${themeTextColor};">
 
 	<%
@@ -388,8 +401,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 					<div class="bottom-task-header">
 						<h2 id="bottomProjectTitle">タスク一覧</h2>
 						<div class="bottom-header-actions">
-							<button class="btn-primary-custom custom-theme-accent" onclick="addNewTask()">+
-								タスクを追加</button>
+							<button class="btn-primary-custom custom-theme-accent"
+								onclick="addNewTask()">+ タスクを追加</button>
 							<button class="btn-secondary-custom"
 								onclick="alert('マイタスクに追加機能')">+ マイタスクに追加</button>
 						</div>
@@ -412,7 +425,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 					<div class="modal-actions">
 						<button class="btn-cancel" onclick="closeProjectModal()">キャンセル</button>
-						<button class="btn-save custom-theme-accent" onclick="submitNewProject()">保存</button>
+						<button class="btn-save custom-theme-accent"
+							onclick="submitNewProject()">保存</button>
 					</div>
 				</div>
 			</div>
@@ -484,7 +498,8 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 
 					<div class="modal-actions">
 						<button class="btn-cancel" onclick="closeTaskModal()">キャンセル</button>
-						<button class="btn-save custom-theme-accent" onclick="submitTaskModal()">保存</button>
+						<button class="btn-save custom-theme-accent"
+							onclick="submitTaskModal()">保存</button>
 					</div>
 				</div>
 			</div>
@@ -506,8 +521,7 @@ if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("newPro
 			<div id="projectDeleteModal" class="modal-overlay">
 				<div class="modal-content delete-modal-content">
 					<h3>プロジェクトの削除</h3>
-					<p id="projectDeleteMessage"
-						style="margin: 15px 0 25px 0;"></p>
+					<p id="projectDeleteMessage" style="margin: 15px 0 25px 0;"></p>
 					<div class="modal-actions"
 						style="text-align: center; border-top: none; padding-top: 0; margin-top: 0;">
 						<button class="btn-cancel" onclick="closeProjectDeleteModal()">キャンセル</button>

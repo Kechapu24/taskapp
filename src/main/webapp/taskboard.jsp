@@ -1299,46 +1299,12 @@ function openTagEditModal(button, tagId, currentColor) {
 	%>
 
 	<div id="task-add-form" style="display: none;">
-		<form class="edit-form" action="task/taskAdd.jsp" method="post">
-
-			<input type="hidden" name="status" id="addTaskStatus"> <label>プロジェクト</label>
-
-			<select name="project_id" required
-				onchange="refreshTaskAssigneeEditor(this.form, [])">
-
-				<option value="">プロジェクトを選択</option>
-
-				<c:forEach var="project" items="${boardProjectOptions}">
-					<option value="${project.projectId}">
-						<c:out value="${project.projectName}" />
-					</option>
-				</c:forEach>
-
-			</select> <label>タスク名</label> <input type="text" name="task_name" required>
-
-			<label>説明</label>
-			<textarea name="description"></textarea>
-
-			<label>優先度</label> <select name="priority">
-				<option value="低">低</option>
-				<option value="中" selected>中</option>
-				<option value="高">高</option>
-			</select> <label>開始日</label> <input type="date" name="start_date"> <label>期限</label>
-			<input type="date" name="due_date">
-			<div class="assignee-editor-mount"></div>
-
-			<%
-			request.removeAttribute(
-					"selectedTagIds");
-			%>
-
-			<jsp:include page="/task/tagEditor.jsp" />
-
-			<button type="submit" class="modal-submit-btn custom-theme-accent">追加</button>
-		</form>
+		<%
+		request.setAttribute("taskFormMode", "add");
+		request.setAttribute("taskFormReturnTo", "taskboard");
+		%>
+		<%-- <jsp:include page="/task/taskForm.jsp" /> --%>
 	</div>
-
-
 
 </body>
 </html>

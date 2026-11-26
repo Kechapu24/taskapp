@@ -674,92 +674,14 @@ if (dueDateSql != null) {
 
 	</div>
 
-
 	<!-- 編集 -->
 	<div id="edit-<%=taskId%>" style="display: none;">
-
-		<form class="edit-form"
-			action="<%=request.getContextPath()%>/task/taskUpdate.jsp"
-			method="post">
-
-			<input type="hidden" name="task_id" value="<%=taskId%>"> <label>タスク名</label>
-
-			<input type="text" name="task_name" value="<%=task.get("taskName")%>"
-				required> <label>状態</label> <select name="status">
-
-				<option value="未着手"
-					<%="未着手".equals(task.get("status"))
-		? "selected"
-		: ""%>>
-					未着手</option>
-
-				<option value="進行中"
-					<%="進行中".equals(task.get("status"))
-		? "selected"
-		: ""%>>
-					進行中</option>
-
-				<option value="完了"
-					<%="完了".equals(task.get("status"))
-		? "selected"
-		: ""%>>
-					完了</option>
-
-			</select> <label>優先度</label> <select name="priority">
-
-				<option value="低"
-					<%="低".equals(task.get("priority"))
-		? "selected"
-		: ""%>>
-					低</option>
-
-				<option value="中"
-					<%="中".equals(task.get("priority"))
-		? "selected"
-		: ""%>>
-					中</option>
-
-				<option value="高"
-					<%="高".equals(task.get("priority"))
-		? "selected"
-		: ""%>>
-					高</option>
-
-			</select> <label>開始日</label> <input type="date" name="start_date"
-				value="<%=task.get("startDate") == null
-		? ""
-		: task.get("startDate")%>">
-
-			<label>期限</label> <input type="date" name="due_date"
-				value="<%=task.get("dueDate") == null
-		? ""
-		: task.get("dueDate")%>">
-
-			<label>説明</label>
-
-			<textarea name="description"><%=task.get("description") == null
-		? ""
-		: task.get("description")%></textarea>
-
-			<div class="assignee-editor-mount"
-				data-project-id="<%=task.get("projectId")%>"
-				data-selected-ids="<%=currentAssigneeIds.toString()%>"></div>
-
-			<%
-			request.setAttribute(
-					"selectedTagIds",
-					selectedTagIds);
-			%>
-
-			<jsp:include page="/task/tagEditor.jsp" />
-
-			<button type="submit" class="modal-submit-btn custom-theme-accent">
-				保存</button>
-
-		</form>
-
+		<%
+		request.setAttribute("taskFormMode", "edit");
+		request.setAttribute("taskFormReturnTo", "taskboard");
+		%>
+		<%-- <jsp:include page="/task/taskForm.jsp" /> --%>
 	</div>
-
 
 	<!-- 削除 -->
 	<div id="delete-<%=taskId%>" style="display: none;">
