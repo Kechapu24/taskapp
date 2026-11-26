@@ -66,22 +66,27 @@ public class ChatMessageDAO {
                     long messageId = rs.getLong("message_id");
 
                     message.put("messageId", messageId);
+
                     message.put(
                         "chatRoomId",
                         rs.getLong("chat_room_id")
                     );
+
                     message.put(
                         "senderId",
                         rs.getObject("sender_id")
                     );
+
                     message.put(
                         "senderName",
                         rs.getString("sender_name")
                     );
+
                     message.put(
                         "messageText",
                         rs.getString("message_text")
                     );
+
                     message.put(
                         "createdAt",
                         rs.getTimestamp("created_at")
@@ -106,6 +111,75 @@ public class ChatMessageDAO {
         }
 
         return messages;
+    }
+
+    /**
+     * 新着メッセージ・削除状態を取得する。
+     *
+     * ChatMessageServletで使用する。
+     *
+     * @param chatRoomId チャットルームID
+     * @param userId 閲覧ユーザーID
+     * @return 最新メッセージIDと削除済みメッセージ数
+     */
+    public Map<String, Long> getMessageChangeState(
+            long chatRoomId,
+            int userId) {
+
+        String sql =
+            "SELECT " +
+            "COALESCE(MAX(m.message_id), 0) AS latest_message_id, " +
+            "COALESCE(SUM(" +
+            "CASE WHEN m.deleted_at IS NOT NULL " +
+            "THEN 1 ELSE 0 END" +
+            "), 0) AS deleted_count " +
+            "FROM chat_message m " +
+            "WHERE m.chat_room_id = ? " +
+            "AND EXISTS (" +
+            "SELECT 1 " +
+            "FROM chat_room_member rm " +
+            "WHERE rm.chat_room_id = m.chat_room_id " +
+            "AND rm.user_id = ?" +
+            ")";
+
+        Map<String, Long> changeState =
+            new LinkedHashMap<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, chatRoomId);
+            stmt.setInt(2, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+
+                    changeState.put(
+                        "latestMessageId",
+                        rs.getLong("latest_message_id")
+                    );
+
+                    changeState.put(
+                        "deletedCount",
+                        rs.getLong("deleted_count")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+
+            throw new RuntimeException(
+                "チャットの変更状態取得に失敗しました。",
+                e
+            );
+        }
+
+        // SQL結果が取得できなかった場合の初期値
+        changeState.putIfAbsent("latestMessageId", 0L);
+        changeState.putIfAbsent("deletedCount", 0L);
+
+        return changeState;
     }
 
     /**
@@ -243,94 +317,91 @@ public class ChatMessageDAO {
     }
 
     /**
-     * チャットルームの最終閲覧日時を更新する。
+     * 自分が送信したメッセージの既読状況を取得する。
+     *
+     * @param chatRoomId チャットルームID
+     * @param senderId 送信者のユーザーID
+     * @return メッセージごとの既読人数一覧
      */
-    
+    public List<Map<String, Object>> getReadStatuses(
+            long chatRoomId,
+            int senderId) {
 
-/**
- * 自分が送信したメッセージの既読状況を取得する。
- *
- * @param chatRoomId チャットルームID
- * @param senderId 送信者のユーザーID
- * @return メッセージごとの既読人数一覧
- */
-public List<Map<String, Object>> getReadStatuses(
-        long chatRoomId,
-        int senderId) {
+        String sql =
+            "SELECT " +
+            "m.message_id, " +
 
-    String sql =
-        "SELECT " +
-        "m.message_id, " +
+            // 既読にした人数
+            "(SELECT COUNT(*) " +
+            "FROM chat_room_member reader " +
+            "WHERE reader.chat_room_id = m.chat_room_id " +
+            "AND reader.user_id IS DISTINCT FROM m.sender_id " +
+            "AND reader.last_read_at IS NOT NULL " +
+            "AND reader.last_read_at >= m.created_at" +
+            ") AS read_count, " +
 
-        // 既読にした人数
-        "(SELECT COUNT(*) " +
-        "FROM chat_room_member reader " +
-        "WHERE reader.chat_room_id = m.chat_room_id " +
-        "AND reader.user_id IS DISTINCT FROM m.sender_id " +
-        "AND reader.last_read_at IS NOT NULL " +
-        "AND reader.last_read_at >= m.created_at" +
-        ") AS read_count, " +
+            // 既読対象人数
+            "(SELECT COUNT(*) " +
+            "FROM chat_room_member recipient " +
+            "WHERE recipient.chat_room_id = m.chat_room_id " +
+            "AND recipient.user_id IS DISTINCT FROM m.sender_id" +
+            ") AS recipient_count " +
 
-        // 既読対象人数
-        "(SELECT COUNT(*) " +
-        "FROM chat_room_member recipient " +
-        "WHERE recipient.chat_room_id = m.chat_room_id " +
-        "AND recipient.user_id IS DISTINCT FROM m.sender_id" +
-        ") AS recipient_count " +
+            "FROM chat_message m " +
+            "WHERE m.chat_room_id = ? " +
+            "AND m.sender_id = ? " +
+            "AND m.deleted_at IS NULL " +
+            "ORDER BY m.message_id ASC";
 
-        "FROM chat_message m " +
-        "WHERE m.chat_room_id = ? " +
-        "AND m.sender_id = ? " +
-        "AND m.deleted_at IS NULL " +
-        "ORDER BY m.message_id ASC";
+        List<Map<String, Object>> statuses =
+            new ArrayList<>();
 
-    List<Map<String, Object>> statuses =
-        new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, chatRoomId);
+            stmt.setInt(2, senderId);
 
-        stmt.setLong(1, chatRoomId);
-        stmt.setInt(2, senderId);
+            try (ResultSet rs = stmt.executeQuery()) {
 
-        try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
 
-            while (rs.next()) {
+                    Map<String, Object> status =
+                        new LinkedHashMap<>();
 
-                Map<String, Object> status =
-                    new LinkedHashMap<>();
+                    status.put(
+                        "messageId",
+                        rs.getLong("message_id")
+                    );
 
-                status.put(
-                    "messageId",
-                    rs.getLong("message_id")
-                );
+                    status.put(
+                        "readCount",
+                        rs.getLong("read_count")
+                    );
 
-                status.put(
-                    "readCount",
-                    rs.getLong("read_count")
-                );
+                    status.put(
+                        "recipientCount",
+                        rs.getLong("recipient_count")
+                    );
 
-                status.put(
-                    "recipientCount",
-                    rs.getLong("recipient_count")
-                );
-
-                statuses.add(status);
+                    statuses.add(status);
+                }
             }
+
+        } catch (SQLException e) {
+
+            throw new RuntimeException(
+                "メッセージの既読状況取得に失敗しました。",
+                e
+            );
         }
 
-    } catch (SQLException e) {
-
-        throw new RuntimeException(
-            "メッセージの既読状況取得に失敗しました。",
-            e
-        );
+        return statuses;
     }
 
-    return statuses;
-}
-
-    
+    /**
+     * チャットルームの最終閲覧日時を更新する。
+     */
     public void markAsRead(
             long chatRoomId,
             int userId) {
@@ -383,6 +454,47 @@ public List<Map<String, Object>> getReadStatuses(
 
             throw new RuntimeException(
                 "チャット参加者の確認に失敗しました。",
+                e
+            );
+        }
+    }
+
+    /**
+     * 自分が送信したメッセージを論理削除する。
+     *
+     * 他人のメッセージは削除できない。
+     *
+     * @param messageId メッセージID
+     * @param chatRoomId チャットルームID
+     * @param senderId 送信者のユーザーID
+     * @return 削除できた場合はtrue
+     */
+    public boolean deleteMessage(
+            long messageId,
+            long chatRoomId,
+            int senderId) {
+
+        String sql =
+            "UPDATE chat_message " +
+            "SET deleted_at = CURRENT_TIMESTAMP " +
+            "WHERE message_id = ? " +
+            "AND chat_room_id = ? " +
+            "AND sender_id = ? " +
+            "AND deleted_at IS NULL";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, messageId);
+            stmt.setLong(2, chatRoomId);
+            stmt.setInt(3, senderId);
+
+            return stmt.executeUpdate() == 1;
+
+        } catch (SQLException e) {
+
+            throw new RuntimeException(
+                "メッセージの削除に失敗しました。",
                 e
             );
         }

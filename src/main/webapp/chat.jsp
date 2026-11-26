@@ -1,4 +1,3 @@
-
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8" %>
 <%@ page import="java.sql.*" %>
@@ -88,6 +87,23 @@ List<Map<String, Object>> messages =
 if (messages == null) {
     messages = new ArrayList<>();
 }
+
+// 新着・削除状態
+Object latestMessageIdValue =
+    request.getAttribute("latestMessageId");
+
+long latestMessageId =
+    latestMessageIdValue instanceof Number
+        ? ((Number) latestMessageIdValue).longValue()
+        : 0;
+
+Object deletedMessageCountValue =
+    request.getAttribute("deletedMessageCount");
+
+long deletedMessageCount =
+    deletedMessageCountValue instanceof Number
+        ? ((Number) deletedMessageCountValue).longValue()
+        : 0;
 
 // ========================================
 // 現在のチャットルームを確認
@@ -599,7 +615,13 @@ boolean hasActiveRoom =
                      メッセージ表示領域
                      ================================= -->
 
-                <div class="chat-message-area" id="chatMessageArea">
+                <div
+                    class="chat-message-area"
+                    id="chatMessageArea"
+                    data-room-id="<%= hasActiveRoom ? activeRoomId : "" %>"
+                    data-latest-message-id="<%= latestMessageId %>"
+                    data-deleted-count="<%= deletedMessageCount %>"
+                    data-latest-url="<%= request.getContextPath() %>/chatLatestMessage">
 
                     <% if (personalMode) { %>
 
@@ -736,7 +758,9 @@ boolean hasActiveRoom =
 
                             %>
 
-                                <div class="chat-message-row <%= ownMessage ? "is-own" : "" %>">
+                                <div
+                                    class="chat-message-row <%= ownMessage ? "is-own" : "" %>"
+                                    data-message-id="<%= message.get("messageId") %>">
 
                                     <!-- 送信者名・時刻 -->
 
@@ -760,7 +784,6 @@ boolean hasActiveRoom =
 
                                     <!-- =================================
                                          本文と既読表示
-                                         既読は吹き出しの左隣
                                          ================================= -->
 
                                     <div class="chat-message-content-row">
@@ -954,6 +977,48 @@ boolean hasActiveRoom =
                                             <% } %>
 
                                         </div>
+
+                                    <% } %>
+
+                                    <!-- =================================
+                                         自分のメッセージ削除ボタン
+                                         ================================= -->
+
+                                    <% if (ownMessage) { %>
+
+                                        <form
+                                            method="post"
+                                            action="<%= request.getContextPath() %>/chatDeleteMessage"
+                                            style="margin-top:5px; align-self:flex-end;"
+                                            onsubmit="return confirm('このメッセージを削除しますか？');">
+
+                                            <input
+                                                type="hidden"
+                                                name="roomId"
+                                                value="<%= activeRoomId %>">
+
+                                            <input
+                                                type="hidden"
+                                                name="messageId"
+                                                value="<%= message.get("messageId") %>">
+
+                                            <button
+                                                type="submit"
+                                                style="
+                                                    border:1px solid #d9534f;
+                                                    border-radius:5px;
+                                                    background:transparent;
+                                                    color:#d9534f;
+                                                    padding:3px 9px;
+                                                    font-size:11px;
+                                                    cursor:pointer;
+                                                ">
+
+                                                削除
+
+                                            </button>
+
+                                        </form>
 
                                     <% } %>
 
@@ -1428,5 +1493,8 @@ boolean hasActiveRoom =
 })();
 </script>
 
+<!-- 新着・削除確認用JavaScript -->
+<script src="<%= request.getContextPath() %>/js/chat-live.js"></script>
+<script src="<%= request.getContextPath() %>/js/chat-message-menu.js"></script>
 </body>
 </html>

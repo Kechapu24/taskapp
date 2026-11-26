@@ -1,4 +1,3 @@
-
 package servlet;
 
 import java.io.IOException;
@@ -10,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
@@ -113,6 +113,29 @@ public class ChatMessageServlet extends HttpServlet {
                 return;
             }
 
+            // 最終閲覧日時を先に更新
+            chatMessageDAO.markAsRead(
+                chatRoomId,
+                loginUser.getUserId()
+            );
+
+            // 新着・削除状態を取得
+            Map<String, Long> changeState =
+                chatMessageDAO.getMessageChangeState(
+                    chatRoomId,
+                    loginUser.getUserId()
+                );
+
+            request.setAttribute(
+                "latestMessageId",
+                changeState.get("latestMessageId")
+            );
+
+            request.setAttribute(
+                "deletedMessageCount",
+                changeState.get("deletedCount")
+            );
+
             // メッセージ一覧を取得
             request.setAttribute(
                 "messages",
@@ -120,12 +143,6 @@ public class ChatMessageServlet extends HttpServlet {
                     chatRoomId,
                     loginUser.getUserId()
                 )
-            );
-
-            // 最終閲覧日時を更新
-            chatMessageDAO.markAsRead(
-                chatRoomId,
-                loginUser.getUserId()
             );
 
             request.setAttribute("activeRoomId", chatRoomId);
